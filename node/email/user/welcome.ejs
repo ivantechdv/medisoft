@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+				<style>
+					/* Estilos CSS */
+					@media screen and (max-width: 600px) {
+									/* Estilos específicos para pantallas pequeñas */
+									.table-general {
+													width: 100%;
+									}
+									.table-general th {
+													width: auto;
+													text-align: left;
+									}
+									.table{
+										font-size: 12px;
+									}
+									/* Agrega más estilos según sea necesario */
+					}
+	</style>
+</head>
+<body>
+    <table cellspacing="0" cellpadding="0" class="table-general" border="0" style="width: 80%;">
+        <thead>
+            <tr>
+                <th colspan="4" style="height: 50px;"></th>
+                <th rowspan="3" style="width: 30px; background-color: #007fff">
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </th>
+            </tr>
+            <tr>
+                <th colspan="2" style="width:400px; vertical-align: middle;">
+                    <font size=4 face="arial">
+                        <span style="color: #007fff">Bienvenido(a)</span> 
+                        <%= data.name %>
+                    </font><br>
+                   <img src="https://unixfystorage.blob.core.windows.net/company/title_bar.png">
+                    <br>
+                </th>
+                <th rowspan="2" style="width: 300px;">
+                    <div style="text-align: center;">
+                       <img src="https://unixfystorage.blob.core.windows.net/company/unixfyone.png">
+                    </div>
+                    <div style="text-align: center; ">
+                        <font size=4 face="arial">
+                            unixfyone
+                        </font>
+                    </div>
+                </th>
+                <th rowspan="2" align="right" style="vertical-align: top; width: 50px;">
+                   <img src="https://unixfystorage.blob.core.windows.net/company/indicador.png">
+                </th>
+            </tr>
+            <tr>
+                <th colspan="4">
+                    &nbsp;
+                </th>
+            </tr>
+        </thead>
+								<tbody>
+									<tr>
+										<th colspan="4" style="padding: 20px; text-align: justify; font-weight: 400;"> 
+											<table border="0">
+												<tr>
+													<th></th>
+													<td style="width: 80%;">
+              <font size=2 face="arial">
+              <p>&nbsp;</p>
+              <p>Estimado Colaborador<strong><%= data.name %></strong>, <br>CI: <strong><%= data.dni %></strong></p>
+              <p>&iexcl;Bienvenido a Nuestra Plataforma Corporativa! </p>
+              <p>Para comenzar a utilizar nuestra plataforma y acceder a todas sus funciones, te hemos proporcionado una contrase&ntilde;a que podr&aacute;s utilizar para iniciar sesi&oacute;n. A continuaci&oacute;n, encontrar&aacute;s tus credenciales de inicio de sesi&oacute;n:</p>
+              <ul>
+              <li><strong>Acceso</strong>: <a href="http://app.unixfyone.com" target="_blank">app.unixfyone.com</a></li>
+              <li><strong>Usuario</strong>: <%= data.email %></li>
+              <li><strong>Contrase&ntilde;a temporal</strong>: <%= data.password %></li>
+              </ul>
+              <p>Te recomendamos que inicies sesi&oacute;n y cambies esta contrase&ntilde;a por una nueva, segura y f&aacute;cil de recordar. Cumpliendo las condiciones para su creaci&oacute;n. La cual puede ser cambiada desde la opci&oacute;n "Mi Perfil".</p>
+
+              <p>Recuerda que su Seguridad es una Prioridad para Nosotros. </p>
+              <p>&nbsp;</p>
+              <strong><p>Saludos Cordiales,</p>
+              <p>Equipo Unixfyone</p></strong>
+										    </font>
+             </td>
+														<th></th>
+												</tr>
+											</table>
+											
+										</th>
+										<th rowspan="3" style="width: 30px; background-color: #007fff">
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+										</th>
+									</tr>
+									
+								</tbody>
+    </table>
+</body>
+</html>

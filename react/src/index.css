@@ -1,0 +1,63 @@
+body {
+ 
+}
+
+.flex{
+  display: flex;
+}
+
+.flex-col{
+  display: flex;
+  flex-direction: column;
+}
+.flex-col-center{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.flex-center{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.active {
+  font-weight: bold;
+  color: #ff0000; /* Cambia esto al color que desees para resaltar la opción activa */
+}
+
+.text-bold{
+  font-weight: bold;
+}
+
+
+.top-nav{
+  position: fixed;
+  width: 100vw;
+}
+
+
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loader {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #222a3b;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+.tooltip{
+  visibility: hidden;
+  position: absolute;
+}
+.has-tooltip:hover .tooltip {
+  visibility: visible;
+  z-index: 100;
+}

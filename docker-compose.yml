@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  node:
+    build: ./node
+    restart: always
+    env_file: ./node/.env
+    ports:
+      - 3000:3000
+
+      
+    networks:
+      - backend
+      - frontend
+
+  react:
+    depends_on:
+      - node
+    build: 
+      context: ./react
+    env_file: ./react/.env 
+ 
+    ports:
+      - 80:80
+    networks:
+      - frontend
+
+networks:
+  backend:
+  frontend:

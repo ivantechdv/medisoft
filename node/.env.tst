@@ -1,0 +1,9 @@
+NODE_ENV=dev
+DB_HOST='localhost'
+DB_USER='root'
+DB_PASSWORD=''
+DB_NAME='db'
+DB_PORT='3306' 
+PORT=3000
+#IP_PROD_FR='http://20.65.152.59'
+

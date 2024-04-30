@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+				<style>
+					/* Estilos CSS */
+					@media screen and (max-width: 600px) {
+									/* Estilos específicos para pantallas pequeñas */
+									.table-general {
+													width: 100%;
+									}
+									.table-general th {
+													width: auto;
+													text-align: left;
+									}
+									.table{
+										font-size: 12px;
+									}
+									/* Agrega más estilos según sea necesario */
+					}
+	</style>
+</head>
+<body>
+    <table cellspacing="0" cellpadding="0" class="table-general" border="0">
+        <thead>
+            <tr>
+                <th colspan="4" style="height: 50px;"></th>
+                <th rowspan="3" style="width: 30px; background-color: #007fff">
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                </th>
+            </tr>
+            <tr>
+                <th colspan="2" style="width:400px; vertical-align: middle;">
+                    <font size=4 face="arial">
+                        <span style="color: #007fff">Alerta</span> Archivos por vencer
+                    </font><br>
+                   <img src="https://unixfystorage.blob.core.windows.net/company/title_bar.png">
+                    <br>
+                </th>
+                <th rowspan="2" style="width: 300px;">
+                    <div style="text-align: center;">
+                       <img src="https://unixfystorage.blob.core.windows.net/company/unixfyone.png">
+                    </div>
+                    <div style="text-align: center; ">
+                        <font size=4 face="arial">
+                            unixfyone
+                        </font>
+                    </div>
+                </th>
+                <th rowspan="2" align="right" style="vertical-align: top; width: 50px;">
+                   <img src="https://unixfystorage.blob.core.windows.net/company/indicador.png">
+                </th>
+            </tr>
+            <tr>
+                <th colspan="4">
+                    &nbsp;
+                </th>
+            </tr>
+        </thead>
+								<tbody>
+									<tr>
+										<th colspan="4" style="padding: 20px; text-align: justify;"> 
+											<table border="0">
+												<tr>
+													<th></th>
+													<th style="width: 80%;"><font size=2 face="arial">
+														<p>Estimado(a) usuario(a),</p>
+														<p>Este correo es para alertarle sobre archivos que están por vencer y necesitan ser revisados. Es importante tomar acción lo antes posible para evitar inconvenientes.</p>
+														<p>Por favor, asegúrese de revisar los archivos mencionados y tomar las medidas necesarias según lo requerido.</p>
+														<table style="margin-top:10px; margin-bottom:10px; border:1px; width: 80%;" class="table">
+															<% if (data && data.length > 0) { %>
+															<% data.forEach(storage => { %>
+																<tr>
+																				<td style="background: #ff6161;
+                    color: white;
+                    padding: 15px;
+                    border-radius: 1em;">
+                     Empresa: <%= storage.company.company %><br>
+																					Titulo: <%= storage.title %> / Categoría: <%= storage.legal_category.name %><br>
+																					Fecha Vencimiento: <%= storage.date_expiration %><br>
+																				</td>
+																</tr>
+												<% }); %>
+												<% } %>
+														</table>
+														<p>Gracias por su atención y cooperación.</p>
+														<p>Saludos cordiales,</p>
+														<p>El equipo de [Unixfyone]</p>
+										</font></th>
+														<th></th>
+												</tr>
+											</table>
+											
+										</th>
+										<th rowspan="3" style="width: 30px; background-color: #007fff">
+											&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+										</th>
+									</tr>
+									
+								</tbody>
+    </table>
+</body>
+</html>
