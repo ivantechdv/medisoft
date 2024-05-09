@@ -128,10 +128,10 @@ function obtenerMetodos(contenido) {
 
 function middlewares() {
  
-  console.log('process.env.IP_PROD_FR => ' , process.env.IP_PROD_FR)
+  //console.log('process.env.IP_PROD_FR => ' , process.env.IP_PROD_FR)
   // Middlewares
   app.use(cors({ 
-    origin: ["http://localhost:5173", process.env.IP_PROD_FR, "http://52.142.37.29", "http://20.65.152.59" ] ,
+    origin: ["http://localhost:5173"] ,
     // origin: "*" ,
    credentials: true 
   
@@ -161,7 +161,7 @@ app.use(express.static('public'));
 function routes() {
 
   // app.use("/api/v1/permisologys", trafic, require("./routes/permisologys/permisologys.routes"))
-  // app.use("/api/v1/users", trafic, require("./routes/users/users.routes"));   
+   app.use("/api/v1/users", trafic, require("./routes/users/users.routes"));   
   // app.use("/api/v1/purchases", trafic, require("./routes/purchases/purchases.routes"));
   // app.use("/api/v1/assets", trafic, require("./routes/assets/assets.routes"));
   // app.use("/api/v1/companies", trafic, require("./routes/companies/companies.routes"));
