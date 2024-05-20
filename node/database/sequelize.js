@@ -17,12 +17,7 @@ const sequelize = new Sequelize(
       acquire: 60000,
       idle: 30000,
     },
-    /*  dialectOptions: {
-      ssl: {
-        rejectUnauthorized: true,
-        ca: fs.readFileSync(path.resolve(__dirname + process.env.File_Root))
-      }
-    } */
-});
+  }
+);
 
 module.exports = sequelize;

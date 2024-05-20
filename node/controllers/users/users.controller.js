@@ -14,10 +14,10 @@ CTRL.create = async (req, res, next) => {
 
 CTRL.get = async (req, res, next) => {
   try {
-Methods.get(req, res, next, User);
+    Methods.get(req, res, next, User);
   } catch (error) {
     next(error);
   }
-}
+};
 
 module.exports = CTRL;
