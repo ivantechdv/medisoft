@@ -1,4 +1,4 @@
-import { postWithData } from '../../api/index';
+import { postData } from '../../api/index';
 import { encrypt } from './../crypto/index';
 
 const ChangeLogger = async ({ oldData, newData, user, module, module_id }) => {
@@ -49,7 +49,7 @@ const ChangeLogger = async ({ oldData, newData, user, module, module_id }) => {
         module_id: module_id,
         changes: encrypt(changes),
       };
-      await postWithData('changelogs', dataToSend);
+      await postData('changelogs', dataToSend);
     }
   } catch (error) {
     console.error('Error al guardar los cambios:', error);

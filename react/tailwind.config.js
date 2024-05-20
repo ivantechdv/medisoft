@@ -1,29 +1,25 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
-  content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
+export default {
+  content: ['./src/**/*.{js,jsx,ts,tsx}'],
   theme: {
     extend: {
-      backgroundColor: {
-        'customGray': '#212121',
-      },
       colors: {
-        'customGreen': '#d7f205',
-        'primary': '#0131b9',
+        body: 'rgba(244, 244, 246, 1)',
+        topNav: 'rgba(59, 130, 246,1)',
+        content: 'rgba(255,255,255,1)',
+        panel: 'rgba(255,255,255,1)',
+        sidebar: 'rgba(17,24,39, 1)',
+        sidebarText: 'rgba(255,255,255,1)',
+        primary: 'rgba(59, 130, 246,1)',
+        secondary: 'rgba(55, 65, 81, 0.9) ',
+        title: 'rgba(17, 24, 39,1) ',
+        subtitle: 'rgba(107, 114, 128,1) ',
+        textWhite: 'rgba(255,255,255) ',
+        breadcrum: 'rgba(17, 24, 39,1) ',
+        breadcrum_active: 'rgba(59, 130, 246,1)',
+        tableHeader: 'rgba(249, 250, 251, 1) ',
       },
-      container: {
-        padding: '2rem',
-      },
-      fontSize: '1rem',
-    },
-    screens: {
-      'sm': {'min': '640px', 'max': '767px'},
-      'md': {'min': '768px', 'max': '1023px'},
-      'lg': {'min': '1024px', 'max': '1279px'},
     },
   },
   plugins: [],
-}
+};

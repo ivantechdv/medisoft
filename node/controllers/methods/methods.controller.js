@@ -11,21 +11,52 @@ CTRL.create = async (req, res, next, Model) => {
   }
 };
 
+CTRL.createBulk = async (req, res, next, Model) => {
+  try {
+    // Guardar los datos en la base de datos usando bulkCreate
+    const result = await Model.bulkCreate(req.body);
+
+    // Enviar una respuesta al cliente
+    res.json(true);
+  } catch (error) {
+    console.error("Error al guardar las patologías:", error);
+    next(error);
+  }
+};
+
+CTRL.update = async (req, res, next, Model) => {
+  try {
+    const { id } = req.params;
+    const data = await Model.update(req.body, {
+      where: { id },
+    });
+    if (data) {
+      return res.status(201).json({ id: id });
+    }
+    return res.status(404).json({ message: "Registro no encontrado" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 CTRL.get = async (req, res, next, Model, where, include) => {
   try {
     const { page = 1, pageSize = ITEMS_PER_PAGE, searchTerm } = req.query;
-    const { module, id } = req.params;
     // Validación de parámetros de consulta
     const parsedPage = parseInt(page);
     const parsedPageSize = parseInt(pageSize);
 
-    if (isNaN(parsedPage) || isNaN(parsedPageSize) || parsedPage <= 0 || parsedPageSize <= 0) {
-      return res.status(400).json({ error: 'Los parámetros de página son inválidos' });
+    if (
+      isNaN(parsedPage) ||
+      isNaN(parsedPageSize) ||
+      parsedPage <= 0 ||
+      parsedPageSize <= 0
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Los parámetros de página son inválidos" });
     }
-    const whereClause ={
-      module:module,
-      module_id:id
-    };
+
     const offset = (parsedPage - 1) * parsedPageSize;
     const { count, rows: rows } = await Model.findAndCountAll({
       where: where,
@@ -46,6 +77,79 @@ CTRL.get = async (req, res, next, Model, where, include) => {
   } catch (error) {
     next(error);
   }
-}
+};
+CTRL.getAll = async (
+  req,
+  res,
+  next,
+  Model,
+  where,
+  include,
+  returnData = false
+) => {
+  try {
+    const result = await Model.findAll({
+      where: where,
+    });
+    if (returnData) {
+      return result; // Devolver los resultados si se requiere
+    } else {
+      res.json(result); // Enviar los resultados si no se requiere devolverlos
+    }
+  } catch (error) {
+    console.log("error", error);
+    next(error);
+  }
+};
+CTRL.getById = async (req, res, next, Model, where, include) => {
+  const { id } = req.params;
+  try {
+    let result = false;
+    if (include) {
+      result = await Model.findByPk(id, {
+        include: include,
+      });
+    } else {
+      result = await Model.findByPk(id);
+    }
+
+    if (result) {
+      res.json(result);
+    } else {
+      res.status(404).json({ error: Model + " registro no encontrado" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al obtener registro " + Model });
+  }
+};
+
+CTRL.delete = async (req, res, next, Model, where, returnData = false) => {
+  const { id } = req.params;
+  let condition = {};
+  if (id) {
+    condition = { id };
+  }
+  if (where) {
+    condition = where;
+  }
+  try {
+    const result = await Model.destroy({
+      where: condition,
+    });
+
+    if (result) {
+      if (returnData) {
+        return;
+      }
+      res.status(200).json(true);
+    } else {
+      res.status(404).json({ message: "Registro no encontrado" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Error al eliminar registro " + Model });
+  }
+};
 
 module.exports = CTRL;

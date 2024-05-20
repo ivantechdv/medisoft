@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { postWithData } from './../../api/index';
+import { postData } from './../../api/index';
 const Login = () => {
   const initialValues = {
     email: '',
@@ -15,7 +15,7 @@ const Login = () => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const response = await postWithData('auth/login', credentials);
+    const response = await postData('auth/login', credentials);
     console.log(response);
   };
   return (

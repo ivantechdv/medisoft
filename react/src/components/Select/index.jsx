@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 
 const CustomSelect = ({
@@ -6,50 +6,76 @@ const CustomSelect = ({
   onChange,
   defaultValue,
   isDisabled = false,
-  targetHeight = 31,
+  targetHeight = 30,
+  isMulti = false, // Nueva prop para manejar múltiples selecciones
 }) => {
-  const [selectedOption, setSelectedOption] = useState(null);
-  useEffect(() => {
-    // Buscar la opción por su valor cuando el defaultValue cambie
-    const defaultOption = options.find(
-      (option) => option.value === defaultValue,
-    );
+  const [selectedOptions, setSelectedOptions] = useState([]);
 
-    console.log(defaultOption);
-    setSelectedOption(defaultOption);
-  }, [defaultValue, options]);
+  useEffect(() => {
+    // Buscar las opciones por su valor cuando el defaultValue cambie
+    if (isMulti) {
+      setSelectedOptions(defaultValue);
+    } else {
+      const defaultOption = options.find(
+        (option) => option.value === defaultValue,
+      );
+      setSelectedOptions(defaultOption);
+    }
+  }, [defaultValue, options, isMulti]);
+
   const styles = {
     control: (base, state) => ({
       ...base,
-      minHeight: 'initial',
+      minHeight: targetHeight,
       marginTop: '4px',
       borderWidth: '1px',
-      borderColor: state.isFocused
+      borderColor: state.isFocused ? '#6366F1' : '#D1D5DB', // Cambia el color del borde cuando está enfocado o no
+      boxShadow: state.isFocused
         ? '0 0 0 0.1rem rgba(99, 102, 241, 0.25)'
-        : '#D1D5DB', // Cambia el color del borde cuando está enfocado o no
+        : 'none',
     }),
     valueContainer: (base) => ({
       ...base,
-      height: `${targetHeight - 1 - 1}px`,
       padding: '0 8px',
+      alignItems: 'center',
+      minHeight: `${targetHeight - 8}px`,
+    }),
+    multiValue: (base) => ({
+      ...base,
+      display: 'flex',
+      alignItems: 'center',
+    }),
+    multiValueLabel: (base) => ({
+      ...base,
+      padding: '2px',
     }),
     clearIndicator: (base) => ({
       ...base,
-      padding: `${(targetHeight - 20 - 1 - 1) / 2}px`,
+      padding: `${(targetHeight - 20) / 2}px`,
     }),
     dropdownIndicator: (base) => ({
       ...base,
-      padding: `${(targetHeight - 20 - 1 - 1) / 2}px`,
+      padding: `${(targetHeight - 20) / 2}px`,
     }),
   };
+
+  const handleChange = (selected) => {
+    setSelectedOptions(selected);
+    onChange(selected);
+  };
+
   return (
     <Select
       options={options}
       styles={styles}
-      onChange={onChange}
+      onChange={handleChange}
       isDisabled={isDisabled}
-      defaultValue={selectedOption}
-      key={selectedOption}
+      isMulti={isMulti} // Propiedad para permitir múltiples selecciones
+      defaultValue={selectedOptions}
+      value={selectedOptions}
+      key={
+        isMulti ? selectedOptions.map((opt) => opt.value).join(',') : 'single'
+      }
     />
   );
 };

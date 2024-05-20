@@ -1,38 +1,40 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
-import Stepper from '../../components/stepper/stepper';
-import { show, postWithData, putWithData } from '../../api';
-import { FaFileUpload, FaEdit, FaExchangeAlt } from 'react-icons/fa';
+import { getData, postData, putData } from '../../api';
+import { FaFilter, FaPlusCircle } from 'react-icons/fa';
 import ToastNotify from '../../components/toaster/toaster';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
-
+import Breadcrumbs from '../../components/Breadcrumbs';
+import Modal from './modal';
 const Users = () => {
-  const navigateTo = useNavigate();
-  const loadPermisology = useRef(false);
-
-
   const initialValues = {
     name: '',
     type: '',
   };
   const [rows, setRows] = useState([]);
-  const [originalRows, setOriginalRows] = useState([]);
-  const [displayedElements, setDisplayedElements] = useState([]);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [elementsNow, setElementsNow] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [title, setTitle] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState(initialValues);
-  const isDesktop = window.innerWidth > 768;
   const id = useRef('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [tableTopPosition, setTableTopPosition] = useState(0);
+
+  useEffect(() => {
+    const table = document.querySelector('.table-container'); // Clase de contenedor de la tabla
+    if (table) {
+      const rect = table.getBoundingClientRect();
+      setTableTopPosition(rect.top);
+    }
+  }, []);
+
   const getRows = async () => {
     try {
-      const response = await show(
+      const response = await getData(
         `assets/getCategories?page=${currentPage}&pageSize=${pageSize}&searchTerm=${searchTerm}`,
       );
 
@@ -62,21 +64,7 @@ const Users = () => {
   };
 
   const openModal = async (row, sub) => {
-    let bandera = false;
-    if (row == 'add') {      
-      setFormData(initialValues);
-      setTitle('Registrar categoría');
-      setIsModalOpen(true);
-      id.current = 0;
-    } else {     
-      setFormData({
-        ['name']: row.name,
-        ['code']: row.code,
-      });
-      id.current = row.id;
-      setTitle('Actualizar categoría');
-      setIsModalOpen(true);
-    }
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
@@ -105,7 +93,7 @@ const Users = () => {
         if (!bandera) {
           return;
         }
-        response = await postWithData('assets/category', dataToSend);
+        response = await postData('assets/category', dataToSend);
       } else {
         bandera = await verifyPermisology(
           'can_update_category',
@@ -115,10 +103,7 @@ const Users = () => {
         if (!bandera) {
           return;
         }
-        response = await putWithData(
-          'assets/category/' + id.current,
-          dataToSend,
-        );
+        response = await putData('assets/category/' + id.current, dataToSend);
       }
       ToastNotify({
         message: response.message,
@@ -141,7 +126,7 @@ const Users = () => {
       return;
     }
     const dataToSend = { ...formData };
-    const response = await putWithData('assets/category/updateStatu/' + id);
+    const response = await putData('assets/category/updateStatu/' + id);
     if (response) {
       setRows((prevRows) =>
         prevRows.map((row) =>
@@ -181,154 +166,143 @@ const Users = () => {
     setCurrentPage(newPage);
   };
 
+  const handleRowClick = (rowData, event) => {
+    setSelectedRow(rowData);
+  };
 
+  const handleClosePanel = () => {
+    setSelectedRow(false);
+  };
   return (
-    <div className='max-w-6xl mx-auto p-6'>
-      <div className='bg-white border rounded shadow'>
-        <Stepper
-          currentStep={1}
-          totalSteps={2}
-          stepTexts={['Categorías de activo', 'prueba']}
-        />
-        <div className='mb-4 overflow-x-auto  bg-gray-50 p-2'>
-          <div className='flex'>
-            <input
-              type='text'
-              placeholder='Busqueda'
-              value={searchTerm}
-              onChange={handleSearchTermChange}
-              className='mt-1 p-1 md:w-1/2 w-full border rounded-md focus:outline-none focus:border-blue-500 transition duration-300'
-            />
+    <div className='max-w-full mx-auto'>
+      <Breadcrumbs
+        items={[
+          { label: 'Inicio', route: '/' },
+          { label: 'Usuarios', route: '/users' },
+        ]}
+      />
+      <div className='max-w-full mx-auto bg-white shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400'>
+        <div className='flex justify-between px-4 py-5 sm:px-6'>
+          <div>
+            <h3 className='text-lg font-semibold leading-6 text-gray-900'>
+              Lista de Usuarios
+            </h3>
+            <p className='mt-1 max-w-2xl text-sm text-gray-500'>
+              Gestion de usuarios.
+            </p>
+          </div>
+          <div className='flex space-x-2'>
             <button
-              className='bg-gray-700 hover:bg-gray-900 text-white font-bold py-1 px-2 rounded ml-auto transition duration-300 text-sm '
-              onClick={() => openModal('add')}
+              className='bg-blue-500 hover:bg-blue-700 text-sm text-white font-bold py-1 px-3 rounded h-10'
+              onClick={openModal}
             >
-              Nuevo
+              <FaPlusCircle />
+            </button>
+            {/* <button className="bg-green-500 hover:bg-green-700 text-sm text-white font-bold py-1 px-3 rounded h-10">
+            <FaRegEdit />
+          </button> */}
+            <button className='bg-gray-500 hover:bg-gray-700 text-sm text-white font-bold py-1 px-3 rounded h-10'>
+              <FaFilter />
             </button>
           </div>
-          <div class="relative flex flex-col text-gray-700 bg-white shadow-md w-full rounded-xl bg-clip-border mt-2">
-  <nav class="flex flex-col gap-1 p-2 font-sans text-base font-normal text-blue-gray-700">
-    <div class="flex items-center w-full p-2 leading-tight transition-all rounded-lg outline-none text-start hover:bg-blue-gray-50 hover:bg-opacity-80 hover:text-blue-gray-900 focus:bg-blue-gray-50 focus:bg-opacity-80 focus:text-blue-gray-900 active:bg-blue-gray-50 active:bg-opacity-80 active:text-blue-gray-900 md:flex-row">
-      <div class="grid mr-4 place-items-center">
-        <img alt="candice" src="https://docs.material-tailwind.com/img/face-1.jpg" class="relative inline-block h-12 w-12 !rounded-full object-cover object-center" />
-      </div>
-      <div class="flex-1 md:flex md:items-center">
-        <div class="flex-1 mb-2 md:mb-0 md:mr-2">
-          <h6 class="block font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-blue-gray-900">
-            Tania Andrew
-          </h6>
-          <p class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">
-          ing.ivanrojas@gmail.com
-        </p>
         </div>
-        
-        <div class="flex-1 mb-2 md:mb-0 md:mr-2">
-          <h6 class="block font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-blue-gray-900">
-            18229563
-          </h6>
-        </div>
-        
-        <div class="flex-1 mb-2 md:mb-0">
-          <h6 class="block font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-blue-gray-900">
-            04121809294
-          </h6>
-        </div>
-      </div>
-    </div>
-  </nav>
-</div>
-<div class="relative flex flex-col text-gray-700 bg-white shadow-md w-full rounded-xl bg-clip-border mt-2">
-  <nav class="flex flex-col gap-1 p-2 font-sans text-base font-normal text-blue-gray-700">
-    <div class="flex items-center w-full p-2 leading-tight transition-all rounded-lg outline-none text-start hover:bg-blue-gray-50 hover:bg-opacity-80 hover:text-blue-gray-900 focus:bg-blue-gray-50 focus:bg-opacity-80 focus:text-blue-gray-900 active:bg-blue-gray-50 active:bg-opacity-80 active:text-blue-gray-900 md:flex-row">
-      <div class="grid mr-4 place-items-center">
-        <img alt="candice" src="https://docs.material-tailwind.com/img/face-1.jpg" class="relative inline-block h-12 w-12 !rounded-full object-cover object-center" />
-      </div>
-      <div class="flex-1 md:flex md:items-center">
-        <div class="flex-1 mb-2 md:mb-0 md:mr-2">
-          <h6 class="block font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-blue-gray-900">
-           Ivan de Jesus Rojas Veliz
-          </h6>
-          <p class="block font-sans text-sm antialiased font-normal leading-normal text-gray-700">
-          ing.ivanrojas@gmail.com
-        </p>
-        </div>
-        
-        <div class="flex-1 mb-2 md:mb-0 md:mr-2">
-          <h6 class="block font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-blue-gray-900">
-            18229563
-          </h6>
-        </div>
-        
-        <div class="flex-1 mb-2 md:mb-0">
-          <h6 class="block font-sans text-base antialiased font-semibold leading-relaxed tracking-normal text-blue-gray-900">
-            04121809294
-          </h6>
+        <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
+          <table className='w-full divide-y divide-gray-200 mb-4 table-container'>
+            <thead className='bg-gray-50'>
+              <tr>
+                <th className='px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                  DNI
+                </th>
+                <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                  Nombre completo
+                </th>
+                <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                  Correo electrónico
+                </th>
+                <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                  Teléfono
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                onMouseEnter={(e) =>
+                  (e.target.parentNode.style.backgroundColor = '#F3F4F6')
+                }
+                onMouseLeave={(e) =>
+                  (e.target.parentNode.style.backgroundColor = 'inherit')
+                }
+                onClick={(e) =>
+                  handleRowClick(
+                    {
+                      dni: '18.229.563',
+                      fullName: 'Ivan de Jesus Rojas Veliz',
+                      email: 'ing.ivanrojas@gmail.com',
+                      phone: '+58 4121809294',
+                    },
+                    e,
+                  )
+                }
+                onDoubleClick={handleClosePanel}
+                style={{ cursor: 'pointer' }}
+              >
+                <td className='px-3'>18.229.563</td>
+                <td className='max-w-xs truncate px-2'>
+                  Ivan de Jesus Rojas Veliz
+                </td>
+                <td className='max-w-xs truncate px-2'>
+                  ing.ivanrojas@gmail.com
+                </td>
+                <td className='max-w-xs truncate px-2'>+58 4121809294</td>
+              </tr>
+            </tbody>
+            <tbody className='bg-white divide-y divide-gray-200'>
+              {/* Aquí irían tus filas de la tabla */}
+            </tbody>
+          </table>
         </div>
       </div>
-      
-    </div>
-  </nav>
-</div>
-
-
-
-          {renderPagination()}
-        </div>
-      </div>
-      {isModalOpen && (
-        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
-          <div className='bg-white p-6 rounded shadow-lg w-1/2'>
-            <Stepper currentStep={1} totalSteps={1} stepTexts={[title]} />
-            {/* Formulario para el nuevo elemento */}
-            <form className='w-full max-w-full p-6 border'>
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-6'>
-                {/* Columna 1 */}
-                <div>
-                  <label className='block text-sm font-medium text-gray-700'>
-                    Código
-                  </label>
-                  <input
-                    type='text'
-                    name='code'
-                    id='code'
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    value={formData.code}
-                    onChange={handleChange}
-                  />
-                </div>
-                <div>
-                  <label className='block text-sm font-medium text-gray-700'>
-                    Categoría
-                  </label>
-                  <input
-                    type='text'
-                    name='name'
-                    id='name'
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    value={formData.name}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-              <div className='flex justify-between mt-10'>
-                <button
-                  className='py-2 px-4 text-sm bg-gray-500 text-white cursor-pointer rounded'
-                  onClick={closeModal}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type='button'
-                  className='bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-                  onClick={handleSubmit}
-                >
-                  Guardar
-                </button>
-              </div>
-            </form>
-          </div>
+      {/* Modal */}
+      {selectedRow && (
+        <div
+          className='fixed bg-white border-2 border-gray-300 overflow-y-auto p-4 shadow-lg'
+          style={{ top: `${tableTopPosition}px`, right: 0, height: '100vh' }}
+        >
+          <button
+            className='absolute top-2 right-2 text-gray-500 hover:text-gray-700'
+            onClick={handleClosePanel}
+          >
+            <svg
+              className='w-6 h-6'
+              fill='none'
+              viewBox='0 0 24 24'
+              stroke='currentColor'
+            >
+              <path
+                strokeLinecap='round'
+                strokeLinejoin='round'
+                strokeWidth={2}
+                d='M6 18L18 6M6 6l12 12'
+              />
+            </svg>
+          </button>
+          <div className='border-2 border-gray-200 w-full mt-6'></div>
+          <h2>Detalles del Registro</h2>
+          <p>
+            <strong>DNI:</strong> {selectedRow.dni}
+          </p>
+          <p>
+            <strong>Nombre completo:</strong> {selectedRow.fullName}
+          </p>
+          <p>
+            <strong>Correo electrónico:</strong> {selectedRow.email}
+          </p>
+          <p>
+            <strong>Teléfono:</strong> {selectedRow.phone}
+          </p>
         </div>
       )}
+      <Modal isOpen={isModalOpen} onClose={closeModal} />
     </div>
   );
 };
