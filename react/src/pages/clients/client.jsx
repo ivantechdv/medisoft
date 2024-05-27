@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
-import { FaUser } from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
+import {
+  FaUser,
+  FaRegEnvelope,
+  FaMapMarkerAlt,
+  FaPhoneSquareAlt,
+} from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
 import { getData, postData, putData, getStorage } from '../../api';
 import ToastNotify from '../../components/toaster/toaster';
 import Spinner from '../../components/Spinner/Spinner';
@@ -39,6 +44,9 @@ const Clients = () => {
     name: '',
     dni: '',
     photo: '',
+    address: '',
+    email: '',
+    phone: '',
   });
 
   const getRecordById = async (id) => {
@@ -272,6 +280,32 @@ const Clients = () => {
                 {cardData.fecha}
               </label>
             </div>
+          </div>
+          <div className='w-full ml-5 flex'>
+            <label className='text-primary mt-4 mb-4'>Datos de contacto</label>
+          </div>
+
+          <div className='w-full ml-5 flex'>
+            <label className='flex'>
+              <FaMapMarkerAlt className=' mr-4 mb-4' />
+            </label>
+            <label className='flex text-xs'>
+              {cardData.address || 'Dirección'}
+            </label>
+          </div>
+          <div className='w-full ml-5 flex'>
+            <label className='flex'>
+              <FaRegEnvelope className=' mr-4 mb-4' />
+            </label>
+            <label className='flex text-xs'>{cardData.email || 'Email'}</label>
+          </div>
+          <div className='w-full ml-5 flex'>
+            <label className='flex'>
+              <FaPhoneSquareAlt className=' mr-4' />
+            </label>
+            <label className='flex text-xs'>
+              {cardData.phone || 'Teléfono'}
+            </label>
           </div>
         </div>
         <div className='flex-1'>

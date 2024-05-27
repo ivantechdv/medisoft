@@ -3,7 +3,9 @@ const sequelize = require("../../database/sequelize");
 const Client = require("../../models/clients/clients.model");
 const ClientPatology = require("../../models/clients_patologies/clients_patologies.model");
 const CodPost = require("../../models/cod_posts/cod_posts.model");
+const Country = require("../../models/countries/countries.model");
 const Patology = require("../../models/patologies/patologies.model");
+const State = require("../../models/states/states.model");
 const Methods = require("../methods/methods.controller");
 
 CTRL.create = async (req, res, next) => {
@@ -29,9 +31,24 @@ CTRL.get = async (req, res, next) => {
     const include = [
       {
         model: CodPost,
+        include: [
+          {
+            model: State,
+            include: [
+              {
+                model: Country,
+              },
+            ],
+          },
+        ],
       },
       {
         model: ClientPatology,
+        include: [
+          {
+            model: Patology,
+          },
+        ],
       },
     ];
     Methods.get(req, res, next, Client, condition, include);

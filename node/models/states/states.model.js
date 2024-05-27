@@ -1,19 +1,15 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../database/sequelize");
-const State = require("../states/states.model");
+const Country = require("../countries/countries.model");
 
-const CodPost = sequelize.define("cod_posts", {
+const State = sequelize.define("states", {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
-  state_id: {
+  country_id: {
     type: DataTypes.INTEGER,
-    allowNull: true,
-  },
-  code: {
-    type: DataTypes.STRING(20),
     allowNull: true,
   },
   name: {
@@ -31,6 +27,6 @@ const CodPost = sequelize.define("cod_posts", {
     defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
   },
 });
-CodPost.belongsTo(State, { foreignKey: "state_id" });
-State.hasMany(CodPost, { foreignKey: "state_id" });
-module.exports = CodPost;
+State.belongsTo(Country, { foreignKey: "country_id" });
+Country.hasMany(State, { foreignKey: "country_id" });
+module.exports = State;
