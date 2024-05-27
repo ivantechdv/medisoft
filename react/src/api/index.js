@@ -1,109 +1,7 @@
 import axios from './axios';
-const apiUrl =
-  import.meta.env.VITE_REACT_APP_API_URL || 'http://localhost:3105/api/v1/';
-const apiProxiURL =
-  import.meta.env.VITE_PROXI_API_URL || 'http://localhost:3100/api/v1';
-//const apiCakeURL = 'https://dev.unixfyone.com/admin/api/user/login/login';
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api/v1/';
+const publicUrl = import.meta.env.VITE_API_PUBLIC || 'http://localhost:5001/';
 import Cookies from 'js-cookie';
-
-export const postAttachment = async (attachmentFile, container) => {
-  try {
-    const formData = new FormData();
-    formData.append('file', attachmentFile);
-    formData.append('container', container);
-    const res = await axios.post(apiProxiURL + '/storage/create', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    if (res.status == 200) {
-      return res;
-    } else {
-      return res.status;
-    }
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-export const deleteAttachment = async (filename, container) => {
-  try {
-    const res = await axios.get(
-      apiProxiURL + '/storage/delete/' + container + '/' + filename,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      },
-    );
-
-    return res.status;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-
-export const cakeLogin = async (data) => {
-  try {
-    const res = await axios.post(apiUrl + 'users/login', data);
-    return res.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-export const verifyEmail = async (data) => {
-  try {
-    const res = await axios.post(apiUrl + 'users/verifyEmail', data);
-    return res.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-
-export const verifyPassword = async (data) => {
-  const token = Cookies.get('email');
-  console.log(token);
-  try {
-    const res = await axios.post(apiUrl + 'users/verifyPassword', data);
-    return res.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-
-export const validatePassword = async (data) => {
-  try {
-    const res = await axios.post(apiUrl + 'users/validatePassword', data);
-    return res.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-
-export const verifyToken = async (data) => {
-  try {
-    const res = await axios.post(apiUrl + 'users/verifyToken', data);
-    return res.data;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
-
-export const cakeLogout = async () => {
-  try {
-    const res = await axios.get(apiUrl + 'users/logout');
-    return res;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-};
 
 export const select = async (endpoint) => {
   const fetchData = async () => {
@@ -128,7 +26,7 @@ export const select = async (endpoint) => {
   }
 };
 
-export const show = async (endpoint) => {
+export const getData = async (endpoint) => {
   const token = Cookies.get('token');
   const fetchData = async () => {
     try {
@@ -146,14 +44,10 @@ export const show = async (endpoint) => {
   return data;
 };
 
-export const postWithData = async (endpoint, data) => {
-  const token = Cookies.get('token');
+export const postData = async (endpoint, data) => {
+  //const token = Cookies.get('token');
   try {
-    const res = await axios.post(apiUrl + endpoint, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await axios.post(apiUrl + endpoint, data);
     return res.data;
   } catch (error) {
     console.error(error);
@@ -161,7 +55,7 @@ export const postWithData = async (endpoint, data) => {
   }
 };
 
-export const putWithData = async (endpoint, data) => {
+export const putData = async (endpoint, data) => {
   const token = Cookies.get('token');
   try {
     const res = await axios.put(apiUrl + endpoint, data, {
@@ -186,19 +80,30 @@ export const deleteById = async (endpoint, id) => {
   }
 };
 
-// almacen
-export const warehouseGetAllMaterials = async () => {
+export const postStorage = async (file, container) => {
   try {
-    const res = await axios.get(apiProxiURL + '/warehouse/', {
-      headers: {
-        'Content-Type': 'multipart/form-data',
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await axios.post(
+      apiUrl + 'storage?container=' + container,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
       },
-    });
-    if (res.status == 200) {
-      return res.data;
-    } else {
-      return 'err 500';
-    }
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const getStorage = (url) => {
+  try {
+    const file = publicUrl + url;
+    return file;
   } catch (error) {
     console.error(error);
     throw error;
