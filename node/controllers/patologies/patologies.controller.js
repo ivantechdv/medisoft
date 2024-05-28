@@ -9,7 +9,7 @@ CTRL.create = async (req, res, next) => {
     Methods.create(req, res, next, Patology);
   } catch (error) {
     console.log("error", error);
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -18,7 +18,7 @@ CTRL.get = async (req, res, next) => {
     const condition = {};
     Methods.get(req, res, next, Patology, condition);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 CTRL.getAll = async (req, res, next) => {
@@ -30,7 +30,7 @@ CTRL.getAll = async (req, res, next) => {
     const include = null;
     Methods.getAll(req, res, next, Patology, condition, include);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 CTRL.getById = async (req, res, next) => {
@@ -38,7 +38,7 @@ CTRL.getById = async (req, res, next) => {
     const condition = {};
     Methods.getById(req, res, next, Patology, condition);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 

@@ -10,19 +10,18 @@ const Methods = require("../methods/methods.controller");
 
 CTRL.create = async (req, res, next) => {
   try {
-    Methods.create(req, res, next, Client);
+    await Methods.create(req, res, next, Client);
   } catch (error) {
-    console.log("error", error);
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 
 CTRL.update = async (req, res, next) => {
   try {
-    Methods.update(req, res, next, Client);
+    await Methods.update(req, res, next, Client);
   } catch (error) {
     console.log("error", error);
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 CTRL.get = async (req, res, next) => {
@@ -51,9 +50,9 @@ CTRL.get = async (req, res, next) => {
         ],
       },
     ];
-    Methods.get(req, res, next, Client, condition, include);
+    await Methods.get(req, res, next, Client, condition, include);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 CTRL.getById = async (req, res, next) => {
@@ -72,9 +71,9 @@ CTRL.getById = async (req, res, next) => {
         ],
       },
     ];
-    Methods.getById(req, res, next, Client, condition, include);
+    await Methods.getById(req, res, next, Client, condition, include);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 
