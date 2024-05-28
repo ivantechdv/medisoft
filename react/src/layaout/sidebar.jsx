@@ -5,7 +5,13 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
 import icono from '/icono.png';
 
-const SidebarItem = ({ item, index, expanded, toggleMenu }) => {
+const SidebarItem = ({
+  item,
+  index,
+  expanded,
+  toggleMenu,
+  isSidebarExpanded,
+}) => {
   const isActive = useLocation().pathname === item.to;
 
   return (
@@ -19,7 +25,7 @@ const SidebarItem = ({ item, index, expanded, toggleMenu }) => {
             onClick={() => toggleMenu(index)}
           >
             <span className='mr-1'>{item.icon}</span>
-            <span>{item.label}</span>
+            {isSidebarExpanded && <span>{item.label}</span>}
             <span className='ml-auto'>
               {expanded ? (
                 <ChevronUpIcon className='w-4 h-4' />
@@ -37,7 +43,7 @@ const SidebarItem = ({ item, index, expanded, toggleMenu }) => {
                   className='font-medium text-sm items-center rounded-lg text-white flex py-1 transition-all duration-300 hover:bg-gray-200 group cursor-pointer'
                 >
                   <span className='mr-2'>{sublink.icon}</span>
-                  <span>{sublink.label}</span>
+                  {isSidebarExpanded && <span>{sublink.label}</span>}
                 </NavLink>
               ))}
             </div>
@@ -51,14 +57,14 @@ const SidebarItem = ({ item, index, expanded, toggleMenu }) => {
           }`}
         >
           <span className='mr-1'>{item.icon}</span>
-          <span>{item.label}</span>
+          {isSidebarExpanded && <span>{item.label}</span>}
         </NavLink>
       )}
     </div>
   );
 };
 
-const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
+const Sidebar = ({ isSidebarOpen, isSidebarExpanded }) => {
   const [expandedMenus, setExpandedMenus] = useState({});
   const location = useLocation();
   const navigationItems = Navigation();
@@ -89,14 +95,19 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
 
   return (
     <aside
-      className={`bg-sidebar text-sidebarText h-screen w-48 pt-2 ${
-        isSidebarOpen ? 'block' : 'hidden'
-      } lg:block`}
+      className={`bg-sidebar text-sidebarText h-screen pt-2 ${
+        isSidebarExpanded ? 'w-48' : 'w-16'
+      } ${isSidebarOpen ? 'block' : 'hidden'} lg:block`}
     >
       <div className='flex flex-col pt-1 overflow-y-auto'>
         <div className='flex justify-center items-center mb-2'>
           <div className='bg-content rounded-full p-2'>
-            <img src={icono} className='w-24 h-24 rounded-full' />
+            <img
+              src={icono}
+              className={`rounded-full ${
+                isSidebarExpanded ? 'w-24 h-24' : 'w-10 h-10'
+              }`}
+            />
           </div>
         </div>
         <div className='border-2 border-gray-100 w-full mb-4 mt-2'></div>
@@ -107,6 +118,7 @@ const Sidebar = ({ isSidebarOpen, toggleSidebar }) => {
             index={index}
             expanded={expandedMenus[index]}
             toggleMenu={toggleMenu}
+            isSidebarExpanded={isSidebarExpanded}
           />
         ))}
       </div>

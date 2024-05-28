@@ -57,7 +57,7 @@ CTRL.create = async (req, res, next) => {
     }
   } catch (error) {
     console.log("error", error);
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -66,7 +66,7 @@ CTRL.get = async (req, res, next) => {
     const condition = {};
     Methods.get(req, res, next, ClientPatology, condition);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 CTRL.getAll = async (req, res, next) => {
@@ -77,7 +77,7 @@ CTRL.getAll = async (req, res, next) => {
     };
     Methods.getAll(req, res, next, ClientPatology, condition, include);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 CTRL.getById = async (req, res, next) => {
@@ -85,7 +85,7 @@ CTRL.getById = async (req, res, next) => {
     const condition = {};
     Methods.getById(req, res, next, ClientPatology, condition);
   } catch (error) {
-    next(error);
+    res.status(500).json({ error: error.message });
   }
 };
 

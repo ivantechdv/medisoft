@@ -62,6 +62,7 @@ CTRL.get = async (req, res, next, Model, where, include) => {
       where: where,
       limit: parsedPageSize,
       offset,
+      include: include,
     });
 
     const totalPages = Math.ceil(count / parsedPageSize);
