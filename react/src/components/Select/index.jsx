@@ -8,18 +8,26 @@ const CustomSelect = ({
   isDisabled = false,
   targetHeight = 30,
   isMulti = false, // Nueva prop para manejar múltiples selecciones
+  onHandleLoadingSelect = null,
 }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
-
   useEffect(() => {
-    // Buscar las opciones por su valor cuando el defaultValue cambie
-    if (isMulti) {
-      setSelectedOptions(defaultValue);
-    } else {
-      const defaultOption = options.find(
-        (option) => option.value === defaultValue,
-      );
-      setSelectedOptions(defaultOption);
+    try {
+      // Buscar las opciones por su valor cuando el defaultValue cambie
+      if (isMulti) {
+        setSelectedOptions(defaultValue);
+      } else {
+        const defaultOption = options.find(
+          (option) => option.value === defaultValue,
+        );
+        setSelectedOptions(defaultOption);
+      }
+    } catch (error) {
+      console.log('error', error);
+    } finally {
+      if (onHandleLoadingSelect != null) {
+        onHandleLoadingSelect();
+      }
     }
   }, [defaultValue, options, isMulti]);
 

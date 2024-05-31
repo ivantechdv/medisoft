@@ -7,7 +7,6 @@ import {
   FaPhoneSquareAlt,
 } from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
 import { getData, postData, putData, getStorage } from '../../api';
-import ToastNotify from '../../components/toaster/toaster';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -18,13 +17,17 @@ import Specific from './tabs/specific';
 const Clients = () => {
   const [formData, setFormData] = useState({
     dni: '',
-    name: '',
+    first_name: '',
+    last_name: '',
+    full_name: '',
     phone: '',
     email: '',
     born_date: '',
     cod_post_id: 0,
     address: '',
     photo: '',
+    dniFront: '',
+    dniBack: '',
     recommendations: '',
   });
   const [pageSize, setPageSize] = useState(10);
@@ -41,12 +44,14 @@ const Clients = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [action, setAction] = useState('Guardar');
   const [cardData, setCardData] = useState({
-    name: '',
+    full_name: '',
     dni: '',
     photo: '',
     address: '',
     email: '',
     phone: '',
+    id: '',
+    code_phone: '',
   });
 
   const getRecordById = async (id) => {
@@ -91,24 +96,6 @@ const Clients = () => {
     }
   }, [id]);
 
-  // const getRows = async () => {
-  //   try {
-  //     const response = await getData(
-  //       `assets/getCategories?page=${currentPage}&pageSize=${pageSize}&searchTerm=${searchTerm}`,
-  //     );
-  //     const { data, meta } = response;
-  //     setRows(data);
-  //     setOriginalRows(data);
-  //     setTotalPages(meta.totalPages);
-  //   } catch (error) {
-  //     console.error('Error ', error);
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   getRows();
-  // }, [currentPage, pageSize, searchTerm]);
-
   const handleSort = (key) => {
     const direction =
       sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc';
@@ -126,74 +113,6 @@ const Clients = () => {
 
   const closeModal = () => {
     setIsModalOpen(false);
-  };
-
-  const handleChange = (event) => {
-    const { id, value, type, checked } = event.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [id]: value,
-    }));
-  };
-
-  const handleSubmit = async () => {
-    const dataToSend = { ...formData };
-    try {
-      let response = '';
-      let bandera = false;
-      if (id.current === 0) {
-        bandera = await verifyPermisology(
-          'can_create_category',
-          user,
-          'No tiene permiso de crear categoría',
-        );
-        if (!bandera) {
-          return;
-        }
-        response = await postData('assets/category', dataToSend);
-      } else {
-        bandera = await verifyPermisology(
-          'can_update_category',
-          user,
-          'No tiene permiso de actualizar categoría',
-        );
-        if (!bandera) {
-          return;
-        }
-        response = await putData('assets/category/' + id.current, dataToSend);
-      }
-      ToastNotify({
-        message: response.message,
-        position: 'top-center',
-      });
-      getRows();
-      closeModal();
-    } catch (error) {
-      console.error('Error a registrar:', error);
-    }
-  };
-
-  const handleChangeStatu = async (id, origin) => {
-    const bandera = await verifyPermisology(
-      'can_change_statu_category',
-      user,
-      'No tiene permiso de cambiar el estatus',
-    );
-    if (!bandera) {
-      return;
-    }
-    const response = await putData('assets/category/updateStatu/' + id);
-    if (response) {
-      setRows((prevRows) =>
-        prevRows.map((row) =>
-          row.id === id ? { ...row, statu: !row.statu } : row,
-        ),
-      );
-      ToastNotify({
-        message: response.message,
-        position: 'top-right',
-      });
-    }
   };
 
   const renderPagination = () => {
@@ -231,6 +150,7 @@ const Clients = () => {
   };
 
   const handleChangeCard = (id, value) => {
+    console.log('id => ', id);
     setCardData((prevCardData) => ({
       ...prevCardData,
       [id]: value,
@@ -244,7 +164,7 @@ const Clients = () => {
           { label: 'Clientes', route: '/Clients' },
           !isNewRecord
             ? {
-                label: cardData.name ? cardData.name : 'Nuevo',
+                label: cardData.full_name ? cardData.full_name : 'Nuevo',
                 route: '',
               }
             : { label: '', route: `/Client/${id}` },
@@ -271,7 +191,7 @@ const Clients = () => {
             </div>
             <div className='mt-8 ml-8'>
               <label className='font-semibold text-md block uppercase'>
-                {cardData.name}
+                {cardData.full_name}
               </label>
               <label className='font-light text-sm block mt-2'>
                 {cardData.dni}
@@ -279,6 +199,16 @@ const Clients = () => {
               <label className='font-light text-sm block '>
                 {cardData.fecha}
               </label>
+              {cardData.id && ( // Verifica si cardData.id existe
+                <div className='flex items-center'>
+                  <label className='font-light text-sm block'>ID CLIENTE</label>
+                  {'  '}
+                  <div className='ml-4 w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-2'>
+                    <span className='text-lg font-bold'>{cardData.id}</span>{' '}
+                    {/* Aplica estilos para hacerlo negrita y grande */}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           <div className='w-full ml-5 flex'>
@@ -304,6 +234,7 @@ const Clients = () => {
               <FaPhoneSquareAlt className=' mr-4' />
             </label>
             <label className='flex text-xs'>
+              {cardData.code_phone + ' '}
               {cardData.phone || 'Teléfono'}
             </label>
           </div>
@@ -359,7 +290,11 @@ const Clients = () => {
                   />
                 )}
                 {activeTab === 'especifico' && (
-                  <Specific id={id} onFormData={formData} />
+                  <Specific
+                    id={id}
+                    onFormData={formData}
+                    onGetRecordById={getRecordById}
+                  />
                 )}
                 {activeTab === 'servicios' && 'Servicios'}
                 {activeTab === 'seguimientos' && 'Seguimientos'}

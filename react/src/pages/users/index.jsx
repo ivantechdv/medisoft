@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { getData, postData, putData } from '../../api';
 import { FaFilter, FaPlusCircle } from 'react-icons/fa';
-import ToastNotify from '../../components/toaster/toaster';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -105,10 +104,6 @@ const Users = () => {
         }
         response = await putData('assets/category/' + id.current, dataToSend);
       }
-      ToastNotify({
-        message: response.message,
-        position: 'top-center',
-      });
       getRows();
       closeModal();
     } catch (error) {
@@ -133,11 +128,6 @@ const Users = () => {
           row.id === id ? { ...row, statu: !row.statu } : row,
         ),
       );
-
-      ToastNotify({
-        message: response.message,
-        position: 'top-right',
-      });
     }
   };
 

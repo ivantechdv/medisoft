@@ -12,11 +12,27 @@ const Client = sequelize.define("clients", {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
-  name: {
+  first_name: {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  last_name: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  full_name: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
   photo: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
+  dniFront: {
+    type: DataTypes.STRING(200),
+    allowNull: true,
+  },
+  dniBack: {
     type: DataTypes.STRING(200),
     allowNull: true,
   },
@@ -28,8 +44,16 @@ const Client = sequelize.define("clients", {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  language_id: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   phone: {
     type: DataTypes.STRING(100),
+    allowNull: true,
+  },
+  code_phone: {
+    type: DataTypes.STRING(10),
     allowNull: true,
   },
   email: {
@@ -37,8 +61,9 @@ const Client = sequelize.define("clients", {
     allowNull: true,
   },
   start_date: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,
     allowNull: true,
+    defaultValue: sequelize.literal("CURRENT_DATE"),
   },
   final_date: {
     type: DataTypes.DATE,
@@ -53,8 +78,9 @@ const Client = sequelize.define("clients", {
     allowNull: true,
   },
   born_date: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,
     allowNull: true,
+    defaultValue: sequelize.literal("CURRENT_DATE"),
   },
   is_active: {
     type: DataTypes.BOOLEAN,

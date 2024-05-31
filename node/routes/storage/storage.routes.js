@@ -14,4 +14,5 @@ router.post("/", (req, res, next) => {
   });
 });
 
+router.delete("/delete/:container/:filename", storageController.deleteFile);
 module.exports = router;

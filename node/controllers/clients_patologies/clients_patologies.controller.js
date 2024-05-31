@@ -53,8 +53,9 @@ CTRL.create = async (req, res, next) => {
         patology_id,
       }));
       req.body = dataToInsert;
-      Methods.createBulk(req, res, next, ClientPatology);
+      await Methods.createBulk(req, res, next, ClientPatology);
     }
+    res.status(200).json(true);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ error: error.message });

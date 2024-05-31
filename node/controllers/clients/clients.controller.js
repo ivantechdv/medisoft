@@ -55,12 +55,55 @@ CTRL.get = async (req, res, next) => {
     res.status(500).json({ error: error.message });
   }
 };
+CTRL.getAll = async (req, res, next) => {
+  try {
+    const condition = {};
+
+    const include = [
+      {
+        model: CodPost,
+        include: [
+          {
+            model: State,
+            include: [
+              {
+                model: Country,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: ClientPatology,
+        include: [
+          {
+            model: Patology,
+          },
+        ],
+      },
+    ];
+
+    await Methods.getAll(req, res, next, Client, condition, include);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 CTRL.getById = async (req, res, next) => {
   try {
     const condition = {};
     const include = [
       {
         model: CodPost,
+        include: [
+          {
+            model: State,
+            include: [
+              {
+                model: Country,
+              },
+            ],
+          },
+        ],
       },
       {
         model: ClientPatology,
