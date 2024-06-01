@@ -126,12 +126,19 @@ CTRL.getAll = async (
       where: condition,
     };
 
-    if (include && Object.keys(include).length > 0) {
-      queryOptions.include = include;
+    // if (include && Object.keys(include).length > 0) {
+    //   console.log("**********");
+    //   console.log(include);
+    //   queryOptions.include = include;
+    // }
+    let optionInclude = [];
+    if (include != null) {
+      optionInclude = include;
     }
 
     const result = await Model.findAll({
-      queryOptions,
+      where: condition,
+      include: optionInclude,
       order: order, // Añadir el parámetro 'order' a la consulta
     });
 

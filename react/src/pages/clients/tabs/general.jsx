@@ -199,7 +199,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       loadingLanguage == false &&
       loadingSelect == false
     ) {
-      setTimeout(() => setLoading(false), 1000);
+      setTimeout(() => setLoading(false), 1600);
     }
   }, [loadingForm, loadingFetch, loadingLanguage, loadingSelect]);
 
@@ -285,10 +285,12 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const handleSubmit = async () => {
     try {
       setLoadingForm(true);
+      setLoading(true);
       // Validar campos requeridos antes de enviar el formulario
       const isValid = validateRequiredFields();
 
       if (!isValid) {
+        setLoadingForm(false);
         // Detener el envío del formulario si algún campo requerido está vacío
         return;
       }

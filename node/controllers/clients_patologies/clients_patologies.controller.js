@@ -18,7 +18,7 @@ CTRL.create = async (req, res, next) => {
     }
 
     const condition = { client_id: clientId };
-    const include = {};
+    const include = [];
 
     const existingPatologies = await Methods.getAll(
       req,
