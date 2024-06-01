@@ -37,8 +37,24 @@ const uploadFile = (req, res) => {
     url: `${req.protocol}://${req.get("host")}/${filePath}`,
   });
 };
+// Controlador para eliminar archivos
+const deleteFile = (req, res) => {
+  const { filename, container } = req.params;
+  const folder = path.join("public", container || "uploads");
+  const filePath = path.join(folder, filename);
+
+  fs.unlink(filePath, (err) => {
+    if (err) {
+      return res
+        .status(500)
+        .json({ error: "File not found or error deleting file" });
+    }
+    res.status(200).json({ message: "File deleted successfully" });
+  });
+};
 
 module.exports = {
   upload,
   uploadFile,
+  deleteFile,
 };

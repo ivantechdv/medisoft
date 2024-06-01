@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   getData,
   postData,
@@ -10,25 +10,40 @@ import { useNavigate } from 'react-router-dom';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
 import Select from '../../../components/Select';
-
-const Form = ({ id, onFormData }) => {
-  const [formData, setFormData] = useState([]);
+import Spinner from '../../../components/Spinner/Spinner';
+import ToastNotify from '../../../components/toast/toast';
+const Form = ({ id, onFormData, onGetRecordById }) => {
+  const [formData, setFormData] = useState({
+    patology_id: '',
+    recommendations: '',
+  });
   const [images, setImages] = useState([]);
   const [patologies, setPatologies] = useState([]);
   const [selectedPatologies, setSelectedPatologies] = useState([]);
   const [recommendations, setRecommendations] = useState('');
+  const [loadingCount, setLoadingCount] = useState(2);
+  const [isLoading, setIsLoading] = useState(false);
+  let loading = loadingCount > 0;
+  const quillRef = useRef(null);
   const navigateTo = useNavigate();
   useEffect(() => {
     const fetchSelect = async () => {
-      const patologies = await getData('patologies/all');
+      try {
+        const order = 'name-asc';
+        const patologies = await getData(`patologies/all?order=${order}`);
 
-      if (patologies) {
-        const options = patologies.map((item) => ({
-          value: item.id,
-          label: item.name,
-        }));
+        if (patologies) {
+          const options = patologies.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }));
 
-        setPatologies(options);
+          setPatologies(options);
+        }
+      } catch (error) {
+        console.log('ERRR', error);
+      } finally {
+        setLoadingCount((prev) => prev - 1);
       }
     };
 
@@ -40,11 +55,22 @@ const Form = ({ id, onFormData }) => {
     console.log('id', id);
     if (onFormData) {
       setRecommendations(onFormData.recommendations);
-      const clientPatologies = onFormData.clients_patologies.map((cp) => ({
-        value: cp.patology_id,
-        label: cp.patology.name, // Asumiendo que `patology` es el objeto relacionado
-      }));
+      const clientPatologies = onFormData.clients_patologies
+        .map((cp) => ({
+          value: cp.patology_id,
+          label: cp.patology.name, // Asumiendo que `patology` es el objeto relacionado
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label)); // Ordenar por nombre;
       setSelectedPatologies(clientPatologies);
+
+      const isQuillEmpty = isQuillContentEmpty(onFormData.recommendations);
+      let recommendations = '';
+      if (isQuillEmpty) {
+        recommendations = '';
+      } else {
+        recommendations = onFormData.recommendations;
+      }
+      setTimeout(() => setLoadingCount((prev) => prev - 1), 500);
     }
   }, [onFormData]);
 
@@ -60,30 +86,68 @@ const Form = ({ id, onFormData }) => {
     setSelectedPatologies(selected);
   };
 
+  const isQuillContentEmpty = (content) => {
+    // Eliminar todas las etiquetas HTML del contenido y comprobar si el resultado está vacío
+    const strippedContent = content.replace(/<\/?[^>]+(>|$)/g, '');
+    return strippedContent.trim() === '';
+  };
   const handleQuill = (value) => {
     setRecommendations(value);
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const clientsPatologiesData = selectedPatologies.map((patology) => ({
-      patology_id: patology.value, // Suponiendo que el valor es el id de la patología
-      client_id: id,
-    }));
-    let response = false;
-    response = await postData('clients-patologies', clientsPatologiesData);
-    console.log('response', response);
+    if (selectedPatologies.length === 0) {
+      ToastNotify({
+        message: 'Debe seleccionar al menos una patología.',
+        position: 'top-left',
+        type: 'error',
+      });
+      return; // Detener el envío del formulario
+    }
 
-    const dataToSend = {
-      recommendations: recommendations,
-    };
-    response = await putData('clients/' + id, dataToSend);
-    if (response) {
-      navigateTo('/client/' + response.id);
+    // Validar si el campo de recomendaciones está vacío
+    if (isQuillContentEmpty(recommendations)) {
+      ToastNotify({
+        message: 'El campo de recomendaciones no puede estar vacío.',
+        position: 'top-left',
+        type: 'error',
+      });
+      return; // Detener el envío del formulario
+    }
+    setIsLoading(true);
+    try {
+      let message = '';
+      const clientsPatologiesData = selectedPatologies.map((patology) => ({
+        patology_id: patology.value, // Suponiendo que el valor es el id de la patología
+        client_id: id,
+      }));
+      let response = false;
+      response = await postData('clients-patologies', clientsPatologiesData);
+      console.log('response', response);
+
+      const dataToSend = {
+        recommendations: recommendations,
+      };
+      response = await putData('clients/' + id, dataToSend);
+      if (response) {
+        onGetRecordById(id);
+        message = 'Datos especificos registrado con exito';
+        ToastNotify({
+          message: message,
+          position: 'top-left',
+          type: 'success',
+        });
+      }
+    } catch (error) {
+      console.log('error =>', error);
+    } finally {
+      setIsLoading(false);
     }
   };
   return (
     <form className=''>
+      {(loading || isLoading) && <Spinner />}
       <div className='relative rounded min-h-[calc(100vh-235px)]'>
         <div className='col-span-2 md:grid md:grid-cols-2 gap-2'>
           <div className='col-span-2'>
@@ -94,8 +158,8 @@ const Form = ({ id, onFormData }) => {
               Patologías
             </label>
             <Select
-              id='provider_category_id'
-              name='provider_category_id'
+              id='patology_id'
+              name='patology_id'
               options={patologies}
               onChange={handleSelectChange}
               defaultValue={selectedPatologies}
@@ -110,6 +174,7 @@ const Form = ({ id, onFormData }) => {
               Recomendaciones
             </label>
             <ReactQuill
+              ref={quillRef}
               value={recommendations}
               onChange={handleQuill}
               style={{ minHeight: '200px', height: '200px' }}

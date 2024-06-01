@@ -178,13 +178,23 @@ function routes() {
     trafic,
     require("./routes/patologies/patologies.routes")
   );
+  app.use(
+    "/api/v1/languages",
+    trafic,
+    require("./routes/languages/languages.routes")
+  );
 }
 app.use(
   "/api/v1/clients-patologies",
   trafic,
   require("./routes/clients_patologies/clients_patologies.routes")
 );
-
+app.use("/api/v1/genders", trafic, require("./routes/genders/genders.routes"));
+app.use(
+  "/api/v1/countries",
+  trafic,
+  require("./routes/countries/countries.routes")
+);
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
   next();

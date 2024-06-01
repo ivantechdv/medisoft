@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { getData, postData, putData } from '../../api';
 import { FaFilter, FaPlusCircle, FaMinusCircle } from 'react-icons/fa';
-import ToastNotify from '../../components/toaster/toaster';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -21,6 +20,7 @@ const Clients = () => {
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [photo, setPhoto] = useState('');
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigateTo = useNavigate();
 
@@ -34,6 +34,7 @@ const Clients = () => {
 
   const getRows = async () => {
     try {
+      setIsLoading(true);
       const response = await getData(
         `clients?page=${currentPage}&pageSize=${pageSize}&searchTerm=${searchTerm}`,
       );
@@ -44,11 +45,18 @@ const Clients = () => {
       setTotalPages(meta.totalPages);
     } catch (error) {
       console.error('Error ', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    getRows();
+    try {
+      getRows();
+    } catch (error) {
+      console.log('error =>', error);
+    } finally {
+    }
   }, [currentPage, pageSize, searchTerm]);
 
   const handleSearchTermChange = (event) => {
@@ -90,10 +98,6 @@ const Clients = () => {
         }
         response = await putData('assets/category/' + id.current, dataToSend);
       }
-      ToastNotify({
-        message: response.message,
-        position: 'top-center',
-      });
       getRows();
       closeModal();
     } catch (error) {
@@ -194,6 +198,9 @@ const Clients = () => {
               <tr>
                 <th></th>
                 <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                  ID
+                </th>
+                <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
                   DNI
                 </th>
                 <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
@@ -217,6 +224,7 @@ const Clients = () => {
                     onMouseLeave={(e) =>
                       (e.target.parentNode.style.backgroundColor = 'inherit')
                     }
+                    onClick={(e) => handleRowClick(row, e)}
                     onDoubleClick={() => handleViewClient(row.id)}
                     style={{ cursor: 'pointer' }}
                   >
@@ -229,13 +237,13 @@ const Clients = () => {
                         onChange={() => handleSelectRow(row.id)}
                       />
                     </td>
-                    <td
-                      className='px-3'
-                      onClick={(e) => handleRowClick(row, e)}
-                    >
+                    <td className='px-3'>
+                      <label className='text-primary'>{row.id}</label>
+                    </td>
+                    <td className='px-3'>
                       <label className='text-primary'>{row.dni}</label>
                     </td>
-                    <td className='max-w-xs truncate px-2'>{row.name}</td>
+                    <td className='max-w-xs truncate px-2'>{row.full_name}</td>
                     <td className='max-w-xs truncate px-2'>{row.email}</td>
                     <td className='max-w-xs truncate px-2'>{row.phone}</td>
                   </tr>
@@ -247,33 +255,35 @@ const Clients = () => {
       {/* Modal */}
       {selectedRow && (
         <div
-          className='fixed bg-panel border-2 border-gray-300 pl-4 pb-4 pt-2 shadow-lg w-96 mb-6'
+          className='fixed bg-panel border-2 border-gray-300 shadow-lg w-96 mb-6'
           style={{
             top: `${tableTopPosition}px`,
             right: 0,
           }}
         >
-          <label className='text-primary pt-2'>{selectedRow.name}</label>
-          <button
-            className='absolute top-2 right-2 text-gray-500 hover:text-gray-700'
-            onClick={handleClosePanel}
-          >
-            <svg
-              className='w-6 h-6'
-              fill='none'
-              viewBox='0 0 24 24'
-              stroke='currentColor'
+          <div className='bg-primary w-full h-full p-2'>
+            <label className='text-white pt-2'>{selectedRow.full_name}</label>
+            <button
+              className='absolute top-2 right-2 text-white hover:text-gray-700'
+              onClick={handleClosePanel}
             >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M6 18L18 6M6 6l12 12'
-              />
-            </svg>
-          </button>
+              <svg
+                className='w-6 h-6'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M6 18L18 6M6 6l12 12'
+                />
+              </svg>
+            </button>
+          </div>
 
-          <div className='border-2 border-gray-200 w-full mt-2'></div>
+          <div className='border-2 border-white w-full'></div>
           <div
             className='overflow-y-auto'
             style={{
@@ -314,13 +324,14 @@ const Clients = () => {
             </h2>
 
             {selectedRow.clients_patologies.length > 0 &&
-              selectedRow.clients_patologies.map((patology) => (
-                <>
+              selectedRow.clients_patologies
+                .slice() // Clonamos el array para evitar modificar el original
+                .sort((a, b) => a.patology.name.localeCompare(b.patology.name)) // Ordenar por nombre de patología
+                .map((patology) => (
                   <li className='p-1' key={patology.id}>
                     {patology.patology.name}
                   </li>
-                </>
-              ))}
+                ))}
             <div className='border-2 border-gray-200 w-full mt-6'></div>
             <h2 className='text-center'>
               <strong>Recomendaciones </strong>
@@ -335,6 +346,7 @@ const Clients = () => {
           </div>
         </div>
       )}
+      {isLoading && <Spinner />}
     </div>
   );
 };

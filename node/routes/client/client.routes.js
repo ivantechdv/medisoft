@@ -5,6 +5,7 @@ const Client = require("../../controllers/clients/clients.controller");
 const validateSchema = require('../../middleware/validator.middleware'); */
 
 router.get("/", Client.get);
+router.get("/all", Client.getAll);
 router.get("/:id", Client.getById);
 
 router.post("/", Client.create);

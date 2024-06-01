@@ -109,3 +109,15 @@ export const getStorage = (url) => {
     throw error;
   }
 };
+
+export const deleteStorage = async (filename, container) => {
+  try {
+    const res = await axios.delete(
+      `${apiUrl}storage/delete/${container}/${filename}`,
+    );
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};

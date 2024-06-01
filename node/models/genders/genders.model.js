@@ -1,15 +1,11 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../database/sequelize");
 
-const Country = sequelize.define("countries", {
+const Gender = sequelize.define("genders", {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
-  },
-  code_phone: {
-    type: DataTypes.STRING(10),
-    allowNull: true,
   },
   name: {
     type: DataTypes.STRING(100),
@@ -27,4 +23,4 @@ const Country = sequelize.define("countries", {
   },
 });
 
-module.exports = Country;
+module.exports = Gender;

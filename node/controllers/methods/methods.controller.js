@@ -1,5 +1,7 @@
 const CTRL = {};
 const sequelize = require("../../database/sequelize");
+const { Sequelize, Op } = require("sequelize");
+
 const ITEMS_PER_PAGE = 20; // Puedes ajustar esto según tus necesidades
 CTRL.create = async (req, res, next, Model) => {
   try {
@@ -63,6 +65,7 @@ CTRL.get = async (req, res, next, Model, where, include) => {
       limit: parsedPageSize,
       offset,
       include: include,
+      order: [["id", "ASC"]],
     });
 
     const totalPages = Math.ceil(count / parsedPageSize);
@@ -89,9 +92,56 @@ CTRL.getAll = async (
   returnData = false
 ) => {
   try {
+    const queryParameters = req.query;
+    const useLike = queryParameters.useLike === "true"; // Verificar si se debe usar LIKE
+    delete queryParameters.useLike; // Eliminar este parametro para que no afecte el resto de la lógica
+
+    const condition = useLike ? { [Op.or]: [] } : {};
+
+    if (queryParameters) {
+      Object.keys(queryParameters).forEach((key) => {
+        if (key !== "order" && queryParameters[key]) {
+          if (useLike) {
+            const likeCondition = {};
+            likeCondition[key] = {
+              [Op.like]: queryParameters[key],
+            };
+            condition[Op.or].push(likeCondition);
+          } else {
+            condition[key] = queryParameters[key];
+          }
+        }
+      });
+    }
+    let order = [];
+    if (queryParameters.order) {
+      const [field, direction] = queryParameters.order.split("-");
+      // Validar y usar 'field' y 'direction' para ordenar los resultados
+      if (direction === "asc" || direction === "desc") {
+        order = [[field, direction.toUpperCase()]];
+      }
+    }
+
+    const queryOptions = {
+      where: condition,
+    };
+
+    // if (include && Object.keys(include).length > 0) {
+    //   console.log("**********");
+    //   console.log(include);
+    //   queryOptions.include = include;
+    // }
+    let optionInclude = [];
+    if (include != null) {
+      optionInclude = include;
+    }
+
     const result = await Model.findAll({
-      where: where,
+      where: condition,
+      include: optionInclude,
+      order: order, // Añadir el parámetro 'order' a la consulta
     });
+
     if (returnData) {
       return result; // Devolver los resultados si se requiere
     } else {
