@@ -12,7 +12,7 @@ import 'react-quill/dist/quill.snow.css';
 import Select from '../../../components/Select';
 import Spinner from '../../../components/Spinner/Spinner';
 import ToastNotify from '../../../components/toast/toast';
-const Form = ({ id, onFormData, onGetRecordById }) => {
+const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const [formData, setFormData] = useState({
     patology_id: '',
     recommendations: '',
@@ -21,6 +21,8 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
   const [patologies, setPatologies] = useState([]);
   const [selectedPatologies, setSelectedPatologies] = useState([]);
   const [recommendations, setRecommendations] = useState('');
+  const [selectedPatologiesOld, setSelectedPatologiesOld] = useState([]);
+  const [recommendationsOld, setRecommendationsOld] = useState('');
   const [loadingCount, setLoadingCount] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
   let loading = loadingCount > 0;
@@ -51,17 +53,18 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
   }, []);
 
   useEffect(() => {
-    console.log('onFormData', onFormData.clients_patologies);
-    console.log('id', id);
     if (onFormData) {
       setRecommendations(onFormData.recommendations);
+      setRecommendationsOld(onFormData.recommendations);
       const clientPatologies = onFormData.clients_patologies
         .map((cp) => ({
           value: cp.patology_id,
-          label: cp.patology.name, // Asumiendo que `patology` es el objeto relacionado
+          label: cp.patology.name,
         }))
-        .sort((a, b) => a.label.localeCompare(b.label)); // Ordenar por nombre;
+        .sort((a, b) => a.label.localeCompare(b.label));
+
       setSelectedPatologies(clientPatologies);
+      setSelectedPatologiesOld(clientPatologies);
 
       const isQuillEmpty = isQuillContentEmpty(onFormData.recommendations);
       let recommendations = '';
@@ -74,6 +77,30 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
     }
   }, [onFormData]);
 
+  const stripHTML = (html) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
+  };
+
+  useEffect(() => {
+    // Strip HTML tags from recommendations and recommendationsOld
+    const strippedRecommendations = stripHTML(recommendations);
+    const strippedRecommendationsOld = stripHTML(recommendationsOld);
+
+    // Compare selectedPatologies and selectedPatologiesOld, and stripped recommendations
+    const hasChanges =
+      JSON.stringify(selectedPatologies) !==
+        JSON.stringify(selectedPatologiesOld) ||
+      strippedRecommendations !== strippedRecommendationsOld;
+    setUnsavedChanges(hasChanges);
+  }, [
+    selectedPatologies,
+    selectedPatologiesOld,
+    recommendations,
+    recommendationsOld,
+    setUnsavedChanges,
+  ]);
   const handleChange = (event) => {
     const { id, value } = event.target;
     setFormData((prevFormData) => ({

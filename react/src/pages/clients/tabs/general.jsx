@@ -10,7 +10,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import Select from '../../../components/Select';
 import ToastNotify from '../../../components/toast/toast';
-import { FaExpand } from 'react-icons/fa';
+import { FaExpand, FaMinusCircle } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
 const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const [formData, setFormData] = useState({
@@ -27,6 +27,8 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     photo: '',
     dniFront: '',
     dniBack: '',
+    is_active: true,
+    type: 'Cliente',
     recommendations: '',
   });
   const [oldData, setOldData] = useState({
@@ -43,6 +45,8 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     photo: '',
     dniFront: '',
     dniBack: '',
+    is_active: '',
+    type: '',
     recommendations: '',
   });
   const [images, setImages] = useState({
@@ -81,6 +85,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       if (onFormData) {
         setFormData(onFormData);
         setOldData(onFormData);
+        setCodPost(onFormData.cod_post.code);
         if (onFormData.photo) {
           setImages((prevImages) => ({
             ...prevImages,
@@ -343,6 +348,9 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       });
     } finally {
       setLoadingForm(false);
+      onHandleChangeCard('address', formData.address);
+      onHandleChangeCard('email', formData.email);
+      onHandleChangeCard('phone', formData.phone);
     }
   };
   const handleImagenChange = (event, key) => {
@@ -363,6 +371,42 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       }));
     }
   };
+
+  const deleteImage = async (image, key) => {
+    try {
+      const filename = image.split('/').pop();
+      await deleteStorage(filename, 'client');
+
+      setImages((prevImages) => ({
+        ...prevImages,
+        [key]: '',
+      }));
+
+      if (key === 'photo') {
+        onHandleChangeCard(key, '');
+      }
+
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [key]: '',
+      }));
+      const dataToSend = {
+        [key]: '',
+      };
+      const response = await putData('clients/' + id, dataToSend);
+      let message = 'Imagen eliminada con exito';
+      if (response) {
+        ToastNotify({
+          message: message,
+          position: 'top-left',
+          type: 'success',
+        });
+      }
+    } catch (error) {
+      console.log('error =>', error);
+    }
+  };
+
   const handleSelectChange = (selected) => {
     setSelectedLanguages(selected);
   };
@@ -374,9 +418,9 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     try {
       if (value != '') {
         let response = [];
-        if (field === 'dni') {
+        if (field === 'dni' && value !== oldData['dni']) {
           response = await getData(`clients/all?dni=${value}`);
-        } else if (field === 'email') {
+        } else if (field === 'email' && value !== oldData['email']) {
           response = await getData(`clients/all?email=${value}`);
         }
         console.log('response', response);
@@ -432,6 +476,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       ...prevFormData,
       ['cod_post_id']: option.id,
     }));
+    setCodPost(option.code);
     setIsOpen(!isOpen);
   };
   const openImageModal = (image) => {
@@ -449,7 +494,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         <div className='md:grid md:grid-cols-4 gap-2'>
           <div className='col-span-1'>
             <div className='col-span-1'>
-              <div className='h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
+              <div className='relative h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
                 {images.photo != '' ? (
                   <>
                     <label htmlFor='photo' className='cursor-pointer'>
@@ -468,6 +513,13 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                         onChange={(event) => handleImagenChange(event, 'photo')}
                       />
                     </label>
+                    <div
+                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
+                      title='Eliminar imagen'
+                      onClick={() => deleteImage(images.photo, 'photo')}
+                    >
+                      <FaMinusCircle size={24} />
+                    </div>
                   </>
                 ) : (
                   <>
@@ -509,10 +561,17 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                       />
                     </label>
                     <div
-                      className='absolute -top-1 -right-4 cursor-pointer'
+                      className='absolute -top-1 -right-3 cursor-pointer'
                       onClick={() => openImageModal(images.dniFront)}
                     >
-                      <FaExpand size={20} />
+                      <FaExpand size={24} />
+                    </div>
+                    <div
+                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
+                      title='Eliminar imagen'
+                      onClick={() => deleteImage(images.dniFront, 'dniFront')}
+                    >
+                      <FaMinusCircle size={24} />
                     </div>
                   </>
                 ) : (
@@ -557,10 +616,17 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                       />
                     </label>
                     <div
-                      className='absolute -top-1 -right-4 cursor-pointer'
+                      className='absolute -top-1 -right-3 cursor-pointer'
                       onClick={() => openImageModal(images.dniBack)}
                     >
-                      <FaExpand size={20} />
+                      <FaExpand size={24} />
+                    </div>
+                    <div
+                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
+                      title='Eliminar imagen'
+                      onClick={() => deleteImage(images.dniBack, 'dniBack')}
+                    >
+                      <FaMinusCircle size={24} />
                     </div>
                   </>
                 ) : (
@@ -840,10 +906,46 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               ></textarea>
             </div>
+            <div className='col-span-1'>
+              <label
+                htmlFor='is_active'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Estatus
+              </label>
+              <select
+                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                name='is_active'
+                id='is_active'
+                onChange={handleChange}
+                value={formData.is_active}
+              >
+                <option value={true}>Activo</option>
+                <option value={false}>Inactivo</option>
+              </select>
+            </div>
+            <div className='col-span-1'>
+              <label
+                htmlFor='type'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Tipo
+              </label>
+              <select
+                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                name='type'
+                id='type'
+                onChange={handleChange}
+                value={formData.type}
+              >
+                <option value='Cliente'>Cliente</option>
+                <option value='Posible Cliente'>Posible Cliente</option>
+              </select>
+            </div>
           </div>
         </div>
       </div>
-      <div className='flex justify-end items-end'>
+      <div className='flex justify-end items-end mt-10'>
         <button
           type='button'
           className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'

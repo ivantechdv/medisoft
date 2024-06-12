@@ -87,6 +87,10 @@ const Client = sequelize.define("clients", {
     allowNull: false,
     defaultValue: true,
   },
+  type: {
+    type: DataTypes.STRING(40),
+    allowNull: true,
+  },
   is_deleted: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
