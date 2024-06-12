@@ -195,6 +195,26 @@ app.use(
   trafic,
   require("./routes/countries/countries.routes")
 );
+app.use(
+  "/api/v1/services",
+  trafic,
+  require("./routes/services/services.routes")
+);
+app.use(
+  "/api/v1/employees",
+  trafic,
+  require("./routes/employees/employees.routes")
+);
+app.use(
+  "/api/v1/client-service",
+  trafic,
+  require("./routes/clients_services/clients_services.routes")
+);
+app.use(
+  "/api/v1/client-service-preselection",
+  trafic,
+  require("./routes/clients_services_preselections/clients_services_preselections.routes")
+);
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
   next();

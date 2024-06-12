@@ -13,15 +13,37 @@ CTRL.create = async (req, res, next, Model) => {
   }
 };
 
-CTRL.createBulk = async (req, res, next, Model) => {
+CTRL.createOrUpdateBulk = async (req, res, next, Model) => {
   try {
-    // Guardar los datos en la base de datos usando bulkCreate
-    const result = await Model.bulkCreate(req.body);
+    const data = req.body; // Obtener los datos enviados por el cliente
+    const createData = []; // Almacenar datos para creación
+    const updateData = []; // Almacenar datos para actualización
+
+    // Separar los datos para creación y actualización
+    data.forEach((item) => {
+      if (item.id) {
+        // Si el registro tiene un ID, se trata de una actualización
+        updateData.push(item);
+      } else {
+        // Si no tiene ID, es una creación
+        createData.push(item);
+      }
+    });
+
+    // Crear nuevos registros
+    const createResult = await Model.bulkCreate(createData);
+
+    // Actualizar registros existentes
+    const updatePromises = updateData.map(async (item) => {
+      const { id, ...updateFields } = item; // Excluir el ID del objeto de actualización
+      await Model.update(updateFields, { where: { id } });
+    });
+    await Promise.all(updatePromises);
 
     // Enviar una respuesta al cliente
     res.json(true);
   } catch (error) {
-    console.error("Error al guardar las patologías:", error);
+    console.error("Error al guardar o actualizar los datos:", error);
     next(error);
   }
 };
