@@ -7,11 +7,12 @@ import {
   getStorage,
   deleteStorage,
 } from '../../../api';
-import { useNavigate } from 'react-router-dom';
+import { json, useNavigate } from 'react-router-dom';
 import Select from '../../../components/Select';
 import ToastNotify from '../../../components/toast/toast';
 import { FaExpand, FaMinusCircle } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
+import ChangeLogger from '../../../components/changeLogger';
 const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -48,11 +49,24 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     is_active: '',
     type: '',
     recommendations: '',
+    age: '',
   });
   const [images, setImages] = useState({
     photo: '',
     dniFront: '',
     dniBack: '',
+  });
+  const [changelogs, setChangelogs] = useState({
+    date: '',
+    client_statu_reason_id: '',
+    reason: '',
+    observation: '',
+  });
+  const [oldChangelogs, setOldChangelogs] = useState({
+    date: '',
+    client_statu_reason_id: '',
+    reason: '',
+    observation: '',
   });
   const [loadingForm, setLoadingForm] = useState(true);
   const [loadingFetch, setLoadingFetch] = useState(true);
@@ -60,12 +74,14 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const [loadingSelect, setLoadingSelect] = useState(true);
   const [loading, setLoading] = useState(true);
   const [expandImage, setExpandImage] = useState(false);
+  const [isOpenModalReason, setIsOpenModalReason] = useState(false);
   const [dniFront, setDniFront] = useState('');
   const [dniBack, setDniBack] = useState('');
   const [codPosts, setCodPosts] = useState([]);
   const [countries, setCountries] = useState([]);
   const [genders, setGenders] = useState([]);
   const [languages, setLanguages] = useState([]);
+  const [clientReason, setClientReason] = useState([]);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [codPost, setCodPost] = useState('');
@@ -74,17 +90,30 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     name: '',
     state: '',
   });
+  const [modalActions, setModalActions] = useState({
+    handleContinue: () => {},
+    handleCancel: () => {},
+  });
   const dniRef = useRef(null);
   const emailRef = useRef(null);
   const dni = useRef(null);
   const ref = useRef(null);
+
   const navigateTo = useNavigate();
   useEffect(() => {
     try {
       setLoadingForm(true);
       if (onFormData) {
         setFormData(onFormData);
+        //calcula la edad
+        const age = calculateAge(onFormData.born_date);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          ['age']: age,
+        }));
+        //guarda data original
         setOldData(onFormData);
+        //setea el codigo postal
         setCodPost(onFormData.cod_post.code);
         if (onFormData.photo) {
           setImages((prevImages) => ({
@@ -149,6 +178,8 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     try {
       setLoadingFetch(true);
       const fetchSelect = async () => {
+        const order = 'name-asc';
+
         const responseCodPosts = await getData('cod_posts/all');
         setCodPosts(responseCodPosts);
 
@@ -161,12 +192,26 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         const responseLanguages = await getData('languages/all');
 
         if (responseLanguages) {
-          const options = responseLanguages.map((item) => ({
+          const options = responseLanguages.map((item, index) => ({
             value: item.id,
             label: item.name,
+            key: item.id ?? `default-key-${index}`,
           }));
 
           setLanguages(options);
+        }
+        const responseReason = await getData(
+          `client-statu-reason/all?order=${order}`,
+        );
+
+        if (responseReason) {
+          const options = responseReason.map((item, index) => ({
+            value: item.id,
+            label: item.name,
+            key: item.id ?? `default-key-${index}`,
+          }));
+
+          setClientReason(options);
         }
       };
 
@@ -212,8 +257,31 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     setTimeout(() => setLoadingSelect(false), 400);
   };
 
+  const calculateAge = (birthDate) => {
+    const today = new Date();
+    const birthDateObj = new Date(birthDate);
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDifference = today.getMonth() - birthDateObj.getMonth();
+
+    // Si el mes de hoy es menor al mes de nacimiento o si es el mismo mes pero el día es menor, restar un año
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birthDateObj.getDate())
+    ) {
+      age--;
+    }
+    return age;
+  };
+
   const handleChange = (event) => {
     const { id, value } = event.target;
+    if (id === 'born_date') {
+      const age = calculateAge(value);
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        ['age']: age,
+      }));
+    }
     if (id === 'phone') {
       const newValue = value.replace(/\D/g, '');
       if (newValue.length <= 9) {
@@ -287,11 +355,36 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
 
     return true;
   };
+
+  function changeValueSelect(data) {
+    const newData = { ...data };
+    for (const key in data) {
+      if (key == 'client_statu_reason_id') {
+        const matchedOption = clientReason.find(
+          (option) => option.value === data[key],
+        );
+        if (matchedOption) {
+          newData['reason'] = matchedOption.label;
+          newData[key] = data[key];
+        }
+      } else {
+        const selectField = document.getElementById(key);
+        if (selectField && selectField.tagName.toLowerCase() === 'select') {
+          const matchedOption = Array.from(selectField.options).find(
+            (option) => option.value == data[key],
+          );
+          if (matchedOption) {
+            newData[key] = matchedOption.text;
+          }
+        }
+      }
+    }
+    return newData;
+  }
   const handleSubmit = async () => {
+    console.log('form data ', formData);
+    console.log('oldata ', oldData);
     try {
-      setLoadingForm(true);
-      setLoading(true);
-      // Validar campos requeridos antes de enviar el formulario
       const isValid = validateRequiredFields();
 
       if (!isValid) {
@@ -299,6 +392,10 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         // Detener el envío del formulario si algún campo requerido está vacío
         return;
       }
+
+      setLoadingForm(true);
+      setLoading(true);
+      // Validar campos requeridos antes de enviar el formulario
 
       let response = false;
 
@@ -330,7 +427,19 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         response = await putData('clients/' + id, dataToSend);
         message = 'Cliente actualizado con exito';
       }
-
+      //changelogs
+      console.log('changelogs => ', changelogs);
+      const currentData = changeValueSelect(changelogs);
+      console.log('oldchangeLogs => ', oldChangelogs);
+      console.log('currentData => ', currentData);
+      await ChangeLogger({
+        oldData: oldChangelogs,
+        newData: currentData,
+        user: null,
+        module: 'clients',
+        module_id: response.id,
+      });
+      //changelogs
       if (response) {
         ToastNotify({
           message: message,
@@ -338,6 +447,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           type: 'success',
         });
         navigateTo('/client/' + response.id);
+        //window.location.href = '/client/' + response.id;
       }
     } catch (error) {
       console.log('error', error);
@@ -351,6 +461,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       onHandleChangeCard('address', formData.address);
       onHandleChangeCard('email', formData.email);
       onHandleChangeCard('phone', formData.phone);
+      setOldData(formData);
     }
   };
   const handleImagenChange = (event, key) => {
@@ -410,53 +521,76 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const handleSelectChange = (selected) => {
     setSelectedLanguages(selected);
   };
-  const validateEmail = (email) => {
+  const validateEmails = (emails) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
+    const emailArray = emails.split(';').map((e) => e.trim().toLowerCase());
+    const validEmails = [];
+    const invalidEmails = [];
+
+    emailArray.forEach((email) => {
+      if (re.test(email)) {
+        validEmails.push(email);
+      } else {
+        invalidEmails.push(email);
+      }
+    });
+
+    return { validEmails, invalidEmails };
   };
+
   const validateField = async (field, value, ref) => {
     try {
-      if (value != '') {
+      if (value !== '') {
         let response = [];
         if (field === 'dni' && value !== oldData['dni']) {
           response = await getData(`clients/all?dni=${value}`);
         } else if (field === 'email' && value !== oldData['email']) {
-          response = await getData(`clients/all?email=${value}`);
-        }
-        console.log('response', response);
-        if (response.length > 0) {
-          setFormData((prevFormData) => ({
-            ...prevFormData,
-            [field]: '',
-          }));
-          onHandleChangeCard(field, '');
-          ToastNotify({
-            message: `el ${field} esta registrado con el ID ${response[0].id}`,
-            position: 'top-center',
-            type: 'error',
-            ref: ref,
-          });
-          if (ref && ref.current) {
-            ref.current.focus(); // Mueve el cursor al campo correspondiente
+          const { validEmails, invalidEmails } = validateEmails(value);
+          for (let email of validEmails) {
+            const emailResponse = await getData(`clients/all?email=${email}`);
+            if (
+              emailResponse.length > 0 &&
+              emailResponse[0].id !== oldData.id
+            ) {
+              response.push({ email, id: emailResponse[0].id });
+            }
           }
-        } else if (field === 'email' && !validateEmail(value)) {
-          setFormData((prevFormData) => ({
-            ...prevFormData,
-            [field]: '',
-          }));
-          ToastNotify({
-            message: `Ingrese un correo electrónico valido`,
-            position: 'top-center',
-            type: 'error',
-            ref: ref,
-          });
-          if (ref && ref.current) {
-            ref.current.focus(); // Mueve el cursor al campo correspondiente
+
+          if (response.length > 0 || invalidEmails.length > 0) {
+            let newEmails = validEmails.filter(
+              (e) => !response.some((r) => r.email === e),
+            );
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              [field]: newEmails.join(';'),
+            }));
+            onHandleChangeCard(field, newEmails.join(';'));
+
+            const errorMessage = [
+              ...response.map(
+                (res) =>
+                  `El correo ${res.email} está registrado con el ID ${res.id}`,
+              ),
+              ...invalidEmails.map(
+                (email) => `El correo ${email} no es válido`,
+              ),
+            ].join(', ');
+
+            ToastNotify({
+              message: errorMessage,
+              position: 'top-center',
+              type: 'error',
+              ref: ref,
+            });
+
+            if (ref && ref.current) {
+              ref.current.focus();
+            }
           }
         }
       }
     } catch (error) {
-      console.log('error en la consulta dni=> ', error);
+      console.log('Error en la consulta:', error);
     }
   };
   const handleOpenCodPost = () => {
@@ -486,6 +620,32 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const closeExpandImage = () => {
     setExpandImage(false);
     dni.current = null;
+  };
+
+  const handleChangeLogs = (event) => {
+    const { id, value } = event.target;
+    setChangelogs((prevChangeLogs) => ({
+      ...prevChangeLogs,
+      [id]: value,
+    }));
+  };
+  const handleChangeLogsSelect = (event, field) => {
+    const newValue = event.value;
+    setChangelogs((prevChangeLogs) => ({
+      ...prevChangeLogs,
+      [field]: newValue,
+    }));
+  };
+
+  const handleOpenReason = () => {
+    setIsOpenModalReason(true);
+  };
+  const closeModalReason = () => {
+    setIsOpenModalReason(false);
+  };
+  const handleContinueChange = () => {
+    setIsOpenModalReason(false);
+    handleSubmit();
   };
   return (
     <form className=''>
@@ -652,6 +812,52 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
             <div className='col-span-1'>
               <label
+                htmlFor='is_active'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Estado
+              </label>
+              <select
+                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                name='is_active'
+                id='is_active'
+                onChange={handleChange}
+                value={formData.is_active}
+              >
+                {[
+                  { value: true, label: 'Activo', key: 'activo' },
+                  { value: false, label: 'Inactivo', key: 'inactivo' },
+                ].map((option) => (
+                  <option key={option.key} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className='col-span-1'>
+              <label
+                htmlFor='type'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Tipo
+              </label>
+              <select
+                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                name='type'
+                id='type'
+                onChange={handleChange}
+                value={formData.type}
+              >
+                <option value='Cliente' key={'1'}>
+                  Cliente
+                </option>
+                <option value='Posible Cliente' key={'2'}>
+                  Posible Cliente
+                </option>
+              </select>
+            </div>
+            <div className='col-span-1'>
+              <label
                 htmlFor='dni'
                 className='block text-sm font-medium text-gray-700'
               >
@@ -665,6 +871,23 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 onChange={handleChange}
                 ref={dniRef}
                 onBlur={() => validateField('dni', formData.dni, dniRef)}
+                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              />
+            </div>
+
+            <div className='col-span-1'>
+              <label
+                htmlFor='born_date'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Fecha de nacimiento
+              </label>
+              <input
+                type='date'
+                id='born_date'
+                name='born_date'
+                value={formData.born_date}
+                onChange={handleChange}
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
@@ -702,22 +925,6 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             </div>
             <div className='col-span-1'>
               <label
-                htmlFor='born_date'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Fecha de nacimiento
-              </label>
-              <input
-                type='date'
-                id='born_date'
-                name='born_date'
-                value={formData.born_date}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='col-span-1'>
-              <label
                 htmlFor='gender_id'
                 className='block text-sm font-medium text-gray-700'
               >
@@ -741,13 +948,29 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             </div>
             <div className='col-span-1'>
               <label
+                htmlFor='age'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Edad
+              </label>
+              <input
+                type='text'
+                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                id='age'
+                name='age'
+                readOnly
+                value={formData.age}
+              />
+            </div>
+            <div className='col-span-2'>
+              <label
                 htmlFor='email'
                 className='block text-sm font-medium text-gray-700'
               >
-                Correo electrónico
+                Correo(s) electrónico(s) separe con ;
               </label>
               <input
-                type='email'
+                type='text'
                 id='email'
                 name='email'
                 value={formData.email}
@@ -795,7 +1018,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 htmlFor='language_id'
                 className='block text-sm font-medium text-gray-700'
               >
-                Lenguaje
+                Idiomas
               </label>
               <Select
                 id='language_id'
@@ -850,7 +1073,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                             Codigo Postal
                           </th>
                           <th className='border border-gray-300'>Nombre</th>
-                          <th className='border border-gray-300'>Estado</th>
+                          <th className='border border-gray-300'>Provincia</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -887,7 +1110,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 Codigo postal: {selectedCodPost.cod_post} <br />
                 Nombre: {selectedCodPost.name}
                 <br />
-                Estado:{selectedCodPost.state}
+                Provincia:{selectedCodPost.state}
               </label>
             </div>
             <div className='col-span-2'>
@@ -906,42 +1129,6 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               ></textarea>
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='is_active'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Estatus
-              </label>
-              <select
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                name='is_active'
-                id='is_active'
-                onChange={handleChange}
-                value={formData.is_active}
-              >
-                <option value={true}>Activo</option>
-                <option value={false}>Inactivo</option>
-              </select>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='type'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Tipo
-              </label>
-              <select
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                name='type'
-                id='type'
-                onChange={handleChange}
-                value={formData.type}
-              >
-                <option value='Cliente'>Cliente</option>
-                <option value='Posible Cliente'>Posible Cliente</option>
-              </select>
-            </div>
           </div>
         </div>
       </div>
@@ -949,7 +1136,12 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         <button
           type='button'
           className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-          onClick={handleSubmit}
+          onClick={
+            formData.is_active == 'false' &&
+            (oldData.is_active === true || oldData.is_active === 'true')
+              ? handleOpenReason
+              : handleSubmit
+          }
         >
           {onAction}
         </button>
@@ -977,6 +1169,117 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             </button>
 
             <img alt='imagen' src={dni.current} className='w-full' />
+          </div>
+        </div>
+      )}
+      {isOpenModalReason && (
+        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
+          <div
+            className={`relative bg-white p-2 rounded shadow-lg min-h-60 w-4/5 lg:w-3/5`}
+          >
+            <button
+              className='absolute top-0 right-0 text-gray-800 text-lg'
+              onClick={closeModalReason}
+            >
+              <svg
+                className='w-6 h-6'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M6 18L18 6M6 6l12 12'
+                />
+              </svg>
+            </button>
+            <div className={`col-span-1 md:grid md:grid-cols-2 gap-2 p-2`}>
+              <div className='col-span-1'>
+                <div className='mb-2'>
+                  <label
+                    htmlFor='date'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Fecha
+                  </label>
+                  <input
+                    type='date'
+                    rows={15}
+                    id='date'
+                    value={changelogs.date}
+                    onChange={handleChangeLogs}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+              </div>
+              <div className='col-span-1'>
+                <div className='mb-2'>
+                  <label
+                    htmlFor='reason'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Motivo
+                  </label>
+                  <Select
+                    id='client_statu_reason_id'
+                    options={clientReason}
+                    placeholder='Seleccione Motivo'
+                    defaultValue={changelogs.client_statu_reason_id}
+                    onChange={(event) =>
+                      handleChangeLogsSelect(event, 'client_statu_reason_id')
+                    }
+                    isSearchable
+                  />
+                </div>
+              </div>
+              <div className='col-span-2'>
+                <div className='mb-2'>
+                  <label
+                    htmlFor='observation'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Observaciones
+                  </label>
+                  <textarea
+                    type='textarea'
+                    rows={7}
+                    id='observation'
+                    value={changelogs.observation}
+                    onChange={handleChangeLogs}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+              </div>
+            </div>
+            <div className='flex justify-end p-4'>
+              <button
+                type='button'
+                className='bg-gray-500 text-white font-bold py-2 px-4 text-sm rounded mr-2'
+                onClick={closeModalReason}
+              >
+                Cancelar
+              </button>
+              <button
+                type='button'
+                className={`font-bold py-2 px-4 text-sm rounded mr-2 ${
+                  changelogs.client_statu_reason_id === '' ||
+                  changelogs.observation === '' ||
+                  changelogs.date === ''
+                    ? 'bg-gray-500 opacity-50 cursor-not-allowed'
+                    : 'bg-green-500 text-white'
+                }`}
+                onClick={handleContinueChange}
+                disabled={
+                  changelogs.client_statu_reason_id == '' ||
+                  changelogs.observation == '' ||
+                  changelogs.date == ''
+                }
+              >
+                Continuar
+              </button>
+            </div>
           </div>
         </div>
       )}

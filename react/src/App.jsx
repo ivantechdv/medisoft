@@ -5,6 +5,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import Login from './pages/login/Login';
 import Layaout from './layaout';
 import toast, { Toaster } from 'react-hot-toast';
+import 'react-tooltip/dist/react-tooltip.css';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
 

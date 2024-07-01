@@ -215,6 +215,26 @@ app.use(
   trafic,
   require("./routes/clients_services_preselections/clients_services_preselections.routes")
 );
+app.use(
+  "/api/v1/eventlogs",
+  trafic,
+  require("./routes/eventlogs/eventlogs.routes")
+);
+app.use(
+  "/api/v1/client-statu-reason",
+  trafic,
+  require("./routes/clients_statu_reasons/clients_statu_reasons.routes")
+);
+app.use(
+  "/api/v1/concepts-invoices",
+  trafic,
+  require("./routes/concepts_invoices/concepts_invoices.routes")
+);
+app.use(
+  "/api/v1/client-invoice",
+  trafic,
+  require("./routes/clients_invoices/clients_invoices.routes")
+);
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
   next();

@@ -30,6 +30,15 @@ const ClientsServicesPreselections = sequelize.define(
       allowNull: true,
       defaultValue: "Pendiente",
     },
+    client_service_id: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
+    observation: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,

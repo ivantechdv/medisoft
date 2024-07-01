@@ -5,6 +5,8 @@ import {
   FaRegEnvelope,
   FaMapMarkerAlt,
   FaPhoneSquareAlt,
+  FaFileAlt,
+  FaClipboardList,
 } from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
 import { getData, postData, putData, getStorage } from '../../api';
 import Spinner from '../../components/Spinner/Spinner';
@@ -13,8 +15,8 @@ import Breadcrumbs from '../../components/Breadcrumbs';
 import Modal from './modal';
 import General from './tabs/general';
 import Specific from './tabs/specific';
-import Service from './tabs/services';
-
+import Service from './tabs/services/index';
+import ModalLogs from './modalLogs';
 const Clients = () => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -41,6 +43,7 @@ const Clients = () => {
   const [title, setTitle] = useState('');
   const { id } = useParams();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalLogs, setModalLogs] = useState(false);
   const [isNewRecord, setIsNewRecord] = useState(true);
   const [selectedRow, setSelectedRow] = useState(null);
   const [tableTopPosition, setTableTopPosition] = useState(0);
@@ -170,6 +173,28 @@ const Clients = () => {
       setActiveTab(newTab);
     }
   };
+  const EmailList = ({ emails }) => {
+    // Dividir la cadena de correos en un array utilizando ";" como delimitador
+    const emailArray = emails.split(';');
+
+    return (
+      <div className='w-full ml-5 flex'>
+        <label className='flex'>
+          <FaRegEnvelope className='mr-4 mb-4' />
+        </label>
+        <div className='flex flex-col'>
+          {emailArray.map((email, index) => (
+            <label key={index} className='flex'>
+              {email.trim() || 'Email'}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+  };
+  const handleLogs = () => {
+    setModalLogs(true);
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -187,7 +212,7 @@ const Clients = () => {
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-110px)]'>
         <div className='grid grid-cols-1 md:grid-cols-4'>
           <div className='md:col-span-1'>
-            <div className='w-64 border-r-2 border-gray-200 md:h-screen'>
+            <div className='w-full border-r-2 border-gray-200 md:h-screen'>
               {/* Contenido del lado izquierdo */}
               <div className='flex relative bg-white border-b-2 border-gray-200 h-40 '>
                 <div className='w-10 bg-primary h-full'></div>
@@ -227,6 +252,9 @@ const Clients = () => {
                       </div>
                     </div>
                   )}
+                  <button type='button' onClick={handleLogs}>
+                    <FaFileAlt size={32} />
+                  </button>
                 </div>
               </div>
               <div className='w-full ml-5 flex'>
@@ -239,23 +267,16 @@ const Clients = () => {
                 <label className='flex'>
                   <FaMapMarkerAlt className=' mr-4 mb-4' />
                 </label>
-                <label className='flex text-xs'>
+                <label className='flex'>
                   {cardData.address || 'Dirección'}
                 </label>
               </div>
-              <div className='w-full ml-5 flex'>
-                <label className='flex'>
-                  <FaRegEnvelope className=' mr-4 mb-4' />
-                </label>
-                <label className='flex text-xs'>
-                  {cardData.email || 'Email'}
-                </label>
-              </div>
+              <EmailList emails={cardData.email} />
               <div className='w-full ml-5 flex'>
                 <label className='flex'>
                   <FaPhoneSquareAlt className=' mr-4' />
                 </label>
-                <label className='flex text-xs'>
+                <label className='flex'>
                   {cardData.code_phone + ' '}
                   {cardData.phone || 'Teléfono'}
                 </label>
@@ -331,6 +352,7 @@ const Clients = () => {
           </div>
         </div>
       </div>
+      {modalLogs && <ModalLogs id={id} />}
     </div>
   );
 };

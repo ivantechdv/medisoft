@@ -1,17 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { getData, postData, putData } from '../../../api';
+import { getData, postData, putData } from '../../../../../api';
 import { useNavigate } from 'react-router-dom';
 import 'react-quill/dist/quill.snow.css';
-import Select from '../../../components/Select';
-import Spinner from '../../../components/Spinner/Spinner';
-import ToastNotify from '../../../components/toast/toast';
-import './services.css';
-import { FaPlusCircle, FaSearch, FaEdit, FaMinusCircle } from 'react-icons/fa';
+import Select from '../../../../../components/Select';
+import Spinner from '../../../../../components/Spinner/Spinner';
+import ToastNotify from '../../../../../components/toast/toast';
+import '../services.css';
+import {
+  FaPlusCircle,
+  FaSearch,
+  FaEdit,
+  FaMinusCircle,
+  FaEye,
+} from 'react-icons/fa';
 import {
   ConfirmSweetAlert,
   InfoSweetAlert,
-} from '../../../components/SweetAlert/SweetAlert';
-const Form = ({ id, onFormData, onGetRecordById }) => {
+} from '../../../../../components/SweetAlert/SweetAlert';
+import ModalServices from './modalService';
+import { Tooltip } from 'react-tooltip';
+const ServicesTable = ({ id, onFormData, onGetRecordById, updateList }) => {
   const initialValues = {
     id: '',
     service_id: '',
@@ -25,10 +33,12 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
     service_demand: null,
   };
   const [formData, setFormData] = useState(initialValues);
+  const [formDataAux, setFormDataAux] = useState(initialValues);
   const [formDataEnd, setFormDataEnd] = useState({
     service_end: '',
     detail_end: '',
     statu: false,
+    client_statu_reason_id: '',
   });
   const [services, setServices] = useState([]);
   const [servicesList, setServicesList] = useState([]);
@@ -59,14 +69,21 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
   const [isActive, setIsActive] = useState(false);
   const [selectedServices, setSelectedServices] = useState([]);
   const [originServiceEnd, setOriginServiceEnd] = useState([]);
+  const [clientReason, setClientReason] = useState([]);
   const sweetAlert = ConfirmSweetAlert({
     title: 'Servicio',
     text: '¿Esta seguro que desea procesar el servicio?',
     icon: 'question',
   });
+  const serviceEndConfirm = ConfirmSweetAlert({
+    title: 'Finalizar Servicio',
+    text: '¿Esta seguro que desea finalizar el servicio?',
+    icon: 'question',
+  });
   const serviceIdRef = useRef('');
   const employeeRef = useRef('');
   const observationRef = useRef('');
+  const serviceEndRef = useRef(false);
   const navigateTo = useNavigate();
 
   useEffect(() => {
@@ -94,6 +111,19 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
             })),
           );
           setEmployees(options);
+        }
+        const responseReason = await getData(
+          `client-statu-reason/all?order=${order}`,
+        );
+
+        if (responseReason) {
+          const options = responseReason.map((item, index) => ({
+            value: item.id,
+            label: item.name,
+            key: item.id ?? `default-key-${index}`,
+          }));
+
+          setClientReason(options);
         }
       } catch (error) {
         console.log('ERRR', error);
@@ -127,7 +157,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
     if (onFormData) {
       getRows();
     }
-  }, [onFormData, isActive]);
+  }, [onFormData, isActive, updateList]);
 
   useEffect(() => {
     if (onFormData) {
@@ -198,6 +228,24 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
 
   const handleConfirm = async (event) => {
     event.preventDefault();
+    const queryParameters = new URLSearchParams();
+    queryParameters.append('statu', 1);
+    queryParameters.append('service_id', formData?.service_id);
+    queryParameters.append('employee_id', formData?.employee_id);
+    const services = await getData(
+      `client-service/all?client_id=${onFormData?.id}&${queryParameters}`,
+    );
+
+    console.log('formData.id =>', formData.id);
+    console.log('services.id =>', services);
+    if (services.length > 0 && formData.id != services[0].id) {
+      ToastNotify({
+        message: 'El servicio ya esta activo con el mismo cuidador!',
+        position: 'top-right',
+        type: 'error',
+      });
+      return;
+    }
     await sweetAlert.showSweetAlert().then((result) => {
       const isConfirmed = result !== null && result;
       if (!isConfirmed) {
@@ -337,6 +385,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
     setPreselection([]);
     setShowBtnPreselection(false);
     setFormData(initialValues);
+    setFormDataAux([]);
     setIsEditingService(false);
   };
 
@@ -386,22 +435,22 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
     setPreselection([]);
 
     if (row) {
+      setShowBtnPreselection(false);
       console.log('row', row);
-      serviceIdRef.current = row.service_id;
+      serviceIdRef.current = row.id;
       queryParameters.append('client_id', row.client_id);
       queryParameters.append('service_id', row.service_id);
       queryParameters.append('client_service_id', row.id);
       const responsePreselection = await getData(
         `client-service-preselection/all?${queryParameters}`,
       );
-      if (responsePreselection) {
+      if (responsePreselection.length > 0) {
         console.log('response preselection', responsePreselection);
         // Mapear responsePreselection para construir los objetos necesarios
         const isAssigned = responsePreselection.some(
           (item) => item.status === 'Asignado',
         );
         setIsAssigned(isAssigned); // Almacenar en el estado
-
         const preselectionEmployees = responsePreselection.map((item) => ({
           id: item.id,
           employee_id: item.employee_id,
@@ -420,6 +469,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
     }
     setIsEditingService(true);
     setFormData(row);
+    setFormDataAux(row);
     setIsOpenModalService(true);
   };
 
@@ -459,16 +509,18 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
       }));
     }
   };
-  const openModalObservations = (row) => {
-    console.log('row=>', row);
+  const openModalObservations = (row, serviceEnd) => {
+    console.log('row=>', serviceEnd);
     employeeRef.current = row.employee_id;
     observationRef.current = row.observation;
+    serviceEndRef.current = serviceEnd ? true : false;
     setIsOpenModalObservation(true);
   };
   const closeModalObservations = () => {
     setIsOpenModalObservation(false);
     employeeRef.current = '';
     observationRef.current = '';
+    serviceEndRef.current = false;
   };
 
   const handleChangePreselection = (newValue) => {
@@ -497,6 +549,25 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
     }));
   };
   const handleServiceEnd = async () => {
+    const { service_end, client_statu_reason_id, detail_end } = formDataEnd;
+
+    if (!service_end || !client_statu_reason_id || !detail_end) {
+      ToastNotify({
+        message: 'Por favor, complete todos los campos requeridos',
+        position: 'top-right',
+      });
+      return;
+    }
+    await serviceEndConfirm.showSweetAlert().then((result) => {
+      const isConfirmed = result !== null && result;
+      if (!isConfirmed) {
+        ToastNotify({
+          message: 'Acción cancelada por el usuario',
+          position: 'top-right',
+        });
+        return;
+      }
+    });
     try {
       let responseServiceEnd = [];
       const dataToSend = { ...formDataEnd };
@@ -539,13 +610,47 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
       }
     });
   };
+
+  const [tooltip, setTooltip] = useState({
+    visible: false,
+    content: '',
+    position: { top: 0, left: 0 },
+  });
+
+  const showTooltip = (content, event) => {
+    const { clientX: left, clientY: top } = event;
+    const containerRect = event.currentTarget
+      .closest('.table-container')
+      .getBoundingClientRect();
+    setTooltip({
+      visible: true,
+      content,
+      position: {
+        top: top - containerRect.top,
+        left: left - containerRect.left,
+      },
+    });
+  };
+
+  const hideTooltip = () => {
+    setTooltip({ visible: false, content: '', position: { top: 0, left: 0 } });
+  };
+
+  const handleSelectChange = (event, field) => {
+    setFormDataEnd((prevFormDataEnd) => ({
+      ...prevFormDataEnd,
+      [field]: event.value,
+    }));
+  };
   return (
     <>
       <form>
         {(loading || isLoading) && <Spinner />}
-        <div className='relative rounded min-h-[calc(100vh-235px)]'>
+        <div className='relative rounded min-h-80'>
           <div className='flex justify-between'>
-            <div>Servicios Contratados</div>
+            <div className='border border-gray-800 p-2'>
+              Servicios Contratados
+            </div>
             <div className='flex space-x-2'>
               <button
                 type='button'
@@ -566,10 +671,9 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
               >
                 <FaMinusCircle className='text-lg' />
               </button>
-
               <button
                 type='button'
-                className={`relative inline-flex items-center h-6 rounded-full w-12 ${
+                className={`relative inline-flex items-center h-6 rounded-full w-12 mr-2 ${
                   isActive ? 'bg-primary' : 'bg-gray-300'
                 }`}
                 onClick={toggleSwitch}
@@ -580,393 +684,149 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
                   }`}
                 />
               </button>
+              <label className='ml-2'>Mostrar baja </label>
             </div>
           </div>
-          <div className='border-2 border-gray-200 overflow-x-auto mt-2 table-container'>
-            <table
-              className='min-w-full border-collapse'
-              style={{ borderSpacing: '10px 10px' }}
-            >
-              <thead className='bg-tableHeader'>
-                <tr>
-                  <th className='hidden md:table-cell'></th>
-                  <th className='px-3 py-1 text-left text-xs font-medium uppercase tracking-wider border'>
-                    Servicio Contratado
-                  </th>
-                  <th className='px-3 py-1 text-left text-xs font-medium uppercase tracking-wider border'>
-                    Empleado
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
-                    Alta Servicio
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
-                    Activación Servicio
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
-                    Baja Servicio
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
-                    Oferta
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
-                    Observaciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {servicesList.length > 0 &&
-                  servicesList.map((row) => {
-                    let backgroundColor = 'inherit';
+          <div style={{ position: 'relative' }}>
+            <div className='border-2 border-gray-200 overflow-x-auto mt-2 table-container'>
+              <table
+                className='min-w-full border-collapse'
+                style={{ borderSpacing: '10px 10px' }}
+              >
+                <thead className='bg-tableHeader'>
+                  <tr>
+                    <th className='hidden md:table-cell'></th>
+                    <th
+                      className='px-3 py-1 text-left text-xs font-medium uppercase tracking-wider border'
+                      style={{ width: '200px' }}
+                    >
+                      Servicio
+                    </th>
+                    <th className='px-3 py-1 text-left text-xs font-medium uppercase tracking-wider border'>
+                      Trabajador
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
+                      F. Alta
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
+                      Activación
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
+                      F. Baja
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
+                      Oferta
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
+                      Observaciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {servicesList.length > 0 &&
+                    servicesList.map((row) => {
+                      let backgroundColor = 'inherit';
 
-                    if (!row.employee) {
-                      backgroundColor = '#ffd27f'; // Naranja claro
-                    } else if (!row.service_end) {
-                      backgroundColor = '#bdffbd'; // Verde claro
-                    } else if (row.service_end) {
-                      backgroundColor = '#e3e1e1'; // Gris claro
-                    }
+                      if (!row.employee || !row.service_start) {
+                        backgroundColor = '#ffd27f'; // Naranja claro
+                      } else if (!row.service_end) {
+                        backgroundColor = '#bdffbd'; // Verde claro
+                      } else if (row.service_end) {
+                        backgroundColor = '#e3e1e1'; // Gris claro
+                      }
 
-                    return (
-                      <tr
-                        key={row.id}
-                        onDoubleClick={() => handleOpenService(row)}
-                        style={{ cursor: 'pointer', backgroundColor }}
-                      >
-                        <td className='text-center hidden md:table-cell border-2'>
-                          <input
-                            type='checkbox'
-                            id={`selectrow-${row.id}`}
-                            name={`selectrow-${row.id}`}
-                            onChange={() => handleCheckboxChange(row.id)}
-                            checked={selectedServices.includes(row.id)}
-                            disabled={
-                              !row.service_start ||
-                              !row.employee ||
-                              row.service_end
-                            }
-                          />
-                        </td>
-                        <td className='px-2 whitespace-nowrap border-2'>
-                          {row.service?.name}
-                        </td>
-                        <td className='px-2 whitespace-nowrap border-2'>
-                          {row.employee?.name || 'Sin asignar'}
-                        </td>
-                        <td className='px-2 border-2'>
-                          {row.service_demand && formatDate(row.service_demand)}
-                        </td>
-                        <td className='px-2 border-2'>
-                          {row.service_start && formatDate(row.service_start)}
-                        </td>
-                        <td className='px-2 border-2'>
-                          {row.service_end && formatDate(row.service_end)}
-                        </td>
-                        <td className='px-2 whitespace-nowrap border-2'></td>
-                        <td className='px-2 whitespace-nowrap border-2'>
-                          {row.observation}
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
+                      return (
+                        <tr
+                          key={row.id}
+                          onClick={() => handleOpenService(row)}
+                          style={{ cursor: 'pointer', backgroundColor }}
+                        >
+                          <td
+                            className='text-center hidden md:table-cell border-2'
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <input
+                              type='checkbox'
+                              id={`selectrow-${row.id}`}
+                              name={`selectrow-${row.id}`}
+                              onChange={() => handleCheckboxChange(row.id)}
+                              checked={selectedServices.includes(row.id)}
+                              disabled={
+                                !row.service_start ||
+                                !row.employee ||
+                                row.service_end
+                              }
+                            />
+                          </td>
+                          <td className='px-2 whitespace-nowrap border-2'>
+                            {row.service?.name}
+                          </td>
+                          <td className='px-2 whitespace-nowrap border-2'>
+                            {row.employee?.name || 'Sin asignar'}
+                          </td>
+                          <td className='px-2 border-2'>
+                            {row.service_demand &&
+                              formatDate(row.service_demand)}
+                          </td>
+                          <td className='px-2 border-2'>
+                            {row.service_start && formatDate(row.service_start)}
+                          </td>
+                          <td className='px-2 border-2'>
+                            {row.service_end && formatDate(row.service_end)}
+                          </td>
+                          <td className='px-2 whitespace-nowrap border-2'>
+                            <button
+                              data-tooltip-id='tooltip'
+                              data-tooltip-content={row.offer}
+                            >
+                              <FaEye />
+                            </button>
+                          </td>
+                          <td className='px-2 whitespace-nowrap border-2'>
+                            <button
+                              data-tooltip-id='tooltip'
+                              data-tooltip-content={row.observation}
+                            >
+                              <FaEye />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
+
+            <Tooltip id='tooltip' />
           </div>
         </div>
       </form>
       <div>
         {isOpenModalService && (
-          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
-            <div
-              className={`relative bg-white p-2 rounded shadow-lg min-h-80 ${
-                modalExpanded ? 'w-4/5 lg:w-3/4' : 'w-4/5 lg:w-1/4'
-              }`}
-            >
-              <button
-                className='absolute top-0 right-0 text-gray-800 text-lg'
-                onClick={closeModalServices}
-              >
-                <svg
-                  className='w-6 h-6'
-                  fill='none'
-                  viewBox='0 0 24 24'
-                  stroke='currentColor'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M6 18L18 6M6 6l12 12'
-                  />
-                </svg>
-              </button>
-              <div
-                className={`col-span-1 ${
-                  modalExpanded
-                    ? 'md:grid md:grid-cols-3'
-                    : 'md:grid md:grid-cols-1'
-                } gap-2 p-2`}
-              >
-                <div className='col-span-1'>
-                  <div className='mb-2'>
-                    <label
-                      htmlFor='service_id'
-                      className='block text-sm font-medium text-secondary'
-                    >
-                      Seleccionar Servicio
-                    </label>
-                    <Select
-                      id='service_id'
-                      options={optionsServices}
-                      placeholder='Seleccione un servicio'
-                      defaultValue={formData.service_id}
-                      onChange={(event) =>
-                        handleChangeSelect(event, 'service_id')
-                      }
-                      isSearchable
-                      isDisabled={isEditingService}
-                    />
-                  </div>
-                  <div className='mb-2'>
-                    <label
-                      htmlFor='employee_id'
-                      className='block text-sm font-medium text-secondary'
-                    >
-                      Seleccionar Empleado
-                    </label>
-                    <Select
-                      id='employee_id'
-                      options={employees}
-                      placeholder='Seleccione un empleado'
-                      defaultValue={formData.employee_id}
-                      onChange={(event) =>
-                        handleChangeSelect(event, 'employee_id')
-                      }
-                      isSearchable
-                      isDisabled={isEditingService}
-                    />
-                  </div>
-                  <div className='mb-2 mt-2'>
-                    <label
-                      htmlFor='has_offer'
-                      className='block text-sm font-medium text-secondary'
-                    >
-                      <div className='flex items-center'>
-                        Generar oferta?
-                        <input
-                          type='checkbox'
-                          id='has_offer'
-                          checked={formData.has_offer} // Use 'checked' instead of 'value' for checkbox
-                          onChange={handleChange}
-                          className='ml-2 p-1 border border-gray-300 rounded focus:outline-none focus:border-indigo-500'
-                          disabled={formData.employee_id !== 0}
-                        />
-                        {showBtnPreselection && (
-                          <div>
-                            {modalExpanded ? (
-                              <button
-                                type='button'
-                                className='ml-2 border border-gray-800 text-gray-800 text-xs py-1 px-2 rounded mr-2'
-                                onClick={handleModalExpanded}
-                              >
-                                Ocultar preselección
-                              </button>
-                            ) : (
-                              <button
-                                type='button'
-                                className='ml-2 border border-gray-800 text-gray-800 text-xs py-1 px-2 rounded mr-2'
-                                onClick={handleModalExpanded}
-                              >
-                                Mostrar preselección
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </label>
-                  </div>
-                  <div className='mb-2'>
-                    <label
-                      htmlFor='service_demand'
-                      className='block text-sm font-medium text-secondary'
-                    >
-                      Alta de servicio
-                    </label>
-                    <input
-                      type='date'
-                      id='service_demand'
-                      value={
-                        formData.service_demand == null
-                          ? ''
-                          : formData.service_demand
-                      }
-                      onChange={handleChange}
-                      disabled={isEditingService}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    />
-                  </div>
-                  <div className='mb-2'>
-                    <label
-                      htmlFor='service_start'
-                      className='block text-sm font-medium text-secondary'
-                    >
-                      Activación de servicio
-                    </label>
-                    <input
-                      type='date'
-                      id='service_start'
-                      value={
-                        formData.service_start == null
-                          ? ''
-                          : formData.service_start
-                      }
-                      onChange={handleChange}
-                      disabled={activeService}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    />
-                  </div>
-                  <div className='mb-1'>
-                    <label
-                      htmlFor='observation'
-                      className='block text-sm font-medium text-secondary'
-                    >
-                      Observaciones
-                    </label>
-                    <textarea
-                      type='text'
-                      rows={6}
-                      id='observation'
-                      value={formData.observation}
-                      onChange={handleChange}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                      disabled={isEditingService}
-                    />
-                  </div>
-                </div>
-                {modalExpanded && (
-                  <>
-                    <div className='col-span-2 border-l-2 border-gray-800 p-2'>
-                      <label>Candidatos preseleccionados</label>
-                      <table className='w-full divide-y divide-tableHeader mb-4 table-container'>
-                        <thead className='bg-tableHeader'>
-                          <tr>
-                            <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                              Empleado
-                            </th>
-                            <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                              Teléfono
-                            </th>
-                            <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                              Estatus
-                            </th>
-                            <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                              Observaciones
-                            </th>
-                            <th>
-                              <button
-                                className='ml-4 border border-gray-800 text-gray-800 font-bold py-1 px-2 rounded mr-2'
-                                onClick={openModalEmployee}
-                              >
-                                <FaSearch />
-                              </button>
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {preselection.length > 0 &&
-                            preselection.map((row) => (
-                              <tr>
-                                <td>{row.name}</td>
-                                <td>{row.phone}</td>
-                                <td>
-                                  <select
-                                    value={row.status}
-                                    onChange={
-                                      isEditingService
-                                        ? (e) =>
-                                            handleChangeStatus(
-                                              e.target.value,
-                                              row.employee_id,
-                                            )
-                                        : null
-                                    }
-                                    className={`px-2 py-2 border rounded text-white ${
-                                      row.status === 'Pendiente'
-                                        ? 'bg-yellow-500'
-                                        : row.status === 'Rechazado'
-                                        ? 'bg-red-500'
-                                        : row.status === 'Asignado'
-                                        ? 'bg-green-500'
-                                        : ''
-                                    }`}
-                                  >
-                                    <option value='Pendiente'>Pendiente</option>
-                                    <option value='Rechazado'>Rechazado</option>
-                                    <option value='Asignado'>Asignado</option>
-                                  </select>
-                                </td>
-                                <td>
-                                  <button
-                                    className='ml-4 border border-gray-800 text-gray-800 font-bold py-1 px-2 rounded mr-2'
-                                    onClick={() => openModalObservations(row)}
-                                  >
-                                    <FaEdit></FaEdit>
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
-              </div>
-              <div className='flex justify-between p-4'>
-                <div>
-                  {' '}
-                  {(formData.service_start &&
-                    formData.employee_id &&
-                    formData.service_end !== '') ||
-                    (formData.service_end !== null && ( // Mostrar el botón si service_start y employee_id existen
-                      <button
-                        type='button'
-                        className='bg-red-500 text-white font-bold py-2 px-2 text-sm rounded'
-                        onClick={() => handleLowService('form')} // Aquí debes definir la función handleDarDeBaja
-                      >
-                        Dar de baja
-                      </button>
-                    ))}
-                </div>
-                <div className='flex'>
-                  <button
-                    type='button'
-                    className='bg-gray-500 text-white font-bold py-2 px-2 text-sm rounded mr-2'
-                    onClick={closeModalServices}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type='button'
-                    className={`py-2 px-2 text-sm rounded font-bold ${
-                      formData.service_end !== '' &&
-                      formData.service_end !== null
-                        ? 'bg-blue-400 text-gray-900 cursor-not-allowed' // Clases cuando está deshabilitado
-                        : 'bg-primary text-white hover:bg-primary-dark'
-                    }`}
-                    onClick={handleConfirm}
-                    disabled={
-                      formData.service_end !== '' &&
-                      formData.service_end !== null
-                    }
-                  >
-                    Guardar
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ModalServices
+            closeModalServices={closeModalServices}
+            modalExpanded={modalExpanded}
+            optionsServices={optionsServices}
+            formData={formData}
+            handleChangeSelect={handleChangeSelect}
+            handleChange={handleChange}
+            handleConfirm={handleConfirm}
+            handleLowService={handleLowService}
+            handleModalExpanded={handleModalExpanded}
+            showBtnPreselection={showBtnPreselection}
+            isEditingService={isEditingService}
+            activeService={activeService}
+            openModalEmployee={openModalEmployee}
+            openModalObservations={openModalObservations}
+            employees={employees}
+            preselection={preselection}
+            handleChangeStatus={handleChangeStatus}
+            formatDate={formatDate}
+            formDataAux={formDataAux}
+          />
         )}
         {isOpenModalEmployee && (
-          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
+          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
             <div
               className={`relative bg-white p-4 rounded shadow-lg min-h-80 w-4/5 lg:w-1/2`}
             >
@@ -1039,7 +899,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
           </div>
         )}
         {isOpenModalObservation && (
-          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
+          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
             <div
               className={`relative bg-white p-2 rounded shadow-lg min-h-60 w-4/5 lg:w-3/5`}
             >
@@ -1074,6 +934,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
                       type='textarea'
                       rows={15}
                       id='observation'
+                      disabled={serviceEndRef.current}
                       value={observationRef.current}
                       onChange={(e) => handleChangePreselection(e.target.value)}
                       className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
@@ -1094,7 +955,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
           </div>
         )}
         {isOpenModalServiceEnd && (
-          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
+          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
             <div
               className={`relative bg-white p-2 rounded shadow-lg min-h-60 w-4/5 lg:w-2/5`}
             >
@@ -1137,6 +998,26 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
                 <div className='col-span-1'>
                   <div className='mb-2'>
                     <label
+                      htmlFor='reason'
+                      className='block text-sm font-medium text-secondary'
+                    >
+                      Motivo
+                    </label>
+                    <Select
+                      id='client_statu_reason_id'
+                      options={clientReason}
+                      placeholder='Seleccione Motivo'
+                      defaultValue={formDataEnd.client_statu_reason_id}
+                      onChange={(event) =>
+                        handleSelectChange(event, 'client_statu_reason_id')
+                      }
+                      isSearchable
+                    />
+                  </div>
+                </div>
+                <div className='col-span-1'>
+                  <div className='mb-2'>
+                    <label
                       htmlFor='service_id'
                       className='block text-sm font-medium text-secondary'
                     >
@@ -1170,4 +1051,4 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
   );
 };
 
-export default Form;
+export default ServicesTable;

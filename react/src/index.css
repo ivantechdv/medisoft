@@ -65,3 +65,7 @@ body {
   visibility: visible;
   z-index: 100;
 }
+input:disabled,
+textarea:disabled {
+  background-color: #efefef; /* Aplica el color de fondo cuando el input está deshabilitado */
+}

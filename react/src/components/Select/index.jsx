@@ -7,7 +7,7 @@ const CustomSelect = ({
   defaultValue,
   isDisabled = false,
   targetHeight = 30,
-  isMulti = false, // Nueva prop para manejar múltiples selecciones
+  isMulti = false,
   onHandleLoadingSelect = null,
 }) => {
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -37,16 +37,19 @@ const CustomSelect = ({
       minHeight: targetHeight,
       marginTop: '4px',
       borderWidth: '1px',
-      borderColor: state.isFocused ? '#6366F1' : '#D1D5DB', // Cambia el color del borde cuando está enfocado o no
+      borderColor: state.isFocused ? '#6366F1' : '#D1D5DB',
       boxShadow: state.isFocused
         ? '0 0 0 0.1rem rgba(99, 102, 241, 0.25)'
         : 'none',
+      color: state.isDisabled ? '#000' : '#000',
+      backgroundColor: state.isDisabled ? '#f5f5f5' : base.backgroundColor,
     }),
     valueContainer: (base) => ({
       ...base,
       padding: '0 8px',
       alignItems: 'center',
       minHeight: `${targetHeight - 8}px`,
+      color: '#000',
     }),
     multiValue: (base) => ({
       ...base,
@@ -56,6 +59,7 @@ const CustomSelect = ({
     multiValueLabel: (base) => ({
       ...base,
       padding: '2px',
+      color: '#000',
     }),
     clearIndicator: (base) => ({
       ...base,
@@ -64,6 +68,18 @@ const CustomSelect = ({
     dropdownIndicator: (base) => ({
       ...base,
       padding: `${(targetHeight - 20) / 2}px`,
+    }),
+    placeholder: (base, state) => ({
+      ...base,
+      color: state.isDisabled ? '#000' : base.color,
+    }),
+    input: (base, state) => ({
+      ...base,
+      color: state.isDisabled ? '#000' : base.color,
+    }),
+    singleValue: (base, state) => ({
+      ...base,
+      color: state.isDisabled ? '#000' : base.color,
     }),
   };
 
@@ -78,7 +94,7 @@ const CustomSelect = ({
       styles={styles}
       onChange={handleChange}
       isDisabled={isDisabled}
-      isMulti={isMulti} // Propiedad para permitir múltiples selecciones
+      isMulti={isMulti}
       defaultValue={selectedOptions}
       value={selectedOptions}
       key={
