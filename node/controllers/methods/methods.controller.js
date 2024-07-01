@@ -50,7 +50,9 @@ CTRL.createOrUpdateBulk = async (req, res, next, Model) => {
 
 CTRL.update = async (req, res, next, Model) => {
   try {
+    console.log("reqboody", req.body);
     const { id } = req.params;
+    console.log("id", id);
     const data = await Model.update(req.body, {
       where: { id },
     });
@@ -144,6 +146,13 @@ CTRL.getAll = async (
       }
     }
 
+    console.log("service start ", queryParameters);
+    if (queryParameters.service_start === "true") {
+      condition["service_start"] = {
+        [Sequelize.Op.ne]: null, // Solo servicios que tienen service_start
+      };
+    }
+
     const queryOptions = {
       where: condition,
     };
@@ -158,6 +167,7 @@ CTRL.getAll = async (
       optionInclude = include;
     }
 
+    console.log("condition =>", condition);
     const result = await Model.findAll({
       where: condition,
       include: optionInclude,

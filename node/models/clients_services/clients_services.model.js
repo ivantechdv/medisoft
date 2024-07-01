@@ -3,6 +3,7 @@ const sequelize = require("../../database/sequelize");
 const Client = require("../clients/clients.model");
 const Employee = require("../employees/employees.model");
 const Service = require("../services/services.model");
+const ClientStatuReason = require("../clients_statu_reasons/clients_statu_reasons.model");
 
 const ClientsServices = sequelize.define("clients_services", {
   id: {
@@ -13,6 +14,10 @@ const ClientsServices = sequelize.define("clients_services", {
   client_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
+  },
+  client_statu_reason_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
   },
   service_id: {
     type: DataTypes.INTEGER,
@@ -39,6 +44,10 @@ const ClientsServices = sequelize.define("clients_services", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+  detail_end: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   service_demand: {
     type: DataTypes.DATE,
     allowNull: true,
@@ -50,6 +59,11 @@ const ClientsServices = sequelize.define("clients_services", {
   service_end: {
     type: DataTypes.DATE,
     allowNull: true,
+  },
+  statu: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: true,
   },
   createdAt: {
     type: DataTypes.DATE,
@@ -68,6 +82,9 @@ const ClientsServices = sequelize.define("clients_services", {
 });
 
 ClientsServices.belongsTo(Client, { foreignKey: "client_id" });
+ClientsServices.belongsTo(ClientStatuReason, {
+  foreignKey: "client_statu_reason_id",
+});
 ClientsServices.belongsTo(Service, { foreignKey: "service_id" });
 Client.hasMany(ClientsServices, { foreignKey: "client_id" });
 ClientsServices.belongsTo(Employee, { foreignKey: "employee_id" });

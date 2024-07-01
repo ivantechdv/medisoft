@@ -1,15 +1,12 @@
 const CTRL = {};
 const sequelize = require("../../database/sequelize");
-const Client = require("../../models/clients/clients.model");
-const ClientsServices = require("../../models/clients_services/clients_services.model");
-const ClientStatuReason = require("../../models/clients_statu_reasons/clients_statu_reasons.model");
-const Employee = require("../../models/employees/employees.model");
-const Service = require("../../models/services/services.model");
+const ConceptsInvoices = require("../../models/concepts_invoices/concepts_invoices.model");
+const PaymentPeriod = require("../../models/payment_period/payment_period.model");
 const Methods = require("../methods/methods.controller");
 
 CTRL.create = async (req, res, next) => {
   try {
-    Methods.create(req, res, next, ClientsServices);
+    Methods.create(req, res, next, ConceptsInvoices);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ error: error.message });
@@ -18,7 +15,7 @@ CTRL.create = async (req, res, next) => {
 
 CTRL.update = async (req, res, next) => {
   try {
-    await Methods.update(req, res, next, ClientsServices);
+    await Methods.update(req, res, next, ConceptsInvoices);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ error: error });
@@ -28,7 +25,7 @@ CTRL.update = async (req, res, next) => {
 CTRL.get = async (req, res, next) => {
   try {
     const condition = {};
-    Methods.get(req, res, next, ClientsServices, condition);
+    Methods.get(req, res, next, ConceptsInvoices, condition);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -36,18 +33,8 @@ CTRL.get = async (req, res, next) => {
 CTRL.getAll = async (req, res, next) => {
   try {
     const condition = {};
-    const include = [
-      {
-        model: Service,
-      },
-      {
-        model: Employee,
-      },
-      {
-        model: ClientStatuReason,
-      },
-    ];
-    Methods.getAll(req, res, next, ClientsServices, condition, include);
+    const include = [{ model: PaymentPeriod }];
+    Methods.getAll(req, res, next, ConceptsInvoices, condition, include);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -55,7 +42,7 @@ CTRL.getAll = async (req, res, next) => {
 CTRL.getById = async (req, res, next) => {
   try {
     const condition = {};
-    Methods.getById(req, res, next, ClientsServices, condition);
+    Methods.getById(req, res, next, ConceptsInvoices, condition);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
