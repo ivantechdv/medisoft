@@ -235,6 +235,11 @@ app.use(
   trafic,
   require("./routes/clients_invoices/clients_invoices.routes")
 );
+app.use(
+  "/api/v1/client-follow-ups",
+  trafic,
+  require("./routes/clients_follow_ups/clients_follow_ups.routes")
+);
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
   next();

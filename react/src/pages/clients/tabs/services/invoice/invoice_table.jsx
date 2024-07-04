@@ -423,7 +423,7 @@ const InvoicesTable = ({ id, onFormData, onGetRecordById, updateList }) => {
   return (
     <>
       <form>
-        {(loading || isLoading) && <Spinner />}
+        {isLoading && <Spinner />}
         <div className='relative rounded '>
           <div className='flex justify-between'>
             <div className='border border-gray-800 p-2'>
