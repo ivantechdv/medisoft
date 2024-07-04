@@ -463,8 +463,11 @@ const ServicesTable = ({ id, onFormData, onGetRecordById, updateList }) => {
 
         // Asignar preselectionEmployees a setPreselection
         setPreselection(preselectionEmployees);
-        setShowBtnPreselection(true);
         setActiveService(true);
+      }
+
+      if (row.employee_id == 0) {
+        setShowBtnPreselection(true);
       }
     }
     setIsEditingService(true);
@@ -645,7 +648,7 @@ const ServicesTable = ({ id, onFormData, onGetRecordById, updateList }) => {
   return (
     <>
       <form>
-        {(loading || isLoading) && <Spinner />}
+        {isLoading && <Spinner />}
         <div className='relative rounded min-h-80'>
           <div className='flex justify-between'>
             <div className='border border-gray-800 p-2'>

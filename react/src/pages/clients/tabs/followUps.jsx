@@ -12,35 +12,55 @@ import 'react-quill/dist/quill.snow.css';
 import Select from '../../../components/Select';
 import Spinner from '../../../components/Spinner/Spinner';
 import ToastNotify from '../../../components/toast/toast';
+import {
+  FaPlusCircle,
+  FaSearch,
+  FaEdit,
+  FaMinusCircle,
+  FaEye,
+} from 'react-icons/fa';
+import { decode } from 'html-entities';
 const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
-  const [formData, setFormData] = useState({
-    patology_id: '',
-    recommendations: '',
-  });
-  const [images, setImages] = useState([]);
-  const [patologies, setPatologies] = useState([]);
-  const [selectedPatologies, setSelectedPatologies] = useState([]);
-  const [recommendations, setRecommendations] = useState('');
-  const [selectedPatologiesOld, setSelectedPatologiesOld] = useState([]);
-  const [recommendationsOld, setRecommendationsOld] = useState('');
+  const initialValues = {
+    title: '',
+    date: '',
+    client_id: '',
+    employee_id: '',
+    text: '',
+  };
+  const [formData, setFormData] = useState(initialValues);
+  const [employees, setEmployees] = useState([]);
   const [loadingCount, setLoadingCount] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
+  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [selectedOption, setSelectedOption] = useState('client');
+  const [followUps, setFollowUps] = useState([]);
+  const [isReadOnly, setIsReadOnly] = useState([]);
   let loading = loadingCount > 0;
   const quillRef = useRef(null);
   const navigateTo = useNavigate();
   useEffect(() => {
     const fetchSelect = async () => {
       try {
-        const order = 'name-asc';
-        const patologies = await getData(`patologies/all?order=${order}`);
+        const queryParameters = new URLSearchParams();
+        queryParameters.append('statu', 1);
+        queryParameters.append('client_id', onFormData.id);
+        queryParameters.append('service_start', 'true');
+        const order = 'id-desc';
 
-        if (patologies) {
-          const options = patologies.map((item) => ({
-            value: item.id,
-            label: item.name,
+        const services = await getData(`client-service/all?${queryParameters}`);
+        console.log('client-service =>', services);
+        if (services) {
+          const options = services.map((item) => ({
+            value: item.employee?.id,
+            label: item.employee?.name,
           }));
-
-          setPatologies(options);
+          setEmployees(options);
+          const responseFollowUps = await getData(
+            `client-follow-ups/all?client_id=${onFormData.id}&order=${order}`,
+          );
+          console.log('followUps', responseFollowUps);
+          setFollowUps(responseFollowUps);
         }
       } catch (error) {
         console.log('ERRR', error);
@@ -54,25 +74,6 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
 
   useEffect(() => {
     if (onFormData) {
-      setRecommendations(onFormData.recommendations);
-      setRecommendationsOld(onFormData.recommendations);
-      const clientPatologies = onFormData.clients_patologies
-        .map((cp) => ({
-          value: cp.patology_id,
-          label: cp.patology.name,
-        }))
-        .sort((a, b) => a.label.localeCompare(b.label));
-
-      setSelectedPatologies(clientPatologies);
-      setSelectedPatologiesOld(clientPatologies);
-
-      const isQuillEmpty = isQuillContentEmpty(onFormData.recommendations);
-      let recommendations = '';
-      if (isQuillEmpty) {
-        recommendations = '';
-      } else {
-        recommendations = onFormData.recommendations;
-      }
       setTimeout(() => setLoadingCount((prev) => prev - 1), 500);
     }
   }, [onFormData]);
@@ -83,24 +84,6 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     return div.textContent || div.innerText || '';
   };
 
-  useEffect(() => {
-    // Strip HTML tags from recommendations and recommendationsOld
-    const strippedRecommendations = stripHTML(recommendations);
-    const strippedRecommendationsOld = stripHTML(recommendationsOld);
-
-    // Compare selectedPatologies and selectedPatologiesOld, and stripped recommendations
-    const hasChanges =
-      JSON.stringify(selectedPatologies) !==
-        JSON.stringify(selectedPatologiesOld) ||
-      strippedRecommendations !== strippedRecommendationsOld;
-    setUnsavedChanges(hasChanges);
-  }, [
-    selectedPatologies,
-    selectedPatologiesOld,
-    recommendations,
-    recommendationsOld,
-    setUnsavedChanges,
-  ]);
   const handleChange = (event) => {
     const { id, value } = event.target;
     setFormData((prevFormData) => ({
@@ -108,9 +91,13 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       [id]: value,
     }));
   };
+  const handleChangeSelect = (event, field) => {
+    const newValue = event.value;
 
-  const handleSelectChange = (selected) => {
-    setSelectedPatologies(selected);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [field]: newValue,
+    }));
   };
 
   const isQuillContentEmpty = (content) => {
@@ -119,51 +106,40 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     return strippedContent.trim() === '';
   };
   const handleQuill = (value) => {
-    setRecommendations(value);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      ['text']: value,
+    }));
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (selectedPatologies.length === 0) {
-      ToastNotify({
-        message: 'Debe seleccionar al menos una patología.',
-        position: 'top-left',
-        type: 'error',
-      });
-      return; // Detener el envío del formulario
-    }
+    const { date, title, text, employee_id } = formData;
 
-    // Validar si el campo de recomendaciones está vacío
-    if (isQuillContentEmpty(recommendations)) {
+    if (
+      !date ||
+      !title ||
+      isQuillContentEmpty(text) ||
+      (selectedOption === 'employee' && !employee_id)
+    ) {
       ToastNotify({
-        message: 'El campo de recomendaciones no puede estar vacío.',
-        position: 'top-left',
+        message: 'Por favor, complete todos los campos requeridos',
+        position: 'top-right',
         type: 'error',
       });
-      return; // Detener el envío del formulario
+      return;
     }
     setIsLoading(true);
     try {
       let message = '';
-      const clientsPatologiesData = selectedPatologies.map((patology) => ({
-        patology_id: patology.value, // Suponiendo que el valor es el id de la patología
-        client_id: id,
-      }));
-      let response = false;
-      response = await postData('clients-patologies', clientsPatologiesData);
-      console.log('response', response);
+      const dataToSend = { ...formData, client_id: onFormData.id };
 
-      const dataToSend = {
-        recommendations: recommendations,
-      };
-      response = await putData('clients/' + id, dataToSend);
+      let response = false;
+      response = await postData('client-follow-ups', dataToSend);
       if (response) {
-        onGetRecordById(id);
-        message = 'Datos especificos registrado con exito';
         ToastNotify({
-          message: message,
-          position: 'top-left',
-          type: 'success',
+          message: 'Seguimiento registrado con exito!',
+          position: 'top',
         });
       }
     } catch (error) {
@@ -172,62 +148,247 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       setIsLoading(false);
     }
   };
+  const openModal = (row = false) => {
+    setFormData(initialValues);
+    setIsReadOnly(false);
+    setSelectedOption('client');
+    console.log('row => ', row);
+    if (row) {
+      if (row.employee_id >= 1) {
+        setSelectedOption('employee');
+      }
+      setFormData(row);
+      setIsReadOnly(true);
+    }
+    setIsOpenModal(true);
+  };
+  const closeModal = () => {
+    setFormData(initialValues);
+    setIsOpenModal(false);
+  };
+  const handleOptionChange = (event) => {
+    setSelectedOption(event.target.value);
+  };
   return (
     <form className=''>
       {(loading || isLoading) && <Spinner />}
       <div className='relative rounded min-h-[calc(100vh-235px)]'>
-        <div className='col-span-2 md:grid md:grid-cols-2 gap-2'>
-          <div className='col-span-2'>
-            <label
-              htmlFor='email'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Patologías
-            </label>
-            <Select
-              id='patology_id'
-              name='patology_id'
-              options={patologies}
-              onChange={handleSelectChange}
-              defaultValue={selectedPatologies}
-              isMulti={true} // Enable multi-selection
-            />
+        <div className='flex justify-between'>
+          <div className='border border-gray-800 p-2'>
+            Lista de seguimientos
           </div>
-          <div className='col-span-2'>
-            <label
-              htmlFor='recommendations'
-              className='block text-sm font-medium text-gray-700'
+          <div className='flex space-x-2'>
+            <button
+              type='button'
+              className='bg-primary text-lg text-white font-bold py-2 px-2 rounded h-8'
+              onClick={() => openModal(false)}
             >
-              Recomendaciones
-            </label>
-            <ReactQuill
-              ref={quillRef}
-              value={recommendations}
-              onChange={handleQuill}
-              style={{ minHeight: '200px', height: '200px' }}
-              modules={{
-                toolbar: [
-                  [{ header: [1, 2, 3, 4, 5, 6, false] }],
-                  ['bold', 'italic', 'underline', 'link'],
-                  [{ list: 'ordered' }, { list: 'bullet' }],
-                  [{ align: [] }],
-                  ['blockquote'],
-                  ['image', 'video'], // Agregar herramientas de imagen y video
-                ],
-              }}
-            />
+              <FaPlusCircle className='text-lg' />
+            </button>
           </div>
         </div>
+        <div className='col-span-2 md:grid md:grid-cols-2 gap-2'>
+          {followUps.length > 0 &&
+            followUps.map((row) => (
+              <>
+                <div
+                  className='flex justify-between items-center bg-white rounded-lg p-4 shadow-sm my-2 border border-gray-300 col-span-2 cursor-pointer'
+                  onClick={() => openModal(row)}
+                >
+                  <div className='flex items-center w-full'>
+                    <div className='w-10 h-10 rounded-full mr-4 border border-blue-500 flex justify-center items-center'>
+                      {row.id}
+                    </div>
+                    <div className='w-full'>
+                      <div className='flex justify-between items-center w-full'>
+                        <h4 className='text-lg font-semibold flex-grow'>
+                          {row.employee_id != 0
+                            ? 'Empleado ' + row.employee.name + '=> '
+                            : ''}
+                          {row.title}
+                        </h4>
+                        <span className='text-sm text-gray-600'>
+                          {row.date}
+                        </span>
+                      </div>
+                      <p
+                        className='text-sm'
+                        dangerouslySetInnerHTML={{ __html: decode(row.text) }}
+                      ></p>
+                    </div>
+                  </div>
+                  <div className='flex items-center'>
+                    <button className='bg-transparent border-none text-gray-500 hover:text-red-500'>
+                      <i className='fas fa-trash'></i>
+                    </button>
+                    <button className='ml-4 bg-transparent border-none text-gray-500 hover:text-orange-500'>
+                      <i className='fas fa-ellipsis-v'></i>
+                    </button>
+                  </div>
+                </div>
+              </>
+            ))}
+        </div>
       </div>
-      <div className='flex justify-end items-end  pr-4 mt-4'>
-        <button
-          type='submit'
-          className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-          onClick={handleSubmit}
-        >
-          Guardar
-        </button>
-      </div>
+      {isOpenModal && (
+        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
+          <div
+            className={`relative bg-white p-2 rounded shadow-lg min-h-80 w-4/5 lg:w-1/2 max-h-screen overflow-y-auto`}
+          >
+            <button
+              className='absolute top-0 right-0 text-gray-800 text-lg'
+              onClick={closeModal}
+            >
+              <svg
+                className='w-6 h-6'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M6 18L18 6M6 6l12 12'
+                />
+              </svg>
+            </button>
+            <div className={`col-span-1 md:grid md:grid-cols-1 gap-2 p-2`}>
+              <div className='col-span-1'>
+                <h3 className='text-lg font-semibold mb-4'>
+                  Seguimiento sobre
+                </h3>
+
+                <div className='flex items-center mb-4'>
+                  <label className='mr-4'>
+                    <input
+                      type='radio'
+                      value='client'
+                      checked={selectedOption === 'client'}
+                      onChange={handleOptionChange}
+                      className='mr-2'
+                      disabled={isReadOnly}
+                    />
+                    Cliente
+                  </label>
+                  <label>
+                    <input
+                      type='radio'
+                      value='employee'
+                      checked={selectedOption === 'employee'}
+                      onChange={handleOptionChange}
+                      className='mr-2'
+                      disabled={isReadOnly}
+                    />
+                    Trabajador
+                  </label>
+                </div>
+              </div>
+              {selectedOption === 'employee' && (
+                <div className='mb-4'>
+                  <label
+                    htmlFor='employee_id'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Trabajador
+                  </label>
+                  <Select
+                    id='employee_id'
+                    options={employees}
+                    placeholder='Seleccione...'
+                    defaultValue={formData.employee_id}
+                    onChange={(event) =>
+                      handleChangeSelect(event, 'employee_id')
+                    }
+                    isSearchable
+                    isDisabled={isReadOnly}
+                  />
+                </div>
+              )}
+              <div className='col-span-1'>
+                <div className='mb-2'>
+                  <label
+                    htmlFor='service_start'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Fecha
+                  </label>
+                  <input
+                    type='date'
+                    id='date'
+                    value={formData.date == null ? '' : formData.date}
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='mb-1'>
+                  <label
+                    htmlFor='title'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Titulo
+                  </label>
+                  <input
+                    type='text'
+                    id='title'
+                    value={formData.title}
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='mb-1'>
+                  <label
+                    htmlFor='text'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Texto
+                  </label>
+                  <ReactQuill
+                    ref={quillRef}
+                    value={formData.text}
+                    onChange={handleQuill}
+                    readOnly={isReadOnly}
+                    style={{ minHeight: '200px', height: '200px' }}
+                    modules={{
+                      toolbar: [
+                        [{ header: [1, 2, 3, 4, 5, 6, false] }],
+                        ['bold', 'italic', 'underline', 'link'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                        [{ align: [] }],
+                        ['blockquote'],
+                        ['image', 'video'], // Agregar herramientas de imagen y video
+                      ],
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className='flex justify-end p-4 mt-12'>
+              <div className='flex'>
+                <button
+                  type='button'
+                  className='bg-gray-500 text-white font-bold py-2 px-2 text-sm rounded mr-2'
+                  onClick={closeModal}
+                >
+                  Cerrar
+                </button>
+                <button
+                  type='button'
+                  className={`py-2 px-2 text-sm rounded font-bold bg-primary text-white hover:bg-primary-dark ${
+                    isReadOnly ? 'bg-blue-300 cursor-not-allowed' : ''
+                  }`}
+                  onClick={handleSubmit}
+                  disabled={isReadOnly}
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 };

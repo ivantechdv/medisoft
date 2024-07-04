@@ -17,6 +17,7 @@ import General from './tabs/general';
 import Specific from './tabs/specific';
 import Service from './tabs/services/index';
 import ModalLogs from './modalLogs';
+import FollowUps from './tabs/followUps';
 const Clients = () => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -347,7 +348,14 @@ const Clients = () => {
                   setUnsavedChanges={setUnsavedChanges}
                 />
               )}
-              {activeTab === 'seguimientos' && 'Seguimientos'}
+              {activeTab === 'seguimientos' && (
+                <FollowUps
+                  id={id}
+                  onFormData={formData}
+                  onGetRecordById={getRecordById}
+                  setUnsavedChanges={setUnsavedChanges}
+                />
+              )}
             </div>
           </div>
         </div>
