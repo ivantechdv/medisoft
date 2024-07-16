@@ -15,14 +15,17 @@ import {
 import ServicesTable from './service/services_table';
 import InvoicesTable from './invoice/invoice_table';
 const Index = ({ id, onFormData, onGetRecordById }) => {
+  const servicesTableRef = useRef();
+  const invoicesTableRef = useRef();
   const updateListInvoice = (origin) => {
-    if (origin == 'invoice') {
-      updateListService();
+    if (origin === 'invoice') {
+      servicesTableRef.current.updateListService();
     }
   };
-  const updateListService = () => {
-    if (origin == 'service') {
-      updateListInvoice();
+
+  const updateListService = (origin) => {
+    if (origin === 'service') {
+      invoicesTableRef.current.updateListInvoice();
     }
   };
   return (
@@ -31,12 +34,14 @@ const Index = ({ id, onFormData, onGetRecordById }) => {
         id={id}
         onFormData={onFormData}
         onGetRecordById={onGetRecordById}
+        ref={servicesTableRef}
         updateList={updateListService}
       />
       <InvoicesTable
         id={id}
         onFormData={onFormData}
         onGetRecordById={onGetRecordById}
+        ref={invoicesTableRef}
         updateList={updateListInvoice}
       />
     </>

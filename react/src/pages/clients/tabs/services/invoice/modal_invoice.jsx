@@ -7,6 +7,7 @@ import {
   InfoSweetAlert,
 } from '../../../../../components/SweetAlert/SweetAlert';
 import ToastNotify from '../../../../../components/toast/toast';
+import Draggable from 'react-draggable';
 const ModalInvoices = ({
   closeModalConceptsInvoice,
   isEditingService,
@@ -14,6 +15,7 @@ const ModalInvoices = ({
   setIsLoading,
   rowFormData,
   handleLowService,
+  getRows,
 }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Servicio Facturable',
@@ -68,6 +70,7 @@ const ModalInvoices = ({
         }
 
         const option_concepts = await getData(`concepts-invoices/all?statu=1`);
+        console.log('option_concepts', option_concepts);
         if (option_concepts) {
           setConcepts(option_concepts);
           const options = option_concepts.map((item) => ({
@@ -120,6 +123,18 @@ const ModalInvoices = ({
         : id === 'discount' || id === 'total'
         ? parseFloat(value) || 0
         : value;
+    calculateValues(id, parsedValue);
+  };
+  const handleBlur = (event) => {
+    const { id, value } = event.target;
+    const parsedValue =
+      id === 'total' ? parseFloat(value).toFixed(2) || '0.00' : value;
+
+    setFormData({
+      ...formData,
+      [id]: parsedValue,
+    });
+
     calculateValues(id, parsedValue);
   };
 
@@ -323,12 +338,13 @@ const ModalInvoices = ({
     } catch (error) {
       console.log('error =>', error);
     } finally {
+      getRows();
       setIsLoading(false);
     }
   };
   return (
-    <>
-      <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
+    <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
+      <Draggable>
         <div
           className={`relative bg-white p-2 rounded shadow-lg min-h-80 w-4/5 lg:w-1/4 max-h-screen overflow-y-auto`}
         >
@@ -435,6 +451,7 @@ const ModalInvoices = ({
                   id='discount'
                   value={formData.discount}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   disabled={isEditingService}
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
@@ -451,6 +468,7 @@ const ModalInvoices = ({
                   id='total'
                   value={formData.total}
                   onChange={handleChange}
+                  onBlur={handleBlur}
                   disabled={isEditingService}
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
@@ -531,8 +549,8 @@ const ModalInvoices = ({
             </div>
           </div>
         </div>
-      </div>
-    </>
+      </Draggable>
+    </div>
   );
 };
 

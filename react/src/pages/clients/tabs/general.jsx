@@ -896,7 +896,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 htmlFor='first_name'
                 className='block text-sm font-medium text-gray-700'
               >
-                Nombres
+                Nombre
               </label>
               <input
                 type='text'
@@ -1072,7 +1072,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                           <th className='border border-gray-300'>
                             Codigo Postal
                           </th>
-                          <th className='border border-gray-300'>Nombre</th>
+                          <th className='border border-gray-300'>Poblacion</th>
                           <th className='border border-gray-300'>Provincia</th>
                         </tr>
                       </thead>
@@ -1107,8 +1107,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 htmlFor='cod_post_id'
                 className='block text-sm font-medium text-gray-700 mt-2'
               >
-                Codigo postal: {selectedCodPost.cod_post} <br />
-                Nombre: {selectedCodPost.name}
+                Población: {selectedCodPost.name}
                 <br />
                 Provincia:{selectedCodPost.state}
               </label>
