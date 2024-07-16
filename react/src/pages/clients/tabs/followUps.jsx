@@ -20,12 +20,47 @@ import {
   FaEye,
 } from 'react-icons/fa';
 import { decode } from 'html-entities';
+import { Tooltip } from 'react-tooltip';
+import {
+  ConfirmSweetAlert,
+  InfoSweetAlert,
+} from '../../../components/SweetAlert/SweetAlert';
 const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
+  const sweetAlert = ConfirmSweetAlert({
+    title: 'Seguimientos',
+    text: '¿Esta seguro que desea procesar el seguimiento?',
+    icon: 'question',
+  });
+
+  const formatDateTime = () => {
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false, // Cambia al timezone correspondiente
+    };
+
+    const formattedDateTime = new Intl.DateTimeFormat('es-ES', options).format(
+      new Date(),
+    );
+
+    const formattedDate = formattedDateTime.replace(
+      /(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/,
+      '$3-$2-$1T$4:$5',
+    );
+
+    console.log('formattedDateTime:', formattedDateTime);
+    console.log('formattedDate:', formattedDate);
+    return formattedDate;
+  };
   const initialValues = {
     title: '',
-    date: '',
+    date: formatDateTime(),
     client_id: '',
-    employee_id: '',
+    employee_id: null,
     text: '',
   };
   const [formData, setFormData] = useState(initialValues);
@@ -39,6 +74,15 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   let loading = loadingCount > 0;
   const quillRef = useRef(null);
   const navigateTo = useNavigate();
+
+  const getRows = async () => {
+    const order = 'dateandtime-desc';
+    const responseFollowUps = await getData(
+      `client-follow-ups/all?client_id=${onFormData.id}&order=${order}`,
+    );
+    console.log('followUps', responseFollowUps);
+    setFollowUps(responseFollowUps);
+  };
   useEffect(() => {
     const fetchSelect = async () => {
       try {
@@ -56,11 +100,6 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
             label: item.employee?.name,
           }));
           setEmployees(options);
-          const responseFollowUps = await getData(
-            `client-follow-ups/all?client_id=${onFormData.id}&order=${order}`,
-          );
-          console.log('followUps', responseFollowUps);
-          setFollowUps(responseFollowUps);
         }
       } catch (error) {
         console.log('ERRR', error);
@@ -70,6 +109,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     };
 
     fetchSelect();
+    getRows();
   }, []);
 
   useEffect(() => {
@@ -129,10 +169,39 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       });
       return;
     }
+    await sweetAlert.showSweetAlert().then((result) => {
+      const isConfirmed = result !== null && result;
+      if (!isConfirmed) {
+        ToastNotify({
+          message: 'Acción cancelada por el usuario',
+          position: 'top-right',
+        });
+        return;
+      } else {
+        const datetime = new Date(date);
+        const formattedDate = datetime.toISOString().slice(0, 10); // Formato YYYY-MM-DD
+        const formattedTime = datetime.toTimeString().slice(0, 8); // Formato HH:mm:ss
+
+        console.log('formattedDate', formattedDate);
+        console.log('formattedTime', formattedTime);
+        //return;
+
+        const dataToSend = {
+          date: formattedDate,
+          time: formattedTime,
+          title,
+          text,
+          employee_id,
+          client_id: onFormData.id,
+        };
+        handleSend(dataToSend);
+      }
+    });
+  };
+  const handleSend = async (dataToSend) => {
     setIsLoading(true);
     try {
       let message = '';
-      const dataToSend = { ...formData, client_id: onFormData.id };
 
       let response = false;
       response = await postData('client-follow-ups', dataToSend);
@@ -145,7 +214,10 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     } catch (error) {
       console.log('error =>', error);
     } finally {
+      getRows();
+
       setIsLoading(false);
+      closeModal();
     }
   };
   const openModal = (row = false) => {
@@ -157,7 +229,12 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       if (row.employee_id >= 1) {
         setSelectedOption('employee');
       }
+      const formattedDateTime = `${row.date}T${row.time}`;
       setFormData(row);
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        date: formattedDateTime,
+      }));
       setIsReadOnly(true);
     }
     setIsOpenModal(true);
@@ -168,6 +245,17 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   };
   const handleOptionChange = (event) => {
     setSelectedOption(event.target.value);
+  };
+  const truncateText = (text, maxLength) => {
+    // Eliminar etiquetas HTML y espacios innecesarios
+    console.log('decode', decode(text).split('</p>'));
+    const cleanText = decode(text).split('</p>');
+
+    // Truncar el texto si excede maxLength
+    if (cleanText[0].length > maxLength) {
+      return cleanText[0].substring(0, maxLength) + '...';
+    }
+    return cleanText[0].replace('<p>', '');
   };
   return (
     <form className=''>
@@ -202,19 +290,33 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     <div className='w-full'>
                       <div className='flex justify-between items-center w-full'>
                         <h4 className='text-lg font-semibold flex-grow'>
-                          {row.employee_id != 0
+                          {row.employee_id != 0 && row.employee_id != null
                             ? 'Empleado ' + row.employee.name + '=> '
                             : ''}
                           {row.title}
                         </h4>
                         <span className='text-sm text-gray-600'>
                           {row.date}
+                          {' ' + row.time}
                         </span>
                       </div>
-                      <p
-                        className='text-sm'
-                        dangerouslySetInnerHTML={{ __html: decode(row.text) }}
-                      ></p>
+                      <div className='flex justify-between items-center w-full'>
+                        <p
+                          className='text-sm'
+                          dangerouslySetInnerHTML={{
+                            __html: decode(truncateText(row.text, 100)),
+                          }}
+                        ></p>
+                        <span className='text-sm text-gray-600'>
+                          <button
+                            type='button'
+                            data-tooltip-id='tooltip'
+                            data-tooltip-html={decode(row.text)}
+                          >
+                            <FaEye className='text-lg' />
+                          </button>
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div className='flex items-center'>
@@ -226,6 +328,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     </button>
                   </div>
                 </div>
+                <Tooltip id='tooltip' />
               </>
             ))}
         </div>
@@ -314,7 +417,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     Fecha
                   </label>
                   <input
-                    type='date'
+                    type='datetime-local'
                     id='date'
                     value={formData.date == null ? '' : formData.date}
                     onChange={handleChange}

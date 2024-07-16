@@ -142,11 +142,18 @@ CTRL.getAll = async (
       const [field, direction] = queryParameters.order.split("-");
       // Validar y usar 'field' y 'direction' para ordenar los resultados
       if (direction === "asc" || direction === "desc") {
-        order = [[field, direction.toUpperCase()]];
+        const fields = field.split("and");
+        if (fields) {
+          for (const orderField of fields) {
+            order.push([orderField, direction.toUpperCase()]);
+          }
+        } else {
+          order = [[field, direction.toUpperCase()]];
+        }
       }
     }
 
-    console.log("service start ", queryParameters);
+    console.log("order", order);
     if (queryParameters.service_start === "true") {
       condition["service_start"] = {
         [Sequelize.Op.ne]: null, // Solo servicios que tienen service_start

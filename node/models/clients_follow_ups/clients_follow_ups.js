@@ -19,6 +19,10 @@ const ClientFollowUp = sequelize.define(
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
+    time: {
+      type: DataTypes.TIME,
+      allowNull: true,
+    },
     client_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
