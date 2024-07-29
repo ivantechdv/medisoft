@@ -5,6 +5,8 @@ import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import Modal from './modal';
+import { useParams, useLocation } from 'react-router-dom';
+
 const Users = () => {
   const initialValues = {
     name: '',
@@ -18,10 +20,12 @@ const Users = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [title, setTitle] = useState('');
   const [formData, setFormData] = useState(initialValues);
-  const id = useRef('');
+  const { id } = useParams();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [tableTopPosition, setTableTopPosition] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const table = document.querySelector('.table-container'); // Clase de contenedor de la tabla
@@ -292,7 +296,8 @@ const Users = () => {
           </p>
         </div>
       )}
-      <Modal isOpen={isModalOpen} onClose={closeModal} />
+      <Modal isOpen={isModalOpen} onClose={closeModal} id={id} />
+      {loading && <Spinner />}
     </div>
   );
 };

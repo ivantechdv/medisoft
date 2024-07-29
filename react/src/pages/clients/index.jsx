@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
+
 import { getData, postData, putData } from '../../api';
 import { FaFilter, FaPlusCircle, FaMinusCircle } from 'react-icons/fa';
 import Spinner from '../../components/Spinner/Spinner';
@@ -159,17 +161,17 @@ const Clients = () => {
       <Breadcrumbs
         items={[
           { label: 'Inicio', route: '/' },
-          { label: 'Clientes', route: '/Clients' },
+          { label: 'Empleadores', route: '/Clients' },
         ]}
       />
       <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400'>
         <div className='flex justify-between px-4 py-5 sm:px-6'>
           <div>
             <h3 className='text-lg font-semibold leading-6 text-gray-900'>
-              Lista de Clientes
+              Lista de Empleadores
             </h3>
             <p className='mt-1 max-w-2xl text-sm text-gray-500'>
-              Gestion de clientes.
+              Gestion de empleadores.
             </p>
           </div>
           <div className='flex space-x-2'>

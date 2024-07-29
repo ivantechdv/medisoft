@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../database/sequelize");
+const CodPost = require("../cod_posts/cod_posts.model");
 
 const Employee = sequelize.define(
   "employees",
@@ -13,7 +14,15 @@ const Employee = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    name: {
+    first_name: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    last_name: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    full_name: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
@@ -21,12 +30,16 @@ const Employee = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
-    borth_date: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
     cod_post_id: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    country_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    born_date: {
+      type: DataTypes.DATEONLY,
       allowNull: true,
     },
     dni: {
@@ -35,6 +48,10 @@ const Employee = sequelize.define(
     },
     num_social_security: {
       type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    code_phone: {
+      type: DataTypes.STRING(10),
       allowNull: true,
     },
     phone: {
@@ -49,26 +66,6 @@ const Employee = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    valid_driving_license: {
-      type: DataTypes.STRING(8),
-      allowNull: true,
-    },
-    own_vehicle: {
-      type: DataTypes.STRING(8),
-      allowNull: true,
-    },
-    cook_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    education_level_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    time_experience_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
     attach_curriculum: {
       type: DataTypes.STRING(150),
       allowNull: true,
@@ -77,12 +74,12 @@ const Employee = sequelize.define(
       type: DataTypes.STRING(150),
       allowNull: true,
     },
-    detail_task: {
-      type: DataTypes.TEXT,
+    type: {
+      type: DataTypes.STRING(100),
       allowNull: true,
     },
-    detail_diseases: {
-      type: DataTypes.TEXT,
+    start_date: {
+      type: DataTypes.DATEONLY,
       allowNull: true,
     },
     createdAt: {
@@ -103,5 +100,8 @@ const Employee = sequelize.define(
     updatedAt: "updatedAt",
   }
 );
+
+Employee.belongsTo(CodPost, { foreignKey: "cod_post_id" });
+CodPost.hasMany(Employee, { foreignKey: "cod_post_id" });
 
 module.exports = Employee;

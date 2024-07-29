@@ -1,543 +1,377 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  getData,
+  postData,
+  putData,
+  postStorage,
+  getStorage,
+} from '../../../api';
+import { useNavigate } from 'react-router-dom';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
+import Select from '../../../components/Select';
+import Spinner from '../../../components/Spinner/Spinner';
+import ToastNotify from '../../../components/toast/toast';
+import {
+  FaPlusCircle,
+  FaSearch,
+  FaEdit,
+  FaMinusCircle,
+  FaEye,
+} from 'react-icons/fa';
+import { decode } from 'html-entities';
+import { Tooltip } from 'react-tooltip';
+import {
+  ConfirmSweetAlert,
+  InfoSweetAlert,
+} from '../../../components/SweetAlert/SweetAlert';
 
-const Form = () => {
-  const [formData, setFormData] = useState({
-    dni: '',
-    nombre: '',
-    email: '',
-    fechaNacimiento: '',
-    direccion: '',
+const Form = ({
+  employee_id,
+  onFormData,
+  onGetRecordById,
+  setUnsavedChanges,
+}) => {
+  const sweetAlert = ConfirmSweetAlert({
+    title: 'Informacion especifica',
+    text: '¿Esta seguro que desea guardar la información?',
+    icon: 'question',
   });
-  const [images, setImages] = useState([]);
 
-  const handleChange = (event) => {
-    const { id, value } = event.target;
+  const formatDateTime = () => {
+    const options = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false, // Cambia al timezone correspondiente
+    };
+
+    const formattedDateTime = new Intl.DateTimeFormat('es-ES', options).format(
+      new Date(),
+    );
+
+    const formattedDate = formattedDateTime.replace(
+      /(\d+)\/(\d+)\/(\d+),\s+(\d+):(\d+):(\d+)/,
+      '$3-$2-$1T$4:$5',
+    );
+
+    console.log('formattedDateTime:', formattedDateTime);
+    console.log('formattedDate:', formattedDate);
+    return formattedDate;
+  };
+
+  const initialValues = {
+    id: '',
+    services: [],
+    patologies: [],
+    tasks: [],
+    experiences: [],
+  };
+  const [formData, setFormData] = useState(initialValues);
+  const [employees, setEmployees] = useState([]);
+  const [loadingCount, setLoadingCount] = useState(2);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isOpenModal, setIsOpenModal] = useState(false);
+  const [selectedOption, setSelectedOption] = useState('client');
+  const [gainExperiences, setGainExperiences] = useState([]);
+  const [patologies, setPatologies] = useState([]);
+  const [services, setServices] = useState([]);
+  const [tasks, setTaks] = useState([]);
+  const [isReadOnly, setIsReadOnly] = useState([]);
+  let loading = loadingCount > 0;
+  const quillRef = useRef(null);
+  const navigateTo = useNavigate();
+
+  useEffect(() => {
+    const fetchSelect = async () => {
+      try {
+        const order = 'name-asc';
+
+        const service = await getData(
+          `employees/gain-experience/all?order=${order}`,
+        );
+        setGainExperiences(service);
+        const task = await getData(`employees/task/all?order=${order}`);
+        setTaks(task);
+
+        const patologies = await getData(`patologies/all?order=${order}`);
+        setPatologies(patologies);
+        const option_services = await getData(`services/all?order=${order}`);
+        setServices(option_services);
+
+        if (employee_id) {
+          // Asegúrate de que `id` esté definido
+          await getRecordById(employee_id);
+        }
+      } catch (error) {
+        console.log('ERRR', error);
+      } finally {
+        setLoadingCount((prev) => prev - 1);
+      }
+    };
+    fetchSelect();
+  }, []);
+  useEffect(() => {
+    const getRecord = async () => {
+      try {
+        if (employee_id && patologies && services && tasks && gainExperiences) {
+          // Asegúrate de que `id` esté definido
+          await getRecordById(employee_id);
+        }
+      } catch (error) {
+        console.log('ERRR', error);
+      } finally {
+      }
+    };
+    getRecord();
+  }, [employee_id, patologies, services, tasks, gainExperiences]);
+
+  const getRecordById = async (employee_id) => {
+    try {
+      //setIsLoading(true);
+      const response = await getData(
+        'employees/specific/all?employee_id=' + employee_id,
+      );
+      if (response.length > 0) {
+        const data = response[0];
+
+        // Convert comma-separated strings into arrays
+        const servicesArray = data.services
+          ? data.services.split(',').map(Number)
+          : [];
+        const patologiesArray = data.patologies
+          ? data.patologies.split(',').map(Number)
+          : [];
+        const tasksArray = data.tasks ? data.tasks.split(',').map(Number) : [];
+        const experiencesArray = data.experiences
+          ? data.experiences.split(',').map(Number)
+          : [];
+
+        setFormData({
+          ...data,
+          services: servicesArray,
+          patologies: patologiesArray,
+          tasks: tasksArray,
+          experiences: experiencesArray,
+          employee_id: employee_id,
+          id: response[0].id,
+        });
+      }
+    } catch (error) {
+      console.error('Error al obtener el registro por id:', error);
+    } finally {
+      // setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    const { services, patologies, tasks, experiences } = formData;
+
+    if (
+      services.length === 0 ||
+      patologies.length === 0 ||
+      tasks.length === 0 ||
+      experiences.length === 0
+    ) {
+      ToastNotify({
+        message: 'Por favor,  seleccione al menos una opción en cada categoría',
+        position: 'top-right',
+        type: 'error',
+      });
+      return;
+    }
+    await sweetAlert.showSweetAlert().then((result) => {
+      const isConfirmed = result !== null && result;
+      if (!isConfirmed) {
+        ToastNotify({
+          message: 'Acción cancelada por el usuario',
+          position: 'top-right',
+        });
+        return;
+      } else {
+        const servicesString = services.join(',');
+        const patologiesString = patologies.join(',');
+        const tasksString = tasks.join(',');
+        const experiencesString = experiences.join(',');
+
+        const dataToSend = {
+          services: servicesString,
+          patologies: patologiesString,
+          tasks: tasksString,
+          experiences: experiencesString,
+          employee_id: employee_id,
+        };
+        console.log('datatosend', dataToSend);
+        handleSend(dataToSend);
+      }
+    });
+  };
+
+  const handleSend = async (dataToSend) => {
+    setIsLoading(true);
+    try {
+      let message = '';
+
+      let response = false;
+      if (formData.id == '') {
+        response = await postData('employees/specific', dataToSend);
+      } else {
+        response = await putData(
+          'employees/specific/' + formData.id,
+          dataToSend,
+        );
+      }
+      if (response) {
+        ToastNotify({
+          message: 'Información registrada con exito!',
+          position: 'top',
+        });
+      }
+    } catch (error) {
+      console.log('error =>', error);
+    } finally {
+      getRecordById(dataToSend.employee_id);
+      setIsLoading(false);
+    }
+  };
+
+  const handleSelected = (event) => {
+    const { name, value, checked } = event.target;
     setFormData((prevFormData) => ({
       ...prevFormData,
-      [id]: value,
+      [name]: checked
+        ? [...prevFormData[name], parseInt(value)]
+        : prevFormData[name].filter((id) => id !== parseInt(value)),
     }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Aquí puedes hacer lo que necesites con los datos del formulario
-    console.log(formData);
-  };
-
   return (
-    <div className='rounded '>
-      <form className='overflow-y-auto '>
-        <div className='md:grid md:grid-cols-3 gap-4'>
-          <div className='col-span-3 md:grid md:grid-cols-3 gap-4'>
-            <div className='col-span-1 md:col-span-1'>
-              <label
-                htmlFor='availability'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Años de experiencia
-              </label>
-              <select
-                name='gender_id'
-                id='gender_id'
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              >
-                <option>Seleccione</option>
-              </select>
-            </div>
-            <div className='col-span-1 md:col-span-1'>
-              <label
-                htmlFor='availability'
-                className='block text-sm font-medium text-gray-700'
-              >
-                ¿Sabe cocinar?
-              </label>
-              <select
-                name='gender_id'
-                id='gender_id'
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              >
-                <option>Seleccione</option>
-              </select>
-            </div>
-            <div className='col-span-1 md:col-span-3'>
-              <label
-                htmlFor='availability'
-                className='block text-sm font-medium text-gray-700 mb-4'
-              >
-                Disponibilidad horaria
-              </label>
-
-              <div className='col-span-3 md:grid md:grid-cols-3 gap-2'>
-                <label
-                  htmlFor='internaSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='checkbox'
-                    id='internaSemana'
-                    name='internaSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>Interna entre semana</span>
-                </label>
-                <label
-                  htmlFor='internaFinSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='checkbox'
-                    id='internaFinSemana'
-                    name='internaFinSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>Interna fin de semana</span>
-                </label>
-                <label
-                  htmlFor='externaSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='checkbox'
-                    id='externaSemana'
-                    name='externaSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>Externa entre semana</span>
-                </label>
-                <label
-                  htmlFor='externaFinSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='checkbox'
-                    id='externaFinSemana'
-                    name='externaFinSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>Externa fin de semana</span>
-                </label>
-                <label htmlFor='noches' className='inline-flex items-center'>
-                  <input
-                    type='checkbox'
-                    id='noches'
-                    name='noches'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>Noches</span>
-                </label>
-              </div>
-            </div>
-            <div className='col-span-1 md:col-span-3 gap-2'>
-              <label
-                htmlFor='availability'
-                className='block text-sm font-medium text-gray-700 mb-4'
-              >
-                ¿Permiso de conducir vigente?
-              </label>
-              <div className='col-span-3 md:grid md:grid-cols-3'>
-                <label
-                  htmlFor='internaSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='radio'
-                    id='internaSemana'
-                    name='internaSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>Si</span>
-                </label>
-                <label
-                  htmlFor='internaSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='radio'
-                    id='internaSemana'
-                    name='internaSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>No</span>
-                </label>
-              </div>
-            </div>
-            <div className='col-span-1 md:col-span-3'>
-              <label
-                htmlFor='availability'
-                className='block text-sm font-medium text-gray-700 mb-4'
-              >
-                ¿Dispone de vehiculo propio?
-              </label>
-              <div className='col-span-3 md:grid md:grid-cols-3 mb-4'>
-                <label
-                  htmlFor='internaSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='radio'
-                    id='internaSemana'
-                    name='internaSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>Si</span>
-                </label>
-                <label
-                  htmlFor='internaSemana'
-                  className='inline-flex items-center'
-                >
-                  <input
-                    type='radio'
-                    id='internaSemana'
-                    name='internaSemana'
-                    checked={''}
-                    onChange={''}
-                    className='form-checkbox h-5 w-5 text-indigo-600'
-                  />
-                  <span className='ml-2'>No</span>
-                </label>
-              </div>
-              <div className='col-span-1 md:col-span-3 gap-4 mb-4'>
-                <label
-                  htmlFor='availability'
-                  className='block text-sm font-medium text-gray-700 mb-4'
-                >
-                  Idiomas
-                </label>
-                <div className='col-span-3 md:grid md:grid-cols-3 gap-2'>
-                  <label
-                    htmlFor='internaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaSemana'
-                      name='internaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Castellano</span>
-                  </label>
-                  <label
-                    htmlFor='internaFinSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaFinSemana'
-                      name='internaFinSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Catalán</span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Frances</span>
-                  </label>
-                  <label
-                    htmlFor='externaFinSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaFinSemana'
-                      name='externaFinSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Italiano</span>
-                  </label>
-                  <label htmlFor='noches' className='inline-flex items-center'>
-                    <input
-                      type='checkbox'
-                      id='noches'
-                      name='noches'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Alemán</span>
-                  </label>
-                  <label htmlFor='noches' className='inline-flex items-center'>
-                    <input
-                      type='checkbox'
-                      id='noches'
-                      name='noches'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Portugués</span>
-                  </label>
-                  <label htmlFor='noches' className='inline-flex items-center'>
-                    <input
-                      type='checkbox'
-                      id='noches'
-                      name='noches'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Ruso</span>
-                  </label>
-                </div>
-              </div>
-              <div className='col-span-1 md:col-span-3 gap-4 mb-4'>
-                <label
-                  htmlFor='availability'
-                  className='block text-sm font-medium text-gray-700 mb-4'
-                >
-                  ¿Experiencia adquirido?
-                </label>
-                <div className='col-span-3 md:grid md:grid-cols-3 gap-2'>
-                  <label
-                    htmlFor='internaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaSemana'
-                      name='internaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Cuidando de un familiar</span>
-                  </label>
-                  <label
-                    htmlFor='internaFinSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaFinSemana'
-                      name='internaFinSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>En domicilios particulares</span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>
-                      En centros de día, residencias u hospitales
-                    </span>
-                  </label>
-                </div>
-              </div>
-              <div className='col-span-1 md:col-span-3 gap-4 mb-4'>
-                <label
-                  htmlFor='availability'
-                  className='block text-sm font-medium text-gray-700 mb-4'
-                >
-                  Formación sanitaria
-                </label>
-                <div className='col-span-3 md:grid md:grid-cols-3 gap-2'>
-                  <label
-                    htmlFor='internaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaSemana'
-                      name='internaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>
-                      Sin titulación, solo experiencia
-                    </span>
-                  </label>
-                  <label
-                    htmlFor='internaFinSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaFinSemana'
-                      name='internaFinSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Auxiliar de enfermería</span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>
-                      Técnico en cuidados sanitarios en domicilio o
-                      instituciones
-                    </span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Gerontóloga</span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Otra</span>
-                  </label>
-                </div>
-              </div>
-              <div className='col-span-1 md:col-span-3 gap-4 mb-4'>
-                <label
-                  htmlFor='availability'
-                  className='block text-sm font-medium text-gray-700 mb-4'
-                >
-                  Tarea que puede realizar como cuidadora
-                </label>
-                <div className='col-span-3 md:grid md:grid-cols-3 gap-2'>
-                  <label
-                    htmlFor='internaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaSemana'
-                      name='internaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Insulina</span>
-                  </label>
-                  <label
-                    htmlFor='internaFinSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='internaFinSemana'
-                      name='internaFinSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Auxiliar de enfermería</span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>
-                      Técnico en cuidados sanitarios en domicilio o
-                      instituciones
-                    </span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Gerontóloga</span>
-                  </label>
-                  <label
-                    htmlFor='externaSemana'
-                    className='inline-flex items-center'
-                  >
-                    <input
-                      type='checkbox'
-                      id='externaSemana'
-                      name='externaSemana'
-                      checked={''}
-                      onChange={''}
-                      className='form-checkbox h-5 w-5 text-indigo-600'
-                    />
-                    <span className='ml-2'>Otra</span>
-                  </label>
-                </div>
-              </div>
-            </div>
+    <form className=''>
+      {/* {(loading || isLoading) && <Spinner />} */}
+      <div className=' rounded min-h-[calc(100vh-235px)]'>
+        <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
+          <button
+            type='button'
+            className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+            onClick={handleSubmit}
+          >
+            Guardar
+          </button>
+        </div>
+        <div className='flex justify-between'>
+          <div className='border border-gray-800 p-1 mb-2'>
+            Disponibilidad horaria
           </div>
         </div>
-      </form>
-    </div>
+        <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
+          {services.length > 0 &&
+            services.map((service) => (
+              <div key={service.id} className='flex items-center'>
+                <input
+                  type='checkbox'
+                  id={`service-${service.id}`}
+                  name='services'
+                  value={service.id}
+                  checked={formData.services?.includes(service.id)}
+                  onChange={handleSelected}
+                  className='mr-2'
+                />
+                <label
+                  htmlFor={`service-${service.id}`}
+                  className='font-medium text-gray-700'
+                >
+                  {service.name}
+                </label>
+              </div>
+            ))}
+        </div>
+        <div className='flex justify-between'>
+          <div className='border border-gray-800 p-1 mb-2 mt-4'>
+            Experiencia
+          </div>
+        </div>
+        <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
+          {gainExperiences.length > 0 &&
+            gainExperiences.map((exp) => (
+              <div key={exp.id} className='flex items-center'>
+                <input
+                  type='checkbox'
+                  id={`exp-${exp.id}`}
+                  name='experiences'
+                  value={exp.id}
+                  checked={formData.experiences?.includes(exp.id)}
+                  onChange={handleSelected}
+                  className='mr-2'
+                />
+                <label
+                  htmlFor={`exp-${exp.id}`}
+                  className='font-medium text-gray-700'
+                >
+                  {exp.name}
+                </label>
+              </div>
+            ))}
+        </div>
+        <div className='flex justify-between'>
+          <div className='border border-gray-800 p-1 mb-2 mt-4'>
+            Tareas Realizadas
+          </div>
+        </div>
+        <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
+          {tasks.length > 0 &&
+            tasks.map((task) => (
+              <div key={task.id} className='flex items-center'>
+                <input
+                  type='checkbox'
+                  id={`tasks-${task.id}`}
+                  name='tasks'
+                  value={task.id}
+                  checked={formData.tasks?.includes(task.id)}
+                  onChange={handleSelected}
+                  className='mr-2'
+                />
+                <label
+                  htmlFor={`tasks-${task.id}`}
+                  className='font-medium text-gray-700'
+                >
+                  {task.name}
+                </label>
+              </div>
+            ))}
+        </div>
+        <div className='flex justify-between'>
+          <div className='border border-gray-800 p-1 mb-2 mt-4'>
+            Especialidad en las siguientes patologias
+          </div>
+        </div>
+        <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
+          {patologies.length > 0 &&
+            patologies.map((patologie) => (
+              <div key={patologie.id} className='flex items-center'>
+                <input
+                  type='checkbox'
+                  id={`patologie-${patologie.id}`}
+                  name='patologies'
+                  value={patologie.id}
+                  checked={formData.patologies?.includes(patologie.id)}
+                  onChange={handleSelected}
+                  className='mr-2'
+                />
+                <label
+                  htmlFor={`patologie-${patologie.id}`}
+                  className='font-medium text-gray-700'
+                >
+                  {patologie.name}
+                </label>
+              </div>
+            ))}
+        </div>
+      </div>
+    </form>
   );
 };
 

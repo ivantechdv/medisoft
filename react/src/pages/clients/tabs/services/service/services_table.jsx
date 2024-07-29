@@ -62,7 +62,7 @@ const ServicesTable = forwardRef(
     const [loadingCount, setLoadingCount] = useState(2);
     const [isLoading, setIsLoading] = useState(false);
     const [isOpenModalService, setIsOpenModalService] = useState(false);
-    const [isOpenModalConfirm, setIsOpenModalConfirm] = useState(true);
+    const [isOpenModalConfirm, setIsOpenModalConfirm] = useState(false);
 
     const loading = loadingCount > 0;
     const [modalExpanded, setModalExpanded] = useState(false);
@@ -608,18 +608,19 @@ const ServicesTable = forwardRef(
         return;
       }
 
-      await serviceEndConfirm.showSweetAlert().then((result) => {
-        const isConfirmed = result !== null && result;
-        if (!isConfirmed) {
-          ToastNotify({
-            message: 'Acción cancelada por el usuario',
-            position: 'top-right',
-          });
-          return;
-        } else {
-          handleSendServiceEnd();
-        }
-      });
+      setIsOpenModalConfirm(true);
+      // await serviceEndConfirm.showSweetAlert().then((result) => {
+      //   const isConfirmed = result !== null && result;
+      //   if (!isConfirmed) {
+      //     ToastNotify({
+      //       message: 'Acción cancelada por el usuario',
+      //       position: 'top-right',
+      //     });
+      //     return;
+      //   } else {
+      //     handleSendServiceEnd();
+      //   }
+      // });
     };
     const handleSendServiceEnd = async () => {
       try {
@@ -630,7 +631,13 @@ const ServicesTable = forwardRef(
             `client-invoice/all?client_id=${onFormData?.id}&client_service_id=${serviceIdRef.current}&statu=1`,
           );
           if (responseGetClientInvoice) {
-            handleSendInvoiceEnd(responseGetClientInvoice, dataToSend);
+            const invoiceUpdatePromises = responseGetClientInvoice.map(
+              async (invoice) => {
+                await putData(`client-invoice/${invoice.id}`, dataToSend);
+              },
+            );
+
+            await Promise.all(invoiceUpdatePromises);
           }
           responseServiceEnd = await putData(
             `client-service/${serviceIdRef.current}`,
@@ -670,6 +677,8 @@ const ServicesTable = forwardRef(
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsOpenModalConfirm(false);
       }
     };
 
@@ -735,7 +744,7 @@ const ServicesTable = forwardRef(
       <>
         <form>
           {isLoading && <Spinner />}
-          <div className='relative rounded min-h-80'>
+          <div className='relative rounded min-h-72'>
             <div className='flex justify-between'>
               <div className='border border-gray-800 p-2'>
                 Servicios Contratados
@@ -1196,7 +1205,7 @@ const ServicesTable = forwardRef(
                     className={`bg-red-500 text-white font-bold py-2 px-4 text-sm rounded mr-2 ${
                       !isChecked ? 'opacity-50 cursor-not-allowed' : ''
                     }`}
-                    onClick={handleServiceEnd}
+                    onClick={handleSendServiceEnd}
                     disabled={!isChecked}
                   >
                     Confirmar

@@ -262,7 +262,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       {(loading || isLoading) && <Spinner />}
       <div className='relative rounded min-h-[calc(100vh-235px)]'>
         <div className='flex justify-between'>
-          <div className='border border-gray-800 p-2'>
+          <div className='border border-gray-800 p-2 mb-2'>
             Lista de seguimientos
           </div>
           <div className='flex space-x-2'>
@@ -275,12 +275,12 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
             </button>
           </div>
         </div>
-        <div className='col-span-2 md:grid md:grid-cols-2 gap-2'>
+        <div className='col-span-2 md:grid md:grid-cols-2 gap-1'>
           {followUps.length > 0 &&
             followUps.map((row) => (
               <>
                 <div
-                  className='flex justify-between items-center bg-white rounded-lg p-4 shadow-sm my-2 border border-gray-300 col-span-2 cursor-pointer'
+                  className='flex justify-between items-center bg-white rounded-lg p-2 shadow-sm border border-gray-300 col-span-2 cursor-pointer'
                   onClick={() => openModal(row)}
                 >
                   <div className='flex items-center w-full'>

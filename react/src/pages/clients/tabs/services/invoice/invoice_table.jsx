@@ -43,6 +43,8 @@ const InvoicesTable = forwardRef(
     const [originServiceEnd, setOriginServiceEnd] = useState([]);
     const [visible, setVisible] = useState(false);
     const [isOpenModalServiceEnd, setIsOpenModalServiceEnd] = useState(false);
+    const [isOpenModalConfirm, setIsOpenModalConfirm] = useState(false);
+
     const [formDataEnd, setFormDataEnd] = useState({
       service_end: '',
       detail_end: '',
@@ -357,17 +359,12 @@ const InvoicesTable = forwardRef(
           position: 'top-right',
         });
         return;
+      } else {
+        setIsOpenModalConfirm(true);
       }
-      await serviceEndConfirm.showSweetAlert().then((result) => {
-        const isConfirmed = result !== null && result;
-        if (!isConfirmed) {
-          ToastNotify({
-            message: 'Acción cancelada por el usuario',
-            position: 'top-right',
-          });
-          return;
-        }
-      });
+    };
+
+    const handleSendServiceEnd = async () => {
       try {
         let responseServiceEnd = [];
         const dataToSend = { ...formDataEnd };
@@ -381,6 +378,16 @@ const InvoicesTable = forwardRef(
               `client-invoice/${invoiceIdRef.current}`,
             );
             if (responseInvoice) {
+              const responseClientInvoice = await getData(
+                `client-invoice/all?client_service_id=${responseInvoice.client_service_id}`,
+              );
+              const invoiceUpdatePromises = responseClientInvoice.map(
+                async (invoice) => {
+                  await putData(`client-invoice/${invoice.id}`, dataToSend);
+                },
+              );
+
+              await Promise.all(invoiceUpdatePromises);
               await putData(
                 `client-service/${responseInvoice.client_service_id}`,
                 dataToSend,
@@ -417,11 +424,15 @@ const InvoicesTable = forwardRef(
           updateList('invoice');
           setIsOpenModalServiceEnd(false);
           setIsOpenModalConceptsInvoice(false);
+          responseInvoice;
           invoiceIdRef.current = '';
           getRows();
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        closeModalConfirm();
+        getRows();
       }
     };
 
@@ -443,6 +454,20 @@ const InvoicesTable = forwardRef(
         ...prevFormDataEnd,
         [field]: event.value,
       }));
+    };
+
+    const [isCheckedOne, setIsCheckedOne] = useState(false);
+
+    const [isCheckedTwo, setIsCheckedTwo] = useState(false);
+
+    const handleCheckboxConfirmOne = () => {
+      setIsCheckedOne(!isCheckedOne);
+    };
+    const handleCheckboxConfirmTwo = () => {
+      setIsCheckedTwo(!isCheckedTwo);
+    };
+    const closeModalConfirm = () => {
+      setIsOpenModalConfirm(false);
     };
     return (
       <>
@@ -700,6 +725,89 @@ const InvoicesTable = forwardRef(
                   onClick={handleServiceEnd}
                 >
                   Finalizar Servicio
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isOpenModalConfirm && (
+          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
+            <div
+              className={`relative bg-white p-2 rounded shadow-lg min-h-60 w-1/2 md:w-2/4 lg:w-1/3`}
+            >
+              <button
+                className='absolute top-0 right-0 text-gray-800 text-lg'
+                onClick={closeModalConfirm}
+              >
+                <svg
+                  className='w-6 h-6'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
+              </button>
+              <div className={`col-span-1 md:grid md:grid-cols-1 gap-2 p-4`}>
+                <div className='col-span-1'>
+                  <p className='ml-2 mt-2'>
+                    ¿Desea dar de baja al servicio facturable seleccionado?
+                  </p>
+                </div>
+              </div>
+              <div className='col-span-1 mt-4'>
+                <label className='flex items-center'>
+                  <input
+                    type='checkbox'
+                    className='form-checkbox h-5 w-5 text-blue-600'
+                    checked={isCheckedOne}
+                    onChange={handleCheckboxConfirmOne}
+                  />
+                  <span className='ml-2'>
+                    Se procederá con la baja de los servicios contratados
+                    asociadas a esta factura
+                  </span>
+                </label>
+              </div>
+              <div className='col-span-1 mt-4'>
+                <label className='flex items-center'>
+                  <input
+                    type='checkbox'
+                    className='form-checkbox h-5 w-5 text-blue-600'
+                    checked={isCheckedTwo}
+                    onChange={handleCheckboxConfirmTwo}
+                  />
+                  <span className='ml-2'>
+                    Se procederá con la baja de las facturas asociadas al
+                    servicio
+                  </span>
+                </label>
+              </div>
+              <div className='flex justify-end p-4'>
+                <button
+                  type='button'
+                  className={`bg-gray-500 text-white font-bold py-2 px-4 text-sm rounded mr-8`}
+                  onClick={closeModalConfirm}
+                >
+                  Cerrar
+                </button>
+                <button
+                  type='button'
+                  className={`bg-red-500 text-white font-bold py-2 px-4 text-sm rounded mr-2 ${
+                    !(isCheckedOne && isCheckedTwo)
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
+                  }`}
+                  onClick={handleSendServiceEnd}
+                  disabled={!(isCheckedOne && isCheckedTwo)}
+                >
+                  Confirmar
                 </button>
               </div>
             </div>

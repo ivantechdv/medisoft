@@ -14,11 +14,10 @@ import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import Modal from './modal';
 import General from './tabs/general';
+import Complementary from './tabs/complementary';
+import Laboral from './tabs/laboral';
 import Specific from './tabs/specific';
-import Service from './tabs/services/index';
-import ModalLogs from './modalLogs';
-import FollowUps from './tabs/followUps';
-const Clients = () => {
+const Employees = () => {
   const [formData, setFormData] = useState({
     dni: '',
     first_name: '',
@@ -26,14 +25,14 @@ const Clients = () => {
     full_name: '',
     phone: '',
     email: '',
-    born_date: '',
+    born_date: new Date(),
     cod_post_id: 0,
     address: '',
     photo: '',
     dniFront: '',
     dniBack: '',
-    is_active: '',
-    type: '',
+    is_active: true,
+    type: 'Cuidador',
     recommendations: '',
   });
   const [pageSize, setPageSize] = useState(10);
@@ -65,7 +64,7 @@ const Clients = () => {
   const getRecordById = async (id) => {
     try {
       //setIsLoading(true);
-      const response = await getData('clients/' + id);
+      const response = await getData('employees/' + id);
       console.log('response', response);
 
       if (response) {
@@ -201,13 +200,13 @@ const Clients = () => {
       <Breadcrumbs
         items={[
           { label: 'Inicio', route: '/' },
-          { label: 'Empleadores', route: '/Clients' },
+          { label: 'Empleadores', route: '/employees' },
           !isNewRecord
             ? {
                 label: cardData.full_name ? cardData.full_name : 'Nuevo',
                 route: '',
               }
-            : { label: '', route: `/Client/${id}` },
+            : { label: '', route: `/employee/${id}` },
         ]}
       />
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-110px)]'>
@@ -297,31 +296,31 @@ const Clients = () => {
               </button>
               <button
                 className={`tab mr-4 pr-4 border-r-2 ${
-                  activeTab === 'especifico' ? 'text-primary' : ''
+                  activeTab === 'complementary' ? 'text-primary' : ''
                 } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
-                onClick={() => handleTabChange('especifico')}
+                onClick={() => handleTabChange('complementary')}
                 disabled={isNewRecord}
               >
-                Especifico
+                Complementario
+              </button>
+              {/* <button
+                className={`tab mr-4 pr-4 border-r-2 ${
+                  activeTab === 'laboral' ? 'text-primary' : ''
+                } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
+                onClick={() => handleTabChange('laboral')}
+                disabled={isNewRecord}
+              >
+                Laboral
               </button>
               <button
                 className={`tab mr-4 pr-4 border-r-2 ${
-                  activeTab === 'servicios' ? 'text-primary' : ''
-                }${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
-                onClick={() => handleTabChange('servicios')}
+                  activeTab === 'specific' ? 'text-primary' : ''
+                } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
+                onClick={() => handleTabChange('specific')}
                 disabled={isNewRecord}
               >
-                Servicios
-              </button>
-              <button
-                className={`tab ${
-                  activeTab === 'seguimientos' ? 'text-primary' : ''
-                }${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
-                onClick={() => handleTabChange('seguimientos')}
-                disabled={isNewRecord}
-              >
-                Seguimientos
-              </button>
+                Especifico
+              </button> */}
             </div>
             <div className='p-2 w-full'>
               {activeTab === 'general' && (
@@ -332,37 +331,22 @@ const Clients = () => {
                   onFormData={formData}
                 />
               )}
-              {activeTab === 'especifico' && (
-                <Specific
-                  id={id}
-                  onFormData={formData}
-                  onGetRecordById={getRecordById}
-                  setUnsavedChanges={setUnsavedChanges}
-                />
+              {activeTab === 'complementary' && (
+                <Complementary employee_id={id} onFormData={formData} />
               )}
-              {activeTab === 'servicios' && (
-                <Service
-                  id={id}
-                  onFormData={formData}
-                  onGetRecordById={getRecordById}
-                  setUnsavedChanges={setUnsavedChanges}
-                />
+              {/* {activeTab === 'laboral' && (
+                <Laboral employee_id={id} onFormData={formData} />
               )}
-              {activeTab === 'seguimientos' && (
-                <FollowUps
-                  id={id}
-                  onFormData={formData}
-                  onGetRecordById={getRecordById}
-                  setUnsavedChanges={setUnsavedChanges}
-                />
-              )}
+              {activeTab === 'specific' && (
+                <Specific employee_id={id} onFormData={formData} />
+              )} */}
             </div>
           </div>
         </div>
       </div>
-      {modalLogs && <ModalLogs id={id} />}
+      {modalLogs && <ModalLogs employee_id={id} />}
     </div>
   );
 };
 
-export default Clients;
+export default Employees;

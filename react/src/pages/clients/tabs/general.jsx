@@ -16,6 +16,7 @@ import ChangeLogger from '../../../components/changeLogger';
 const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const [formData, setFormData] = useState({
     dni: '',
+    start_date: '',
     first_name: '',
     last_name: '',
     full_name: '',
@@ -35,6 +36,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const [oldData, setOldData] = useState({
     dni: '',
     first_name: '',
+    start_date: '',
     last_name: '',
     full_name: '',
     code_phone: '',
@@ -114,7 +116,13 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         //guarda data original
         setOldData(onFormData);
         //setea el codigo postal
-        setCodPost(onFormData.cod_post.code);
+        setCodPost(
+          onFormData.cod_post.code +
+            '/' +
+            onFormData.cod_post.name +
+            '/' +
+            onFormData.cod_post.state?.name,
+        );
         if (onFormData.photo) {
           setImages((prevImages) => ({
             ...prevImages,
@@ -610,7 +618,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       ...prevFormData,
       ['cod_post_id']: option.id,
     }));
-    setCodPost(option.code);
+    setCodPost(option.code + '/' + option.name + '/' + option.state?.name);
     setIsOpen(!isOpen);
   };
   const openImageModal = (image) => {
@@ -651,6 +659,20 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     <form className=''>
       {loading && <Spinner />}
       <div className='rounded min-h-[calc(100vh-235px)]'>
+        <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
+          <button
+            type='button'
+            className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+            onClick={
+              formData.is_active == 'false' &&
+              (oldData.is_active === true || oldData.is_active === 'true')
+                ? handleOpenReason
+                : handleSubmit
+            }
+          >
+            {onAction}
+          </button>
+        </div>
         <div className='md:grid md:grid-cols-4 gap-2'>
           <div className='col-span-1'>
             <div className='col-span-1'>
@@ -810,86 +832,121 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             </div>
           </div>
           <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
-            <div className='col-span-1'>
-              <label
-                htmlFor='is_active'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Estado
-              </label>
-              <select
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                name='is_active'
-                id='is_active'
-                onChange={handleChange}
-                value={formData.is_active}
-              >
-                {[
-                  { value: true, label: 'Activo', key: 'activo' },
-                  { value: false, label: 'Inactivo', key: 'inactivo' },
-                ].map((option) => (
-                  <option key={option.key} value={option.value}>
-                    {option.label}
+            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='is_active'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Estado
+                </label>
+                <select
+                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  name='is_active'
+                  id='is_active'
+                  onChange={handleChange}
+                  value={formData.is_active}
+                >
+                  {[
+                    { value: true, label: 'Activo', key: 'activo' },
+                    { value: false, label: 'Inactivo', key: 'inactivo' },
+                  ].map((option) => (
+                    <option key={option.key} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='type'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Tipo
+                </label>
+                <select
+                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  name='type'
+                  id='type'
+                  onChange={handleChange}
+                  value={formData.type}
+                >
+                  <option value='Cliente' key={'1'}>
+                    Cliente
                   </option>
-                ))}
-              </select>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='type'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Tipo
-              </label>
-              <select
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                name='type'
-                id='type'
-                onChange={handleChange}
-                value={formData.type}
-              >
-                <option value='Cliente' key={'1'}>
-                  Cliente
-                </option>
-                <option value='Posible Cliente' key={'2'}>
-                  Posible Cliente
-                </option>
-              </select>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='dni'
-                className='block text-sm font-medium text-gray-700'
-              >
-                DNI
-              </label>
-              <input
-                type='text'
-                id='dni'
-                name='dni'
-                value={formData.dni}
-                onChange={handleChange}
-                ref={dniRef}
-                onBlur={() => validateField('dni', formData.dni, dniRef)}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
+                  <option value='Posible Cliente' key={'2'}>
+                    Posible Cliente
+                  </option>
+                </select>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='date_start'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Fecha de alta
+                </label>
+                <input
+                  type='date'
+                  id='start_date'
+                  name='start_date'
+                  value={formData.start_date}
+                  onChange={handleChange}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='dni'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  DNI
+                </label>
+                <input
+                  type='text'
+                  id='dni'
+                  name='dni'
+                  value={formData.dni}
+                  onChange={handleChange}
+                  ref={dniRef}
+                  onBlur={() => validateField('dni', formData.dni, dniRef)}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
 
-            <div className='col-span-1'>
-              <label
-                htmlFor='born_date'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Fecha de nacimiento
-              </label>
-              <input
-                type='date'
-                id='born_date'
-                name='born_date'
-                value={formData.born_date}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
+              <div className='col-span-1'>
+                <label
+                  htmlFor='born_date'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Fecha de nacimiento
+                </label>
+                <input
+                  type='date'
+                  id='born_date'
+                  name='born_date'
+                  value={formData.born_date}
+                  onChange={handleChange}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
+
+              <div className='col-span-1'>
+                <label
+                  htmlFor='age'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Edad
+                </label>
+                <input
+                  type='text'
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  id='age'
+                  name='age'
+                  readOnly
+                  value={formData.age}
+                />
+              </div>
             </div>
             <div className='col-span-1'>
               <label
@@ -946,40 +1003,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   ))}
               </select>
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='age'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Edad
-              </label>
-              <input
-                type='text'
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                id='age'
-                name='age'
-                readOnly
-                value={formData.age}
-              />
-            </div>
-            <div className='col-span-2'>
-              <label
-                htmlFor='email'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Correo(s) electrónico(s) separe con ;
-              </label>
-              <input
-                type='text'
-                id='email'
-                name='email'
-                value={formData.email}
-                onChange={handleChange}
-                ref={emailRef}
-                onBlur={() => validateField('email', formData.email, emailRef)}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
+
             <div className='col-span-1'>
               <label
                 htmlFor='phone'
@@ -1012,6 +1036,24 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   placeholder='Número de teléfono'
                 />
               </div>
+            </div>
+            <div className='col-span-2'>
+              <label
+                htmlFor='email'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Correo(s) electrónico(s) separe con ;
+              </label>
+              <input
+                type='text'
+                id='email'
+                name='email'
+                value={formData.email}
+                onChange={handleChange}
+                ref={emailRef}
+                onBlur={() => validateField('email', formData.email, emailRef)}
+                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              />
             </div>
             <div className='col-span-1'>
               <label
@@ -1101,17 +1143,6 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 )}
               </div>
             </div>
-
-            <div className='col-span-1'>
-              <label
-                htmlFor='cod_post_id'
-                className='block text-sm font-medium text-gray-700 mt-2'
-              >
-                Población: {selectedCodPost.name}
-                <br />
-                Provincia:{selectedCodPost.state}
-              </label>
-            </div>
             <div className='col-span-2'>
               <label
                 htmlFor='address'
@@ -1131,7 +1162,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           </div>
         </div>
       </div>
-      <div className='flex justify-end items-end mt-10'>
+      {/* <div className='flex justify-end items-end mt-10'>
         <button
           type='button'
           className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
@@ -1144,7 +1175,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         >
           {onAction}
         </button>
-      </div>
+      </div> */}
       {expandImage && (
         <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
           <div className='bg-white p-2 rounded shadow-lg w-3/4'>

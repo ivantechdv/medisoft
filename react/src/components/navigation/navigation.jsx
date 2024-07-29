@@ -31,7 +31,7 @@ function Navigation() {
           icon: <CollectionIcon className='w-5 h-5' />,
         },
         {
-          to: '/',
+          to: '/users',
           label: 'Usuarios',
           icon: <FaObjectGroup className='w-5 h-5' />,
         },
@@ -49,7 +49,7 @@ function Navigation() {
     },
     {
       to: '/clients',
-      label: 'Clientes',
+      label: 'Empleadores',
       icon: <FaWarehouse className='w-4 h-4' />,
     },
     {
@@ -58,7 +58,7 @@ function Navigation() {
       icon: <BriefcaseIcon className='w-4 h-4' />,
     },
     {
-      to: '/',
+      to: '/employee',
       label: 'Empleados',
       icon: <FaCogs className='w-4 h-4' />,
     },

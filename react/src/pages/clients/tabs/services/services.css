@@ -1,6 +1,6 @@
 .table-container {
-  max-height: 230px; /* Ajusta la altura según sea necesario */
-  min-height: 230px;
+  max-height: 200px; /* Ajusta la altura según sea necesario */
+  min-height: 200px;
   overflow-y: auto;
   position: relative;
 }

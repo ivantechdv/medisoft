@@ -168,6 +168,17 @@ function routes() {
     trafic,
     require("./routes/cod_posts/cod_posts.routes")
   );
+  app.use("/api/v1/cooks", trafic, require("./routes/cooks/cooks.routes"));
+  app.use(
+    "/api/v1/educational-levels",
+    trafic,
+    require("./routes/educational_level/educational_level.routes")
+  );
+  app.use(
+    "/api/v1/time-experiences",
+    trafic,
+    require("./routes/time_experience/time_experience.routes")
+  );
   app.use(
     "/api/v1/storage",
     trafic,

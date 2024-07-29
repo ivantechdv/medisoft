@@ -63,7 +63,6 @@ const Client = sequelize.define("clients", {
   start_date: {
     type: DataTypes.DATEONLY,
     allowNull: true,
-    defaultValue: sequelize.literal("CURRENT_DATE"),
   },
   final_date: {
     type: DataTypes.DATE,
