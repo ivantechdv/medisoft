@@ -10,4 +10,5 @@ router.get("/:id", UserController.getById);
 
 router.post("/", UserController.create);
 router.put("/:id", UserController.update);
+router.post("/login", UserController.login);
 module.exports = router;

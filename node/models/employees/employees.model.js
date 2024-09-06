@@ -1,6 +1,8 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../database/sequelize");
 const CodPost = require("../cod_posts/cod_posts.model");
+const EmployeeSpecific = require("./specific.model");
+const EmployeeComplementary = require("./complementary.model");
 
 const Employee = sequelize.define(
   "employees",
@@ -23,6 +25,10 @@ const Employee = sequelize.define(
       allowNull: true,
     },
     full_name: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    name: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
@@ -103,5 +109,6 @@ const Employee = sequelize.define(
 
 Employee.belongsTo(CodPost, { foreignKey: "cod_post_id" });
 CodPost.hasMany(Employee, { foreignKey: "cod_post_id" });
-
+Employee.hasOne(EmployeeSpecific, { foreignKey: "employee_id" });
+Employee.hasOne(EmployeeComplementary, { foreignKey: "employee_id" });
 module.exports = Employee;

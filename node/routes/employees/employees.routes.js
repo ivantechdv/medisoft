@@ -5,8 +5,13 @@ const Complementary = require("../../controllers/employees/complementary.control
 const Task = require("../../controllers/employees/task.controller");
 const GainExperience = require("../../controllers/employees/gain_experience.controller");
 const Specific = require("../../controllers/employees/specific.controller");
+const Reference = require("../../controllers/employees/reference.controller");
+const Filter = require("../../controllers/employees/filter.controller");
 
 /* const  authRequired = require('../../middleware/validateToken');*/
+router.post("/reference", Reference.create);
+router.get("/reference/all", Reference.getAll);
+router.put("/reference/:id", Reference.update);
 
 router.post("/specific", Specific.create);
 router.get("/specific/all", Specific.getAll);
@@ -24,8 +29,13 @@ router.post("/task", Task.create);
 router.get("/task/all", Task.getAll);
 router.put("/task/:id", Task.update);
 
+router.post("/filter", Filter.create);
+router.get("/filter/all", Filter.getAll);
+router.put("/filter/:id", Filter.update);
+
 router.get("/", Employee.get);
 router.get("/all", Employee.getAll);
+router.get("/getBySearch", Employee.getBySearch);
 router.get("/:id", Employee.getById);
 router.post("/", Employee.create);
 router.put("/:id", Employee.update);

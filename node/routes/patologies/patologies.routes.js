@@ -7,6 +7,6 @@ router.get("/", Patology.get);
 router.get("/all", Patology.getAll);
 router.get("/:id", Patology.getById);
 router.post("/", Patology.create);
-router.put("/:id", Patology.create);
+router.put("/:id", Patology.update);
 
 module.exports = router;

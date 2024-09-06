@@ -1,12 +1,17 @@
 const CTRL = {};
 const sequelize = require("../../database/sequelize");
 const Client = require("../../models/clients/clients.model");
-const Patology = require("../../models/patologies/patologies.model");
+const CodPost = require("../../models/cod_posts/cod_posts.model");
+const Country = require("../../models/countries/countries.model");
+const EmployeeComplementary = require("../../models/employees/complementary.model");
+const Employee = require("../../models/employees/employees.model");
+const EmployeeReference = require("../../models/employees/reference.model");
+const State = require("../../models/states/states.model");
 const Methods = require("../methods/methods.controller");
 
 CTRL.create = async (req, res, next) => {
   try {
-    Methods.create(req, res, next, Patology);
+    Methods.create(req, res, next, EmployeeReference);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ error: error.message });
@@ -14,17 +19,16 @@ CTRL.create = async (req, res, next) => {
 };
 CTRL.update = async (req, res, next) => {
   try {
-    await Methods.update(req, res, next, Patology);
+    await Methods.update(req, res, next, EmployeeReference);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ error: error.message });
   }
 };
-
 CTRL.get = async (req, res, next) => {
   try {
     const condition = {};
-    Methods.get(req, res, next, Patology, condition);
+    Methods.get(req, res, next, EmployeeReference, condition);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -36,7 +40,7 @@ CTRL.getAll = async (req, res, next) => {
     //   model: Client,
     // };
     const include = null;
-    Methods.getAll(req, res, next, Patology, condition, include);
+    Methods.getAll(req, res, next, EmployeeReference, condition, include);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -44,7 +48,8 @@ CTRL.getAll = async (req, res, next) => {
 CTRL.getById = async (req, res, next) => {
   try {
     const condition = {};
-    Methods.getById(req, res, next, Patology, condition);
+    const include = [];
+    Methods.getById(req, res, next, EmployeeReference, condition, include);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
