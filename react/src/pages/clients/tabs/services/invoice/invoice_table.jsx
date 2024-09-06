@@ -404,16 +404,20 @@ const InvoicesTable = forwardRef(
               );
 
               if (initialResponse) {
-                const responseInvoice = await getData(
-                  `client-invoice/${invoiceId}`,
+                const responseClientInvoice = await getData(
+                  `client-invoice/all?client_service_id=${initialResponse.client_service_id}`,
                 );
-                console.log('responseInvoice', responseInvoice);
-                if (responseInvoice) {
-                  await putData(
-                    `client-service/${responseInvoice.client_service_id}`,
-                    dataToSend,
-                  );
-                }
+
+                const invoiceUpdatePromises = responseClientInvoice.map(
+                  async (invoice) => {
+                    await putData(`client-invoice/${invoice.id}`, dataToSend);
+                  },
+                );
+                await Promise.all(invoiceUpdatePromises);
+                await putData(
+                  `client-service/${initialResponse.client_service_id}`,
+                  dataToSend,
+                );
               }
             });
             responseServiceEnd = await Promise.all(promises);

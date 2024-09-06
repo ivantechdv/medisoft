@@ -36,12 +36,12 @@ function Navigation() {
           icon: <FaObjectGroup className='w-5 h-5' />,
         },
         {
-          to: '/',
+          to: '/patologies',
           label: 'Patologias',
           icon: <CollectionIcon className='w-5 h-5' />,
         },
         {
-          to: '/',
+          to: '/services',
           label: 'Servicios',
           icon: <FaObjectGroup className='w-5 h-5' />,
         },
@@ -58,7 +58,7 @@ function Navigation() {
       icon: <BriefcaseIcon className='w-4 h-4' />,
     },
     {
-      to: '/employee',
+      to: '/employees',
       label: 'Empleados',
       icon: <FaCogs className='w-4 h-4' />,
     },

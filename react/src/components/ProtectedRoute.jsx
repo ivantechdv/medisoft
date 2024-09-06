@@ -1,28 +1,13 @@
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import Cookies from 'js-cookie';
 
-export const ProtectedRoute = ({
-  user,
-  from,
-  children,
-  
-  redirectTo = '/login',
-}) => {
- 
+const ProtectedRoute = () => {
+  const authToken = Cookies.get('authToken'); // Obtén el token de las cookies
+  const isAuthenticated = !!authToken; // Verifica si el token existe
 
-
-  if (from !== Cookies.get('from')) {
-    return <Navigate to={'/'} />;
-  }
-
-  if (!user) {
-    const usercookie = Cookies.get('user');
-    if (usercookie) {
-      const userDataCookie = JSON.parse(usercookie);
-      user = userDataCookie;
-    } else {
-      return <Navigate to={redirectTo} />;
-    }
-  }
-  return children ? children : <Outlet />;
+  // Redirige al usuario a la página de inicio de sesión si no está autenticado
+  return isAuthenticated ? <Outlet /> : <Navigate to='/login' replace />;
 };
+
+export default ProtectedRoute;

@@ -7,16 +7,9 @@ import Breadcrumbs from '../../components/Breadcrumbs';
 import Modal from './modal';
 import { useParams, useLocation } from 'react-router-dom';
 
-const Users = () => {
+const Patologies = () => {
   const initialValues = {
-    dni: '',
-    first_name: '',
-    last_name: '',
-    full_name: '',
-    email: '',
-    phone: '',
-    address: '',
-    avatar: '',
+    name: '',
   };
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(10);
@@ -46,7 +39,7 @@ const Users = () => {
   const getRows = async () => {
     try {
       const response = await getData(
-        `users?page=${currentPage}&pageSize=${pageSize}&searchTerm=${searchTerm}`,
+        `patologies?page=${currentPage}&pageSize=${pageSize}&searchTerm=${searchTerm}`,
       );
 
       const { data, meta } = response;
@@ -196,6 +189,23 @@ const Users = () => {
       }
     });
   };
+
+  const toggleSwitch = async (id) => {
+    try {
+      const rowToUpdate = rows.find((row) => row.id === id);
+      const updatedRow = { ...rowToUpdate, is_active: !rowToUpdate.is_active };
+
+      // Llamada a la API para actualizar el estado
+      await putData(`patologies/${id}`, { is_active: updatedRow.is_active });
+
+      // Actualiza el estado local con el nuevo valor
+      setRows((prevRows) =>
+        prevRows.map((row) => (row.id === id ? updatedRow : row)),
+      );
+    } catch (error) {
+      console.error('Error al actualizar estado: ', error);
+    }
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -208,10 +218,10 @@ const Users = () => {
         <div className='flex justify-between px-4 py-5 sm:px-6'>
           <div>
             <h3 className='text-lg font-semibold leading-6 text-gray-900'>
-              Lista de Usuarios
+              Lista de Patologies
             </h3>
             <p className='mt-1 max-w-2xl text-sm text-gray-500'>
-              Gestion de usuarios.
+              Gestiones sus patologias
             </p>
           </div>
           <div className='flex space-x-2'>
@@ -235,21 +245,21 @@ const Users = () => {
           </div>
         </div>
         <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
-          <table className='w-full divide-y divide-gray-200 mb-4 table-container2'>
+          <table
+            className='w-full divide-y divide-gray-200 mb-4 table-container2'
+            style={{ tableLayout: 'fixed' }}
+          >
             <thead className='bg-gray-50'>
               <tr>
-                <th></th>
-                <th className='px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  DNI
+                <th className='w-1/6'></th>
+                <th className='w-2/4 px-3 py-1 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                  ID
                 </th>
-                <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Nombre completo
+                <th className='w-2/4 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                  Nombre
                 </th>
-                <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Correo electrónico
-                </th>
-                <th className='px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
-                  Teléfono
+                <th className='w-2/4 px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider'>
+                  Estado
                 </th>
               </tr>
             </thead>
@@ -257,17 +267,17 @@ const Users = () => {
               {rows.length > 0 &&
                 rows.map((row) => (
                   <tr
+                    key={row.id}
                     onMouseEnter={(e) =>
                       (e.target.parentNode.style.backgroundColor = '#F3F4F6')
                     }
                     onMouseLeave={(e) =>
                       (e.target.parentNode.style.backgroundColor = 'inherit')
                     }
-                    onClick={(e) => handleRowClick(row, e)}
                     onDoubleClick={(e) => handleEdit(row, e)}
                     style={{ cursor: 'pointer' }}
                   >
-                    <td className='text-center'>
+                    <td className='text-center w-1/4'>
                       <div onClick={(e) => e.stopPropagation()}>
                         <input
                           type='checkbox'
@@ -278,10 +288,26 @@ const Users = () => {
                         />
                       </div>
                     </td>
-                    <td className='px-3'>{row.dni}</td>
-                    <td className='max-w-xs truncate px-2'>{row.full_name}</td>
-                    <td className='max-w-xs truncate px-2'>{row.email}</td>
-                    <td className='max-w-xs truncate px-2'>{row.phone}</td>
+                    <td className='px-3 w-1/4'>{row.id}</td>
+                    <td className='max-w-xs truncate px-2 w-1/4'>{row.name}</td>
+                    <td>
+                      <button
+                        type='button'
+                        className={`relative inline-flex items-center h-6 rounded-full w-12 mr-2 z-20 ${
+                          row.is_active ? 'bg-primary' : 'bg-gray-300'
+                        }`}
+                        onClick={() => toggleSwitch(row.id)}
+                      >
+                        <span
+                          className={`inline-block w-6 h-6 transform rounded-full bg-white shadow-md transition-transform ${
+                            row.is_active ? 'translate-x-6' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                      <label className='ml-2'>
+                        {row.is_active ? 'Activo' : 'Inactivo'}
+                      </label>
+                    </td>
                   </tr>
                 ))}
             </tbody>
@@ -289,45 +315,7 @@ const Users = () => {
         </div>
       </div>
       {/* Modal */}
-      {selectedRow && (
-        <div
-          className='fixed bg-white border-2 border-gray-300 overflow-y-auto p-4 shadow-lg'
-          style={{ top: `${tableTopPosition}px`, right: 0, height: '100vh' }}
-        >
-          <button
-            className='absolute top-2 right-2 text-gray-500 hover:text-gray-700'
-            onClick={handleClosePanel}
-          >
-            <svg
-              className='w-6 h-6'
-              fill='none'
-              viewBox='0 0 24 24'
-              stroke='currentColor'
-            >
-              <path
-                strokeLinecap='round'
-                strokeLinejoin='round'
-                strokeWidth={2}
-                d='M6 18L18 6M6 6l12 12'
-              />
-            </svg>
-          </button>
-          <div className='border-2 border-gray-200 w-full mt-6'></div>
-          <h2>Detalles del Registro</h2>
-          <p>
-            <strong>DNI:</strong> {selectedRow.dni}
-          </p>
-          <p>
-            <strong>Nombre completo:</strong> {selectedRow.fullName}
-          </p>
-          <p>
-            <strong>Correo electrónico:</strong> {selectedRow.email}
-          </p>
-          <p>
-            <strong>Teléfono:</strong> {selectedRow.phone}
-          </p>
-        </div>
-      )}
+
       <Modal
         isOpen={isModalOpen}
         onClose={closeModal}
@@ -339,4 +327,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default Patologies;

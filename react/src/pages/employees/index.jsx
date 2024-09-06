@@ -140,7 +140,7 @@ const Clients = () => {
     setSelectedRow(false);
   };
   const handleViewClient = (clientId) => {
-    navigateTo(`/client/${clientId}`);
+    navigateTo(`/employee/${clientId}`);
   };
 
   const handleFormEmployee = () => {
