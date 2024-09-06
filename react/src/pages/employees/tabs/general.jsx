@@ -13,7 +13,23 @@ import ToastNotify from '../../../components/toast/toast';
 import { FaExpand, FaMinusCircle } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
 import ChangeLogger from '../../../components/changeLogger';
-const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
+import {
+  ConfirmSweetAlert,
+  InfoSweetAlert,
+} from '../../../components/SweetAlert/SweetAlert';
+
+const Form = ({
+  onHandleChangeCard,
+  id,
+  onAction,
+  onFormData,
+  onHandleHasChange,
+}) => {
+  const sweetAlert = ConfirmSweetAlert({
+    title: 'Información',
+    text: '¿Esta seguro que desea enviar los datos?',
+    icon: 'question',
+  });
   const [formData, setFormData] = useState({
     dni: '',
     start_date: '',
@@ -37,25 +53,24 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   });
   const [oldData, setOldData] = useState({
     dni: '',
-    first_name: '',
     start_date: '',
+    first_name: '',
     last_name: '',
     full_name: '',
     code_phone: '',
-    num_social_security: '',
     phone: '',
     email: '',
     born_date: '',
     cod_post_id: 0,
+    num_social_security: '',
     address: '',
     photo: '',
     dniFront: '',
     dniBack: '',
+    is_active: true,
     country_id: '',
-    is_active: '',
-    type: '',
+    type: 'Cliente',
     recommendations: '',
-    age: '',
   });
   const [images, setImages] = useState({
     photo: '',
@@ -110,6 +125,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       setLoadingForm(true);
       if (onFormData) {
         setFormData(onFormData);
+        setOldData(onFormData);
         //calcula la edad
         if (onFormData.born_date != '') {
           const age = calculateAge(onFormData.born_date);
@@ -117,11 +133,11 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             ...prevFormData,
             ['age']: age,
           }));
+          setOldData((prevFormData) => ({
+            ...prevFormData,
+            ['age']: age,
+          }));
         }
-
-        //guarda data original
-        setOldData(onFormData);
-        //setea el codigo postal
 
         console.log('photo', onFormData.photo);
         if (onFormData.photo) {
@@ -158,7 +174,8 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     } catch (error) {
       console.log('error=>', error);
     } finally {
-      setLoadingForm(false);
+      //setLoadingForm(false);
+      setTimeout(() => setLoadingForm(false), 1600);
     }
   }, [onFormData]);
 
@@ -359,60 +376,18 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         return;
       }
 
-      setLoadingForm(true);
-      setLoading(true);
-      // Validar campos requeridos antes de enviar el formulario
-
-      let response = false;
-
-      for (const [key, value] of Object.entries(formData)) {
-        const isFile = value instanceof File;
-        console.log('value ' + key, value);
-        if (isFile) {
-          const fileUploadResponse = await postStorage(value, 'employee');
-          formData[key] = fileUploadResponse.path;
-          if (
-            oldData[key] !== null &&
-            oldData[key] !== undefined &&
-            oldData[key] !== ''
-          ) {
-            const filename = oldData[key].split('/').pop();
-            await deleteStorage(filename, 'employee');
-          }
+      await sweetAlert.showSweetAlert().then((result) => {
+        const isConfirmed = result !== null && result;
+        if (!isConfirmed) {
+          ToastNotify({
+            message: 'Acción cancelada por el usuario',
+            position: 'top-right',
+          });
+          return;
+        } else {
+          handleSend();
         }
-      }
-      const dataToSend = { ...formData };
-
-      let message = '';
-      if (!id) {
-        response = await postData('employees', dataToSend);
-        message = 'Empleado registrado con exito';
-      } else {
-        response = await putData('employees/' + id, dataToSend);
-        message = 'Empleado actualizado con exito';
-      }
-      //changelogs
-      console.log('changelogs => ', changelogs);
-      const currentData = changeValueSelect(changelogs);
-      console.log('oldchangeLogs => ', oldChangelogs);
-      console.log('currentData => ', currentData);
-      await ChangeLogger({
-        oldData: oldChangelogs,
-        newData: currentData,
-        user: null,
-        module: 'employees',
-        module_id: response.id,
       });
-      //changelogs
-      if (response) {
-        ToastNotify({
-          message: message,
-          position: 'top-left',
-          type: 'success',
-        });
-        navigateTo('/employee/' + response.id);
-        //window.location.href = '/client/' + response.id;
-      }
     } catch (error) {
       console.log('error', error);
       ToastNotify({
@@ -421,11 +396,66 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         type: 'error',
       });
     } finally {
-      setLoadingForm(false);
+      setTimeout(() => setLoadingForm(false), 800);
       onHandleChangeCard('address', formData.address);
       onHandleChangeCard('email', formData.email);
       onHandleChangeCard('phone', formData.phone);
       setOldData(formData);
+    }
+  };
+  const handleSend = async () => {
+    setLoadingForm(true);
+    // Validar campos requeridos antes de enviar el formulario
+
+    let response = false;
+
+    for (const [key, value] of Object.entries(formData)) {
+      const isFile = value instanceof File;
+      console.log('value ' + key, value);
+      if (isFile) {
+        const fileUploadResponse = await postStorage(value, 'employee');
+        formData[key] = fileUploadResponse.path;
+        if (
+          oldData[key] !== null &&
+          oldData[key] !== undefined &&
+          oldData[key] !== ''
+        ) {
+          const filename = oldData[key].split('/').pop();
+          await deleteStorage(filename, 'employee');
+        }
+      }
+    }
+    const dataToSend = { ...formData };
+
+    let message = '';
+    if (!id) {
+      response = await postData('employees', dataToSend);
+      message = 'Empleado registrado con exito';
+    } else {
+      response = await putData('employees/' + id, dataToSend);
+      message = 'Empleado actualizado con exito';
+    }
+    //changelogs
+    console.log('changelogs => ', changelogs);
+    const currentData = changeValueSelect(changelogs);
+    console.log('oldchangeLogs => ', oldChangelogs);
+    console.log('currentData => ', currentData);
+    await ChangeLogger({
+      oldData: oldChangelogs,
+      newData: currentData,
+      user: null,
+      module: 'employees',
+      module_id: response.id,
+    });
+    //changelogs
+    if (response) {
+      ToastNotify({
+        message: message,
+        position: 'top-left',
+        type: 'success',
+      });
+      navigateTo('/employee/' + response.id);
+      //window.location.href = '/client/' + response.id;
     }
   };
   const handleImagenChange = (event, key) => {
@@ -611,10 +641,43 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     setIsOpenModalReason(false);
     handleSubmit();
   };
+
+  const findDifferences = (obj1, obj2) => {
+    const differences = {};
+
+    for (const key in obj1) {
+      if (obj1[key] !== obj2[key]) {
+        differences[key] = { oldValue: obj2[key], newValue: obj1[key] };
+      }
+    }
+
+    for (const key in obj2) {
+      if (obj1[key] !== obj2[key] && !differences[key]) {
+        differences[key] = { oldValue: obj2[key], newValue: obj1[key] };
+      }
+    }
+
+    return differences;
+  };
+
+  const hasChanges = () => {
+    const differences = findDifferences(formData, oldData);
+    console.log('Diferencias detectadas:', differences);
+    return Object.keys(differences).length > 0;
+  };
+
+  useEffect(() => {
+    if (hasChanges()) {
+      onHandleHasChange(true);
+    } else {
+      onHandleHasChange(false);
+    }
+  }, [formData]);
   return (
     <form className=''>
+      {loadingForm && <Spinner />}
       <div className='rounded min-h-[calc(100vh-235px)]'>
-        <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
+        <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
           <button
             type='button'
             className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
@@ -629,7 +692,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           </button>
         </div>
         <div className='md:grid md:grid-cols-4 gap-2'>
-          <div className='col-span-1'>
+          <div className='grid grid-cols-2 md:grid-cols-1'>
             <div className='col-span-1'>
               <div className='relative h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
                 {images.photo != '' ? (
@@ -729,8 +792,6 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   </>
                 )}
               </div>
-            </div>
-            <div className='col-span-1'>
               <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
                 {images.dniBack != '' ? (
                   <>
@@ -1027,97 +1088,103 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='country_id'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Pais de nacimiento
-              </label>
-              <select
-                id='country_id'
-                name='country_id'
-                onChange={handleChange}
-                value={formData.country_id}
-                className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-              >
-                {countries.length > 0 &&
-                  countries.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='asset'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Código postal
-              </label>
-              <div ref={ref} style={{ position: 'relative' }}>
-                <input
-                  name='cod_post_id'
-                  id='cod_post_id'
-                  type='text'
-                  value={codPost}
-                  autoComplete='off' // Desactiva la función de autocompletar
-                  onClick={handleOpenCodPost}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  onChange={handleSearchCodPost}
-                />
-                {isOpen && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      zIndex: 100,
-                      top: '100%',
-                      maxHeight: '200px', // Altura máxima de la tabla
-                      overflowY: 'auto', // Agrega un scroll vertical si es necesario
-                      left: 0,
-                      width: '100%',
-                      backgroundColor: 'white',
-                      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-                    }}
-                  >
-                    <table
-                      border={1}
-                      style={{ width: '100%' }}
-                      className='border border-gray-300'
+            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='country_id'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Pais de nacimiento
+                </label>
+                <select
+                  id='country_id'
+                  name='country_id'
+                  onChange={handleChange}
+                  value={formData.country_id}
+                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                >
+                  {countries.length > 0 &&
+                    countries.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='col-span-2'>
+                <label
+                  htmlFor='asset'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Código postal
+                </label>
+                <div ref={ref} style={{ position: 'relative' }}>
+                  <input
+                    name='cod_post_id'
+                    id='cod_post_id'
+                    type='text'
+                    value={codPost}
+                    autoComplete='off' // Desactiva la función de autocompletar
+                    onClick={handleOpenCodPost}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    onChange={handleSearchCodPost}
+                  />
+                  {isOpen && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        zIndex: 100,
+                        top: '100%',
+                        maxHeight: '200px', // Altura máxima de la tabla
+                        overflowY: 'auto', // Agrega un scroll vertical si es necesario
+                        left: 0,
+                        width: '100%',
+                        backgroundColor: 'white',
+                        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
+                      }}
                     >
-                      <thead className=''>
-                        <tr>
-                          <th className='border border-gray-300'>
-                            Codigo Postal
-                          </th>
-                          <th className='border border-gray-300'>Poblacion</th>
-                          <th className='border border-gray-300'>Provincia</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {codPosts.length > 0 &&
-                          codPosts.map((option) => (
-                            <tr
-                              key={option.id}
-                              onClick={() => handleSelectedCodPost(option)}
-                              className='cursor-pointer hover:bg-gray-200'
-                            >
-                              <td className='border border-gray-300 px-2'>
-                                {option.code}
-                              </td>
-                              <td className='border border-gray-300 px-2'>
-                                {option.name}
-                              </td>
-                              <td className='border border-gray-300 px-2'>
-                                {option.state?.name}
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                      <table
+                        border={1}
+                        style={{ width: '100%' }}
+                        className='border border-gray-300'
+                      >
+                        <thead className=''>
+                          <tr>
+                            <th className='border border-gray-300'>
+                              Codigo Postal
+                            </th>
+                            <th className='border border-gray-300'>
+                              Poblacion
+                            </th>
+                            <th className='border border-gray-300'>
+                              Provincia
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {codPosts.length > 0 &&
+                            codPosts.map((option) => (
+                              <tr
+                                key={option.id}
+                                onClick={() => handleSelectedCodPost(option)}
+                                className='cursor-pointer hover:bg-gray-200'
+                              >
+                                <td className='border border-gray-300 px-2'>
+                                  {option.code}
+                                </td>
+                                <td className='border border-gray-300 px-2'>
+                                  {option.name}
+                                </td>
+                                <td className='border border-gray-300 px-2'>
+                                  {option.state?.name}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
             <div className='col-span-2'>

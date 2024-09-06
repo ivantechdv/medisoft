@@ -13,14 +13,7 @@ import {
 } from '../../api';
 const Modal = ({ isOpen, onClose, id, row }) => {
   const initialValues = {
-    dni: '',
-    first_name: '',
-    last_name: '',
-    full_name: '',
-    email: '',
-    phone: '',
-    address: '',
-    avatar: '',
+    name: '',
   };
   const [formData, setFormData] = useState(initialValues); // Aquí puedes inicializar los datos del formulario si es necesario
   const [isLoading, setIsLoading] = useState(false);
@@ -48,16 +41,15 @@ const Modal = ({ isOpen, onClose, id, row }) => {
 
       const dataToSend = {
         ...formData,
-        full_name: formData.first_name + ' ' + formData.last_name,
       };
 
       let message = '';
       if (!id) {
-        response = await postData('users', dataToSend);
-        message = 'Usuario registrado con exito';
+        response = await postData('patologies', dataToSend);
+        message = 'Patologia registrado con exito';
       } else {
-        response = await putData('users/' + id, dataToSend);
-        message = 'Usuario actualizado con exito';
+        response = await putData('patologies/' + id, dataToSend);
+        message = 'Patologia actualizado con exito';
       }
       //changelogs
       // console.log('changelogs => ', changelogs);
@@ -111,87 +103,16 @@ const Modal = ({ isOpen, onClose, id, row }) => {
         className='absolute top-0 right-0 transform bg-white p-6 rounded-md h-full shadow-md overflow-auto'
         style={{ width: 400 }}
       >
-        <h2 className='text-lg font-semibold mb-4'>Formulario de Usuarios</h2>
-        <div className='flex justify-center items-center '>
-          <div className='rounded-full border border-blue-500 overflow-hidden w-32 h-32 flex items-center justify-center'>
-            {formData.avatar != '' ? (
-              <img
-                src={formData.avatar || ''}
-                alt=''
-                className='w-full h-full object-cover'
-              />
-            ) : (
-              <label
-                htmlFor='file-upload'
-                className='bg-gray-200 text-white rounded-full text-2xl w-32 h-32 flex justify-center items-center'
-              >
-                <input
-                  type='file'
-                  onChange={''}
-                  className='hidden'
-                  id='file-upload'
-                />
-                <FaUserCircle className='' size={102} />
-              </label>
-            )}
-          </div>
-        </div>
+        <h2 className='text-lg font-semibold mb-4'>Gestion de Patologias</h2>
+
         <div className='mb-4'>
-          <label htmlFor='dni' className='block mb-1'>
-            DNI:
-          </label>
-          <input
-            type='text'
-            id='dni'
-            value={formData.dni || ''}
-            onChange={handleChange}
-            className='border border-gray-300 rounded-md px-3 py-2 w-full'
-          />
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='first_name' className='block mb-1'>
+          <label htmlFor='name' className='block mb-1'>
             Nombre:
           </label>
           <input
             type='text'
-            id='first_name'
-            value={formData.first_name || ''}
-            onChange={handleChange}
-            className='border border-gray-300 rounded-md px-3 py-2 w-full'
-          />
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='last_name' className='block mb-1'>
-            Apellidos:
-          </label>
-          <input
-            type='text'
-            id='last_name'
-            value={formData.last_name || ''}
-            onChange={handleChange}
-            className='border border-gray-300 rounded-md px-3 py-2 w-full'
-          />
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='email' className='block mb-1'>
-            Email:
-          </label>
-          <input
-            type='text'
-            id='email'
-            value={formData.email || ''}
-            onChange={handleChange}
-            className='border border-gray-300 rounded-md px-3 py-2 w-full'
-          />
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='phone' className='block mb-1'>
-            Teléfono:
-          </label>
-          <input
-            type='text'
-            id='phone'
-            value={formData.phone || ''}
+            id='name'
+            value={formData.name || ''}
             onChange={handleChange}
             className='border border-gray-300 rounded-md px-3 py-2 w-full'
           />

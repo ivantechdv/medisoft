@@ -27,8 +27,8 @@ import {
 } from '../../../components/SweetAlert/SweetAlert';
 const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const sweetAlert = ConfirmSweetAlert({
-    title: 'Seguimientos',
-    text: '¿Esta seguro que desea procesar el seguimiento?',
+    title: 'Laboral',
+    text: '¿Esta seguro que desea registrar la referencia?',
     icon: 'question',
   });
 
@@ -57,17 +57,10 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     return formattedDate;
   };
   const initialValues = {
-    employee_id: null,
-    contact_ref1: '',
-    date_start1: '',
-    date_until1: '',
-    contact_ref2: '',
-    date_start2: '',
-    date_until2: '',
-    contact_ref3: '',
-    date_start3: '',
-    date_until3: '',
-    services: [],
+    contact: '',
+    phone: '',
+    from_date: '',
+    until_date: '',
   };
   const [formData, setFormData] = useState(initialValues);
   const [employees, setEmployees] = useState([]);
@@ -75,35 +68,37 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [selectedOption, setSelectedOption] = useState('client');
-  const [services, setServices] = useState([]);
+  const [followUps, setFollowUps] = useState([]);
   const [isReadOnly, setIsReadOnly] = useState([]);
   let loading = loadingCount > 0;
   const quillRef = useRef(null);
   const navigateTo = useNavigate();
 
+  const getRows = async () => {
+    try {
+      const responseFollowUps = await getData(
+        `employees/reference/all?employee_id=${onFormData.id}`,
+      );
+      console.log('response =>', responseFollowUps);
+      setFollowUps(responseFollowUps);
+    } catch (error) {
+      console.log('error =>', error);
+    }
+  };
   useEffect(() => {
-    const fetchSelect = async () => {
-      try {
-        const order = 'name-asc';
-
-        const option_services = await getData(`services/all?order=${order}`);
-        setServices(option_services);
-      } catch (error) {
-        console.log('ERRR', error);
-      } finally {
-        setLoadingCount((prev) => prev - 1);
-      }
-    };
-    fetchSelect();
+    getRows();
   }, []);
 
-  const getRows = async () => {
-    const order = 'dateandtime-desc';
-    const responseFollowUps = await getData(
-      `employees/laboralAll?employee_id=${onFormData.id}`,
-    );
-    console.log('followUps', responseFollowUps);
-    setFollowUps(responseFollowUps[0]);
+  useEffect(() => {
+    if (onFormData) {
+      setTimeout(() => setLoadingCount((prev) => prev - 1), 500);
+    }
+  }, [onFormData]);
+
+  const stripHTML = (html) => {
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    return div.textContent || div.innerText || '';
   };
 
   const handleChange = (event) => {
@@ -122,16 +117,23 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     }));
   };
 
+  const isQuillContentEmpty = (content) => {
+    // Eliminar todas las etiquetas HTML del contenido y comprobar si el resultado está vacío
+    const strippedContent = content.replace(/<\/?[^>]+(>|$)/g, '');
+    return strippedContent.trim() === '';
+  };
+  const handleQuill = (value) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      ['text']: value,
+    }));
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     const { date, title, text, employee_id } = formData;
 
-    if (
-      !date ||
-      !title ||
-      isQuillContentEmpty(text) ||
-      (selectedOption === 'employee' && !employee_id)
-    ) {
+    if (!phone || !contact || !from_date || !until_date) {
       ToastNotify({
         message: 'Por favor, complete todos los campos requeridos',
         position: 'top-right',
@@ -148,22 +150,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
         });
         return;
       } else {
-        const datetime = new Date(date);
-        const formattedDate = datetime.toISOString().slice(0, 10); // Formato YYYY-MM-DD
-        const formattedTime = datetime.toTimeString().slice(0, 8); // Formato HH:mm:ss
-
-        console.log('formattedDate', formattedDate);
-        console.log('formattedTime', formattedTime);
-        //return;
-
-        const dataToSend = {
-          date: formattedDate,
-          time: formattedTime,
-          title,
-          text,
-          employee_id,
-          client_id: onFormData.id,
-        };
+        const dataToSend = { ...formData, employee_id: onFormData.id };
         handleSend(dataToSend);
       }
     });
@@ -174,10 +161,10 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       let message = '';
 
       let response = false;
-      response = await postData('client-follow-ups', dataToSend);
+      response = await postData('employees/reference', dataToSend);
       if (response) {
         ToastNotify({
-          message: 'Seguimiento registrado con exito!',
+          message: 'Referencia registrada con exito!',
           position: 'top',
         });
       }
@@ -190,200 +177,224 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       closeModal();
     }
   };
-  const handleServiceChange = (event) => {
-    const { value, checked } = event.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      services: checked
-        ? [...prevFormData.services, parseInt(value)]
-        : prevFormData.services.filter((id) => id !== parseInt(value)),
-    }));
+  const openModal = (row = false) => {
+    setFormData(initialValues);
+    setIsReadOnly(false);
+    setSelectedOption('client');
+    console.log('row => ', row);
+    if (row) {
+      if (row.employee_id >= 1) {
+        setSelectedOption('employee');
+      }
+      const formattedDateTime = `${row.date}T${row.time}`;
+      setFormData(row);
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        date: formattedDateTime,
+      }));
+      setIsReadOnly(true);
+    }
+    setIsOpenModal(true);
+  };
+  const closeModal = () => {
+    setFormData(initialValues);
+    setIsOpenModal(false);
+  };
+  const handleOptionChange = (event) => {
+    setSelectedOption(event.target.value);
+  };
+  const truncateText = (text, maxLength) => {
+    // Eliminar etiquetas HTML y espacios innecesarios
+    console.log('decode', decode(text).split('</p>'));
+    const cleanText = decode(text).split('</p>');
+
+    // Truncar el texto si excede maxLength
+    if (cleanText[0].length > maxLength) {
+      return cleanText[0].substring(0, maxLength) + '...';
+    }
+    return cleanText[0].replace('<p>', '');
   };
   return (
     <form className=''>
-      {/* {(loading || isLoading) && <Spinner />} */}
+      {(loading || isLoading) && <Spinner />}
       <div className='relative rounded min-h-[calc(100vh-235px)]'>
         <div className='flex justify-between'>
-          <div className='border border-gray-800 p-1 mb-2'>
-            Referencias personales
+          <div className='border border-gray-800 p-2 mb-2'>Referencias</div>
+          <div className='flex space-x-2'>
+            <button
+              type='button'
+              className='bg-primary text-lg text-white font-bold py-2 px-2 rounded h-8'
+              onClick={() => openModal(false)}
+            >
+              <FaPlusCircle className='text-lg' />
+            </button>
           </div>
         </div>
-        <div className='col-span-1 md:grid md:grid-cols-4 gap-1'>
-          <div className='col-span-2'>
-            <label
-              htmlFor='contact_ref1'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Contacto Referencia
-            </label>
-            <input
-              type='text'
-              id='contact_ref1'
-              name='contact_ref1'
-              value={formData.contact_ref1}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-          <div className='col-span-1'>
-            <label
-              htmlFor='date_start1'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Fecha desde
-            </label>
-            <input
-              type='date'
-              id='date_start1'
-              name='date_start1'
-              value={formData.date_start1}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-          <div className='col-span-1'>
-            <label
-              htmlFor='date_until1'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Fecha hasta
-            </label>
-            <input
-              type='date'
-              id='date_until1'
-              name='date_until1'
-              value={formData.date_until1}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-
-          <div className='col-span-2'>
-            <label
-              htmlFor='contact_ref2'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Contacto Referencia
-            </label>
-            <input
-              type='text'
-              id='contact_ref2'
-              name='contact_ref2'
-              value={formData.contact_ref2}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-          <div className='col-span-1'>
-            <label
-              htmlFor='date_start2'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Fecha desde
-            </label>
-            <input
-              type='date'
-              id='date_start2'
-              name='date_start2'
-              value={formData.date_start2}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-          <div className='col-span-1'>
-            <label
-              htmlFor='date_until2'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Fecha hasta
-            </label>
-            <input
-              type='date'
-              id='date_until2'
-              name='date_until2'
-              value={formData.date_until2}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-
-          <div className='col-span-2'>
-            <label
-              htmlFor='contact_ref3'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Contacto Referencia
-            </label>
-            <input
-              type='text'
-              id='contact_ref3'
-              name='contact_ref3'
-              value={formData.contact_ref3}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-          <div className='col-span-1'>
-            <label
-              htmlFor='date_start3'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Fecha desde
-            </label>
-            <input
-              type='date'
-              id='date_start3'
-              name='date_start3'
-              value={formData.date_start3}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-          <div className='col-span-1'>
-            <label
-              htmlFor='date_until3'
-              className='block text-sm font-medium text-gray-700'
-            >
-              Fecha hasta
-            </label>
-            <input
-              type='date'
-              id='date_until3'
-              name='date_until3'
-              value={formData.date_until3}
-              onChange={handleChange}
-              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-            />
-          </div>
-        </div>
-        <div className='flex justify-between'>
-          <div className='border border-gray-800 p-1 mb-2 mt-10'>
-            Disponibilidad horaria
-          </div>
-        </div>
-        <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
-          {services.length > 0 &&
-            services.map((service) => (
-              <div key={service.id} className='flex items-center'>
-                <input
-                  type='checkbox'
-                  id={`service-${service.id}`}
-                  name='services'
-                  value={service.id}
-                  checked={formData.services?.includes(service.id)}
-                  onChange={handleServiceChange}
-                  className='mr-2'
-                />
-                <label
-                  htmlFor={`service-${service.id}`}
-                  className='font-medium text-gray-700'
+        <div className='col-span-2 md:grid md:grid-cols-2 gap-1'>
+          {followUps &&
+            followUps.map((row) => (
+              <>
+                <div
+                  className='flex justify-between items-center bg-white rounded-lg p-2 shadow-sm border border-gray-300 col-span-2 cursor-pointer'
+                  onClick={() => openModal(row)}
                 >
-                  {service.name}
-                </label>
-              </div>
+                  <div className='flex items-center w-full'>
+                    <div className='w-10 h-9 rounded-full mr-4 border border-blue-500 flex justify-center items-center'>
+                      {row.id}
+                    </div>
+                    <div className='w-full'>
+                      <div className='flex justify-between items-center w-full'>
+                        <h4 className='text-lg font-semibold flex-grow'>
+                          {row.contact}
+                        </h4>
+                        <span className='text-sm text-gray-600'>
+                          Desde {row.from_date}
+                        </span>
+                      </div>
+                      <div className='flex justify-between items-center w-full'>
+                        <span className='text-sm text-gray-600'>
+                          {row.phone}
+                        </span>
+                        <span className='text-sm text-gray-600'>
+                          Hasta {row.until_date}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className='flex items-center'>
+                    <button className='bg-transparent border-none text-gray-500 hover:text-red-500'>
+                      <i className='fas fa-trash'></i>
+                    </button>
+                    <button className='ml-4 bg-transparent border-none text-gray-500 hover:text-orange-500'>
+                      <i className='fas fa-ellipsis-v'></i>
+                    </button>
+                  </div>
+                </div>
+                <Tooltip id='tooltip' />
+              </>
             ))}
         </div>
       </div>
+      {isOpenModal && (
+        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
+          <div
+            className={`relative bg-white p-2 rounded shadow-lg min-h-80 w-4/5 lg:w-1/2 max-h-screen overflow-y-auto`}
+          >
+            <button
+              className='absolute top-0 right-0 text-gray-800 text-lg'
+              onClick={closeModal}
+            >
+              <svg
+                className='w-6 h-6'
+                fill='none'
+                viewBox='0 0 24 24'
+                stroke='currentColor'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth={2}
+                  d='M6 18L18 6M6 6l12 12'
+                />
+              </svg>
+            </button>
+            <div className={`col-span-1 md:grid md:grid-cols-1 gap-2 p-2`}>
+              <div className='col-span-1'>
+                <h3 className='text-lg font-semibold mb-4'>
+                  Referencia Personal
+                </h3>
+              </div>
+              <div className='col-span-1'>
+                <div className='mb-1'>
+                  <label
+                    htmlFor='contact'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Contácto
+                  </label>
+                  <input
+                    type='text'
+                    id='contact'
+                    value={formData.contact}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='mb-1'>
+                  <label
+                    htmlFor='phone'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Teléfono
+                  </label>
+                  <input
+                    type='text'
+                    id='phone'
+                    value={formData.phone}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='mb-2'>
+                  <label
+                    htmlFor='from_date'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Fecha desde
+                  </label>
+                  <input
+                    type='date'
+                    id='from_date'
+                    value={formData.from_date == null ? '' : formData.from_date}
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='mb-2'>
+                  <label
+                    htmlFor='until_date'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Fecha hasta
+                  </label>
+                  <input
+                    type='date'
+                    id='until_date'
+                    value={
+                      formData.until_date == null ? '' : formData.until_date
+                    }
+                    onChange={handleChange}
+                    disabled={isReadOnly}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+              </div>
+            </div>
+            <div className='flex justify-end p-4 mt-12'>
+              <div className='flex'>
+                <button
+                  type='button'
+                  className='bg-gray-500 text-white font-bold py-2 px-2 text-sm rounded mr-2'
+                  onClick={closeModal}
+                >
+                  Cerrar
+                </button>
+                <button
+                  type='button'
+                  className={`py-2 px-2 text-sm rounded font-bold bg-primary text-white hover:bg-primary-dark ${
+                    isReadOnly ? 'bg-blue-300 cursor-not-allowed' : ''
+                  }`}
+                  onClick={handleSubmit}
+                  disabled={isReadOnly}
+                >
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </form>
   );
 };

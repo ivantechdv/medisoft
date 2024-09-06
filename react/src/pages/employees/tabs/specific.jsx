@@ -31,6 +31,7 @@ const Form = ({
   onFormData,
   onGetRecordById,
   setUnsavedChanges,
+  onHandleHasChange,
 }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Informacion especifica',
@@ -71,9 +72,11 @@ const Form = ({
     experiences: [],
   };
   const [formData, setFormData] = useState(initialValues);
+  const [initialFormData, setInitialFormData] = useState(initialValues);
   const [employees, setEmployees] = useState([]);
   const [loadingCount, setLoadingCount] = useState(2);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingFetch, setLoadingFetch] = useState(true);
+  const [loadingData, setLoadingData] = useState(true);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [selectedOption, setSelectedOption] = useState('client');
   const [gainExperiences, setGainExperiences] = useState([]);
@@ -86,6 +89,7 @@ const Form = ({
   const navigateTo = useNavigate();
 
   useEffect(() => {
+    setLoadingFetch(true);
     const fetchSelect = async () => {
       try {
         const order = 'name-asc';
@@ -109,7 +113,7 @@ const Form = ({
       } catch (error) {
         console.log('ERRR', error);
       } finally {
-        setLoadingCount((prev) => prev - 1);
+        setTimeout(() => setLoadingFetch(false), 400);
       }
     };
     fetchSelect();
@@ -117,6 +121,7 @@ const Form = ({
   useEffect(() => {
     const getRecord = async () => {
       try {
+        setLoadingData(true);
         if (employee_id && patologies && services && tasks && gainExperiences) {
           // Asegúrate de que `id` esté definido
           await getRecordById(employee_id);
@@ -124,6 +129,7 @@ const Form = ({
       } catch (error) {
         console.log('ERRR', error);
       } finally {
+        setTimeout(() => setLoadingData(false), 400);
       }
     };
     getRecord();
@@ -150,7 +156,7 @@ const Form = ({
           ? data.experiences.split(',').map(Number)
           : [];
 
-        setFormData({
+        const initialData = {
           ...data,
           services: servicesArray,
           patologies: patologiesArray,
@@ -158,7 +164,10 @@ const Form = ({
           experiences: experiencesArray,
           employee_id: employee_id,
           id: response[0].id,
-        });
+        };
+
+        setFormData(initialData);
+        setInitialFormData(initialData); // Guarda el estado inicial
       }
     } catch (error) {
       console.error('Error al obtener el registro por id:', error);
@@ -212,7 +221,7 @@ const Form = ({
   };
 
   const handleSend = async (dataToSend) => {
-    setIsLoading(true);
+    setLoadingData(true);
     try {
       let message = '';
 
@@ -235,7 +244,7 @@ const Form = ({
       console.log('error =>', error);
     } finally {
       getRecordById(dataToSend.employee_id);
-      setIsLoading(false);
+      setLoadingData(false);
     }
   };
 
@@ -249,9 +258,30 @@ const Form = ({
     }));
   };
 
+  const hasChanges = () => {
+    return (
+      JSON.stringify(formData.services) !==
+        JSON.stringify(initialFormData.services) ||
+      JSON.stringify(formData.patologies) !==
+        JSON.stringify(initialFormData.patologies) ||
+      JSON.stringify(formData.tasks) !==
+        JSON.stringify(initialFormData.tasks) ||
+      JSON.stringify(formData.experiences) !==
+        JSON.stringify(initialFormData.experiences)
+    );
+  };
+
+  useEffect(() => {
+    if (hasChanges()) {
+      onHandleHasChange(true);
+    } else {
+      onHandleHasChange(false);
+    }
+  }, [formData]);
+
   return (
     <form className=''>
-      {/* {(loading || isLoading) && <Spinner />} */}
+      {(loadingData || loadingFetch) && <Spinner />}
       <div className=' rounded min-h-[calc(100vh-235px)]'>
         <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
           <button
@@ -270,7 +300,7 @@ const Form = ({
         <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
           {services.length > 0 &&
             services.map((service) => (
-              <div key={service.id} className='flex items-center'>
+              <div key={service.id} className=''>
                 <input
                   type='checkbox'
                   id={`service-${service.id}`}
@@ -297,7 +327,7 @@ const Form = ({
         <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
           {gainExperiences.length > 0 &&
             gainExperiences.map((exp) => (
-              <div key={exp.id} className='flex items-center'>
+              <div key={exp.id} className=''>
                 <input
                   type='checkbox'
                   id={`exp-${exp.id}`}
@@ -324,7 +354,7 @@ const Form = ({
         <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
           {tasks.length > 0 &&
             tasks.map((task) => (
-              <div key={task.id} className='flex items-center'>
+              <div key={task.id} className=''>
                 <input
                   type='checkbox'
                   id={`tasks-${task.id}`}
@@ -351,7 +381,7 @@ const Form = ({
         <div className='grid grid-cols-2 md:grid md:grid-cols-3 gap-1'>
           {patologies.length > 0 &&
             patologies.map((patologie) => (
-              <div key={patologie.id} className='flex items-center'>
+              <div key={patologie.id} className=''>
                 <input
                   type='checkbox'
                   id={`patologie-${patologie.id}`}

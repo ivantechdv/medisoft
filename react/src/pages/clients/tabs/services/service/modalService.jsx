@@ -218,8 +218,8 @@ const ServicesModal = ({
               <>
                 <div className='col-span-2 border-l-2 border-gray-800 p-2'>
                   <label>Candidatos preseleccionados</label>
-                  <table className='w-full divide-y divide-tableHeader mb-4 table-container'>
-                    <thead className='bg-tableHeader'>
+                  <table className='w-full divide-y divide-tableHeader mb-4 table-container2'>
+                    <thead className='bg-tableHeader2'>
                       <tr>
                         <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
                           Empleado
@@ -265,7 +265,7 @@ const ServicesModal = ({
                                         )
                                     : null
                                 }
-                                className={`px-2 py-2 border rounded text-white ${
+                                className={`px-1 py-1 border rounded text-white ${
                                   row.status === 'Pendiente'
                                     ? 'bg-yellow-500'
                                     : row.status === 'Rechazado'

@@ -13,7 +13,13 @@ import ToastNotify from '../../../components/toast/toast';
 import { FaExpand, FaMinusCircle } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
 import ChangeLogger from '../../../components/changeLogger';
-const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
+const Form = ({
+  onHandleChangeCard,
+  employee_id,
+  onAction,
+  onFormData,
+  onHandleHasChange,
+}) => {
   const [formData, setFormData] = useState({
     id: '',
     driving_license: true,
@@ -49,6 +55,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
   const [timeExperiences, setTimeExperiences] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const [selectedLanguagesAux, setSelectedLanguagesAux] = useState('');
   const [currentLanguages, setCurrentLanguages] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
   const [codPost, setCodPost] = useState('');
@@ -70,6 +77,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
 
   useEffect(() => {
     try {
+      setLoading(true);
       const fetchSelect = async () => {
         const order = 'name-asc';
 
@@ -103,11 +111,13 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
     } catch (error) {
       console.log('error=>', error);
     } finally {
+      setTimeout(() => setLoading(false), 100);
     }
   }, [employee_id]);
 
   useEffect(() => {
     try {
+      setLoading(true);
       const languageIds = formData.language_id
         .split(',')
         .map((id) => parseInt(id));
@@ -120,21 +130,23 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
     } catch (error) {
       console.log('error=>', error);
     } finally {
+      setTimeout(() => setLoading(false), 1400);
     }
   }, [formData]);
   const getRecordById = async (employee_id) => {
     try {
-      //setIsLoading(true);
+      setLoading(true);
       const response = await getData(
         'employees/complementary/all?employee_id=' + employee_id,
       );
       if (response.length > 0) {
         setFormData(response[0]);
+        setOldData(response[0]);
       }
     } catch (error) {
       console.error('Error al obtener el registro por id:', error);
     } finally {
-      // setIsLoading(false);
+      setTimeout(() => setLoading(false), 400);
     }
   };
 
@@ -192,6 +204,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
 
   const handleSubmit = async () => {
     try {
+      setLoading(true);
       // const isValid = validateRequiredFields();
 
       // if (!isValid) {
@@ -203,9 +216,10 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
       let response = false;
       const dataToSend = { ...formData };
       const languageIds = selectedLanguages.map((language) => language.value);
+      console.log('languageIDS', languageIds);
       dataToSend.language_id = languageIds.join(',');
       dataToSend.employee_id = employee_id;
-
+      delete dataToSend.id;
       let message = '';
       if (formData.id == '') {
         response = await postData('employees/complementary', dataToSend);
@@ -237,6 +251,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
       });
     } finally {
       getRecordById(employee_id);
+      setLoading(false);
     }
   };
 
@@ -244,8 +259,20 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
     setSelectedLanguages(selected);
   };
 
+  const hasChanges = () => {
+    return JSON.stringify(formData) !== JSON.stringify(oldData);
+  };
+
+  useEffect(() => {
+    if (hasChanges()) {
+      onHandleHasChange(true);
+    } else {
+      onHandleHasChange(false);
+    }
+  }, [formData]);
   return (
     <form className=''>
+      {loading && <Spinner />}
       <div className='rounded min-h-[calc(100vh-235px)]'>
         <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
           <button
@@ -261,7 +288,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
             <div className='col-span-2 md:grid md:grid-cols-2 gap-2 '>
               <div className='col-span-1'>
                 <label className='block text-sm font-medium text-gray-700'>
-                  ¿Tiene licencia de conducir?
+                  Permiso de conducir
                 </label>
                 <div className='mt-1'>
                   <label className='inline-flex items-center'>
@@ -292,7 +319,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
               </div>
               <div className='col-span-1'>
                 <label className='block text-sm font-medium text-gray-700'>
-                  ¿Dispones de vehículo propio?
+                  Vehiculo propio
                 </label>
                 <div className='mt-1'>
                   <label className='inline-flex items-center'>
@@ -389,7 +416,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
                   htmlFor='gender_id'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  ¿Sabe cocinar?
+                  Experiencia cocina
                 </label>
                 <select
                   className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
@@ -409,7 +436,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
               </div>
               <div className='col-span-1'>
                 <label className='block text-sm font-medium text-gray-700'>
-                  ¿Consentimiento de contacto?
+                  Consentimiento de contacto
                 </label>
                 <div className='mt-1'>
                   <label className='inline-flex items-center'>
@@ -456,7 +483,7 @@ const Form = ({ onHandleChangeCard, employee_id, onAction, onFormData }) => {
               </div>
               <div className='col-span-1'>
                 <label className='block text-sm font-medium text-gray-700'>
-                  ¿Acepta las condiciones?
+                  Acepta condiciones
                 </label>
                 <div className='mt-1'>
                   <label className='inline-flex items-center'>
