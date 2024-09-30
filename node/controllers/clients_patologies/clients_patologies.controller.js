@@ -45,7 +45,7 @@ CTRL.create = async (req, res, next) => {
         patology_id: patologiesToRemove,
       };
       const include = {};
-      Methods.delete(req, res, next, ClientPatology, where, true);
+      await Methods.delete(req, res, next, ClientPatology, where, true);
     }
     if (patologiesToAdd.length > 0) {
       const dataToInsert = patologiesToAdd.map((patology_id) => ({
@@ -53,7 +53,7 @@ CTRL.create = async (req, res, next) => {
         patology_id,
       }));
       req.body = dataToInsert;
-      await Methods.createBulk(req, res, next, ClientPatology);
+      await Methods.createOrUpdateBulk(req, res, next, ClientPatology);
     }
     res.status(200).json(true);
   } catch (error) {

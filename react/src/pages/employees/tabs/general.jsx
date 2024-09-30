@@ -38,6 +38,8 @@ const Form = ({
     full_name: '',
     code_phone: '',
     phone: '',
+    code_phone2: '',
+    phone2: '',
     email: '',
     born_date: '',
     cod_post_id: 0,
@@ -48,8 +50,11 @@ const Form = ({
     dniBack: '',
     is_active: true,
     country_id: '',
-    type: 'Cliente',
+    type: '1',
     recommendations: '',
+    statu_id: '',
+    level_id: '',
+    state_id: '',
   });
   const [oldData, setOldData] = useState({
     dni: '',
@@ -59,6 +64,8 @@ const Form = ({
     full_name: '',
     code_phone: '',
     phone: '',
+    code_phone2: '',
+    phone2: '',
     email: '',
     born_date: '',
     cod_post_id: 0,
@@ -69,8 +76,11 @@ const Form = ({
     dniBack: '',
     is_active: true,
     country_id: '',
-    type: 'Cliente',
+    type: '1',
     recommendations: '',
+    statu_id: '',
+    level_id: '',
+    state_id: '',
   });
   const [images, setImages] = useState({
     photo: '',
@@ -99,6 +109,8 @@ const Form = ({
   const [dniBack, setDniBack] = useState('');
   const [codPosts, setCodPosts] = useState([]);
   const [countries, setCountries] = useState([]);
+  const [levels, setLevels] = useState([]);
+  const [status, setStatus] = useState([]);
   const [genders, setGenders] = useState([]);
   const [languages, setLanguages] = useState([]);
   const [clientReason, setClientReason] = useState([]);
@@ -119,6 +131,10 @@ const Form = ({
   const dni = useRef(null);
   const ref = useRef(null);
 
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedState, setSelectedState] = useState(null);
+  const [postalCodes, setPostalCodes] = useState([]);
+
   const navigateTo = useNavigate();
   useEffect(() => {
     try {
@@ -126,6 +142,7 @@ const Form = ({
       if (onFormData) {
         setFormData(onFormData);
         setOldData(onFormData);
+
         //calcula la edad
         if (onFormData.born_date != '') {
           const age = calculateAge(onFormData.born_date);
@@ -180,10 +197,31 @@ const Form = ({
   }, [onFormData]);
 
   useEffect(() => {
+    if (onFormData.cod_post?.state?.country) {
+      const country = countries.find(
+        (c) => c.id === parseInt(onFormData.cod_post.state.country_id),
+      );
+      console.log('country', country);
+      setSelectedCountry(country);
+
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        ['state_id']: onFormData.cod_post.state_id,
+      }));
+      setSelectedState(onFormData.cod_post.state);
+    }
+  }, [countries, onFormData]);
+
+  useEffect(() => {
     try {
       setLoadingFetch(true);
       const fetchSelect = async () => {
         const order = 'name-asc';
+
+        const responseLevels = await getData('employees/level/all');
+        setLevels(responseLevels);
+        const responseStatus = await getData('employees/status/all');
+        setStatus(responseStatus);
 
         const responseCodPosts = await getData('cod_posts/all');
         setCodPosts(responseCodPosts);
@@ -300,6 +338,20 @@ const Form = ({
       }
       if (id === 'dni') {
         onHandleChangeCard(id, value);
+      }
+
+      if (id === 'country_current_id') {
+        const country = countries.find((c) => c.id === parseInt(value));
+        setSelectedCountry(country);
+        setSelectedState(null); // Resetear el estado
+        setPostalCodes([]);
+      }
+      if (id === 'state_id') {
+        const state = selectedCountry.states.find(
+          (s) => s.id === parseInt(value),
+        );
+        setSelectedState(state);
+        setPostalCodes(state.cod_posts); // Establecer los códigos postales
       }
     }
   };
@@ -864,8 +916,8 @@ const Form = ({
                   value={formData.is_active}
                 >
                   {[
-                    { value: true, label: 'Activo', key: 'activo' },
-                    { value: false, label: 'Inactivo', key: 'inactivo' },
+                    { value: true, label: 'Activo', key: '1' },
+                    { value: false, label: 'Inactivo', key: '0' },
                   ].map((option) => (
                     <option key={option.key} value={option.value}>
                       {option.label}
@@ -913,21 +965,49 @@ const Form = ({
               </div>
               <div className='col-span-1'>
                 <label
-                  htmlFor='dni'
+                  htmlFor='level_id'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  DNI
+                  Level
                 </label>
-                <input
-                  type='text'
-                  id='dni'
-                  name='dni'
-                  value={formData.dni}
+                <select
+                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  name='level_id'
+                  id='level_id'
                   onChange={handleChange}
-                  ref={dniRef}
-                  onBlur={() => validateField('dni', formData.dni, dniRef)}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                />
+                  value={formData.level_id}
+                >
+                  <option value=''>Seleccione</option>
+                  {levels.length > 0 &&
+                    levels.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='statu_id'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Status
+                </label>
+                <select
+                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  name='statu_id'
+                  id='statu_id'
+                  onChange={handleChange}
+                  value={formData.statu_id}
+                >
+                  <option value=''>Seleccione</option>
+                  {status.length > 0 &&
+                    status.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
               </div>
 
               <div className='col-span-1'>
@@ -963,6 +1043,47 @@ const Form = ({
                   value={formData.age}
                 />
               </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='dni'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  DNI
+                </label>
+                <input
+                  type='text'
+                  id='dni'
+                  name='dni'
+                  value={formData.dni}
+                  onChange={handleChange}
+                  ref={dniRef}
+                  onBlur={() => validateField('dni', formData.dni, dniRef)}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='gender_id'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Genero
+                </label>
+                <select
+                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  name='gender_id'
+                  id='gender_id'
+                  onChange={handleChange}
+                  value={formData.gender_id}
+                >
+                  <option value=''>Seleccione</option>
+                  {genders.length > 0 &&
+                    genders.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
             <div className='col-span-1'>
               <label
@@ -996,29 +1117,6 @@ const Form = ({
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='gender_id'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Genero
-              </label>
-              <select
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                name='gender_id'
-                id='gender_id'
-                onChange={handleChange}
-                value={formData.gender_id}
-              >
-                <option value=''>Seleccione</option>
-                {genders.length > 0 &&
-                  genders.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
 
             <div className='col-span-1'>
               <label
@@ -1048,6 +1146,39 @@ const Form = ({
                   name='phone'
                   onChange={handleChange}
                   value={formData.phone}
+                  className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                  placeholder='Número de teléfono'
+                />
+              </div>
+            </div>
+            <div className='col-span-1'>
+              <label
+                htmlFor='phone2'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Teléfono [opcional]
+              </label>
+              <div className='flex mt-1'>
+                <select
+                  id='code_phone2'
+                  name='code_phone2'
+                  onChange={handleChange}
+                  value={formData.code_phone2}
+                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
+                >
+                  {countries.length > 0 &&
+                    countries.map((option) => (
+                      <option key={option.id} value={option.code_phone}>
+                        {option.code_phone}
+                      </option>
+                    ))}
+                </select>
+                <input
+                  type='text'
+                  id='phone2'
+                  name='phone'
+                  onChange={handleChange}
+                  value={formData.phone2}
                   className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
                   placeholder='Número de teléfono'
                 />
@@ -1088,7 +1219,7 @@ const Form = ({
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
-            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
+            <div className='col-span-2 md:grid md:grid-cols-2 gap-2'>
               <div className='col-span-1'>
                 <label
                   htmlFor='country_id'
@@ -1111,7 +1242,75 @@ const Form = ({
                     ))}
                 </select>
               </div>
-              <div className='col-span-2'>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='country_current_id'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Pais de residencia
+                </label>
+                <select
+                  id='country_current_id'
+                  name='country_current_id'
+                  onChange={handleChange}
+                  value={formData.country_current_id}
+                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                >
+                  {countries.length > 0 &&
+                    countries.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='state_id'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Estado
+                </label>
+                <select
+                  id='state_id'
+                  name='state_id'
+                  onChange={handleChange}
+                  value={formData.state_id}
+                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                >
+                  <option>Seleccione...</option>
+                  {selectedCountry &&
+                    selectedCountry.states.map((state) => (
+                      <option key={state.id} value={state.id}>
+                        {state.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='cod_post_id'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Codigo Postal
+                </label>
+                <select
+                  id='cod_post_id'
+                  name='cod_post_id'
+                  onChange={handleChange}
+                  value={formData.cod_post_id}
+                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                >
+                  <option>Seleccione...</option>
+                  {selectedState &&
+                    codPosts.map((code) => (
+                      <option key={code.id} value={code.id}>
+                        {code.code + ' | ' + code.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              {/* <div className='col-span-1'>
                 <label
                   htmlFor='asset'
                   className='block text-sm font-medium text-gray-700'
@@ -1185,7 +1384,7 @@ const Form = ({
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
             </div>
             <div className='col-span-2'>
               <label

@@ -20,20 +20,29 @@ import Specific from './tabs/specific';
 const Employees = () => {
   const [formData, setFormData] = useState({
     dni: '',
+    start_date: '',
     first_name: '',
     last_name: '',
     full_name: '',
+    code_phone: '',
     phone: '',
+    code_phone2: '',
+    phone2: '',
     email: '',
-    born_date: new Date(),
+    born_date: '',
     cod_post_id: 0,
+    num_social_security: '',
     address: '',
     photo: '',
     dniFront: '',
     dniBack: '',
     is_active: true,
-    type: 'Cuidador',
+    country_id: '',
+    type: '1',
     recommendations: '',
+    statu_id: '',
+    level_id: '',
+    state_id: '',
   });
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);

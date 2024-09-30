@@ -7,6 +7,9 @@ const GainExperience = require("../../controllers/employees/gain_experience.cont
 const Specific = require("../../controllers/employees/specific.controller");
 const Reference = require("../../controllers/employees/reference.controller");
 const Filter = require("../../controllers/employees/filter.controller");
+const Status = require("../../controllers/employees/status.controller");
+
+const Level = require("../../controllers/employees/level.controller");
 
 /* const  authRequired = require('../../middleware/validateToken');*/
 router.post("/reference", Reference.create);
@@ -28,6 +31,13 @@ router.put("/gain-experience/:id", GainExperience.update);
 router.post("/task", Task.create);
 router.get("/task/all", Task.getAll);
 router.put("/task/:id", Task.update);
+
+router.post("/level", Level.create);
+router.get("/level/all", Level.getAll);
+
+router.post("/status", Status.create);
+router.get("/status/all", Status.getAll);
+router.put("/status/:id", Status.update);
 
 router.post("/filter", Filter.create);
 router.get("/filter/all", Filter.getAll);

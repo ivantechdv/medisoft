@@ -31,7 +31,7 @@ CTRL.get = async (req, res, next) => {
     const condition = {};
     Methods.get(req, res, next, Employee, condition);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error al ejecutar la consulta:", error);
   }
 };
 CTRL.getAll = async (req, res, next) => {
@@ -43,7 +43,7 @@ CTRL.getAll = async (req, res, next) => {
     const include = null;
     Methods.getAll(req, res, next, Employee, condition, include);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error al ejecutar la consulta:", error);
   }
 };
 const processQueryParameters = (queryParameters) => {
