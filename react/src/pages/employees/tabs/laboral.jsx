@@ -216,7 +216,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   };
   return (
     <form className=''>
-      {(loading || isLoading) && <Spinner />}
+      {isLoading && <Spinner />}
       <div className='relative rounded min-h-[calc(100vh-235px)]'>
         <div className='flex justify-between'>
           <div className='border border-gray-800 p-2 mb-2'>Referencias</div>

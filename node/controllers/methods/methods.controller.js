@@ -103,7 +103,7 @@ CTRL.get = async (req, res, next, Model, where, include) => {
       },
     });
   } catch (error) {
-    next(error);
+    console.error("Error al ejecutar la consulta:", error);
   }
 };
 CTRL.getAll = async (

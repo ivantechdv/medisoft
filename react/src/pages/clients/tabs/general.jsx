@@ -101,6 +101,10 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const dni = useRef(null);
   const ref = useRef(null);
 
+  const [selectedCountry, setSelectedCountry] = useState(null);
+  const [selectedState, setSelectedState] = useState(null);
+  const [postalCodes, setPostalCodes] = useState([]);
+
   const navigateTo = useNavigate();
   useEffect(() => {
     try {
@@ -292,7 +296,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     }
     if (id === 'phone') {
       const newValue = value.replace(/\D/g, '');
-      if (newValue.length <= 9) {
+      if (newValue?.length <= 9) {
         setFormData((prevFormData) => ({
           ...prevFormData,
           [id]: newValue,
@@ -557,14 +561,14 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           for (let email of validEmails) {
             const emailResponse = await getData(`clients/all?email=${email}`);
             if (
-              emailResponse.length > 0 &&
+              emailResponse?.length > 0 &&
               emailResponse[0].id !== oldData.id
             ) {
               response.push({ email, id: emailResponse[0].id });
             }
           }
 
-          if (response.length > 0 || invalidEmails.length > 0) {
+          if (response?.length > 0 || invalidEmails?.length > 0) {
             let newEmails = validEmails.filter(
               (e) => !response.some((r) => r.email === e),
             );
@@ -995,7 +999,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 value={formData.gender_id}
               >
                 <option value=''>Seleccione</option>
-                {genders.length > 0 &&
+                {genders?.length > 0 &&
                   genders.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.name}
@@ -1019,7 +1023,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   value={formData.code_phone}
                   className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
                 >
-                  {countries.length > 0 &&
+                  {countries?.length > 0 &&
                     countries.map((option) => (
                       <option key={option.code_phone} value={option.code_phone}>
                         {option.code_phone}
@@ -1074,6 +1078,28 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             </div>
             <div className='col-span-1'>
               <label
+                htmlFor='country_current_id'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Pais de residencia
+              </label>
+              <select
+                id='country_current_id'
+                name='country_current_id'
+                onChange={handleChange}
+                value={formData.country_current_id}
+                className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+              >
+                {countries.length > 0 &&
+                  countries.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className='col-span-1'>
+              <label
                 htmlFor='asset'
                 className='block text-sm font-medium text-gray-700'
               >
@@ -1119,7 +1145,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                         </tr>
                       </thead>
                       <tbody>
-                        {codPosts.length > 0 &&
+                        {codPosts?.length > 0 &&
                           codPosts.map((option) => (
                             <tr
                               key={option.id}

@@ -252,7 +252,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     const cleanText = decode(text).split('</p>');
 
     // Truncar el texto si excede maxLength
-    if (cleanText[0].length > maxLength) {
+    if (cleanText[0]?.length > maxLength) {
       return cleanText[0].substring(0, maxLength) + '...';
     }
     return cleanText[0].replace('<p>', '');
@@ -276,7 +276,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
           </div>
         </div>
         <div className='col-span-2 md:grid md:grid-cols-2 gap-1'>
-          {followUps.length > 0 &&
+          {followUps?.length > 0 &&
             followUps.map((row) => (
               <>
                 <div

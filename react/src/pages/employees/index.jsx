@@ -247,11 +247,14 @@ const Clients = () => {
                     </td>
                     <td className='max-w-xs truncate px-2'>{row.full_name}</td>
                     <td className='max-w-xs truncate px-2'>{row.email}</td>
-                    <td className='max-w-xs truncate px-2'>{row.phone}</td>
+                    <td className='max-w-xs truncate px-2'>
+                      {row.code_phone + ' ' + row.phone}
+                    </td>
                   </tr>
                 ))}
             </tbody>
           </table>
+          {renderPagination()}
         </div>
       </div>
       {/* Modal */}

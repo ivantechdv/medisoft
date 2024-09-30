@@ -28,10 +28,6 @@ const Employee = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-    },
     gender_id: {
       type: DataTypes.INTEGER,
       allowNull: true,
@@ -64,6 +60,14 @@ const Employee = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+    code_phone2: {
+      type: DataTypes.STRING(10),
+      allowNull: true,
+    },
+    phone2: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
     email: {
       type: DataTypes.STRING(100),
       allowNull: true,
@@ -81,11 +85,23 @@ const Employee = sequelize.define(
       allowNull: true,
     },
     type: {
-      type: DataTypes.STRING(100),
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     start_date: {
       type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
+    level_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    statu_id: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     createdAt: {
