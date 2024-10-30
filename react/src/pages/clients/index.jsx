@@ -156,6 +156,10 @@ const Clients = () => {
       }
     });
   };
+  const handlePageSizeChange = (event) => {
+    setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+    setCurrentPage(1); // Reinicia a la primera página
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -175,6 +179,16 @@ const Clients = () => {
             </p>
           </div>
           <div className='flex space-x-2'>
+            <select
+              className='border rounded h-10 px-2'
+              value={pageSize}
+              onChange={handlePageSizeChange}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
             <button
               className='bg-primary text-lg text-textWhite font-bold py-2 px-3 rounded h-10'
               onClick={handleFormClient}
@@ -252,6 +266,7 @@ const Clients = () => {
                 ))}
             </tbody>
           </table>
+          {renderPagination()}
         </div>
       </div>
       {/* Modal */}
@@ -328,6 +343,9 @@ const Clients = () => {
             {selectedRow.clients_patologies.length > 0 &&
               selectedRow.clients_patologies
                 .slice() // Clonamos el array para evitar modificar el original
+                .filter(
+                  (patology) => patology.patology && patology.patology.name,
+                ) // Filtrar aquellos que tengan patología y nombre
                 .sort((a, b) => a.patology.name.localeCompare(b.patology.name)) // Ordenar por nombre de patología
                 .map((patology) => (
                   <li className='p-1' key={patology.id}>

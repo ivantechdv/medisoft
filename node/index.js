@@ -251,6 +251,11 @@ app.use(
   trafic,
   require("./routes/clients_follow_ups/clients_follow_ups.routes")
 );
+app.use(
+  "/api/v1/clients-tasks",
+  trafic,
+  require("./routes/clients_tasks/clients_tasks.routes")
+);
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
   next();

@@ -2,9 +2,13 @@ const CTRL = {};
 const sequelize = require("../../database/sequelize");
 const Client = require("../../models/clients/clients.model");
 const ClientPatology = require("../../models/clients_patologies/clients_patologies.model");
+const ClientTask = require("../../models/clients_tasks/clients_tasks.model");
+
 const CodPost = require("../../models/cod_posts/cod_posts.model");
 const Country = require("../../models/countries/countries.model");
 const Patology = require("../../models/patologies/patologies.model");
+
+const Task = require("../../models/employees/task.model");
 const State = require("../../models/states/states.model");
 const Methods = require("../methods/methods.controller");
 
@@ -49,6 +53,14 @@ CTRL.get = async (req, res, next) => {
           },
         ],
       },
+      {
+        model: ClientTask,
+        include: [
+          {
+            model: Task,
+          },
+        ],
+      },
     ];
     await Methods.get(req, res, next, Client, condition, include);
   } catch (error) {
@@ -81,6 +93,14 @@ CTRL.getAll = async (req, res, next) => {
           },
         ],
       },
+      {
+        model: ClientTask,
+        include: [
+          {
+            model: Task,
+          },
+        ],
+      },
     ];
 
     await Methods.getAll(req, res, next, Client, condition, include);
@@ -110,6 +130,14 @@ CTRL.getById = async (req, res, next) => {
         include: [
           {
             model: Patology,
+          },
+        ],
+      },
+      {
+        model: ClientTask,
+        include: [
+          {
+            model: Task,
           },
         ],
       },

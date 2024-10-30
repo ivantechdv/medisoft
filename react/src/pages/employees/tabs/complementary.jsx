@@ -132,7 +132,7 @@ const Form = ({
     } finally {
       setTimeout(() => setLoading(false), 1400);
     }
-  }, [formData]);
+  }, [formData.language_id]);
   const getRecordById = async (employee_id) => {
     try {
       setLoading(true);

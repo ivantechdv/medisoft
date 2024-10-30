@@ -27,10 +27,9 @@ const uploadFile = (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
-  const filePath = path.relative(
-    "public",
-    path.join(req.file.destination, req.file.filename)
-  );
+  const filePath = path
+    .relative("public", path.join(req.file.destination, req.file.filename))
+    .replace(/\\/g, "/"); // Reemplazar '\' por '/'
   res.status(201).json({
     filename: req.file.filename,
     path: filePath,

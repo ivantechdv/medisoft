@@ -44,6 +44,10 @@ const Client = sequelize.define("clients", {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
+  origen_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+  },
   language_id: {
     type: DataTypes.STRING(100),
     allowNull: true,

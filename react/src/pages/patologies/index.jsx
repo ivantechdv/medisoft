@@ -206,6 +206,10 @@ const Patologies = () => {
       console.error('Error al actualizar estado: ', error);
     }
   };
+  const handlePageSizeChange = (event) => {
+    setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+    setCurrentPage(1); // Reinicia a la primera página
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -218,13 +222,23 @@ const Patologies = () => {
         <div className='flex justify-between px-4 py-5 sm:px-6'>
           <div>
             <h3 className='text-lg font-semibold leading-6 text-gray-900'>
-              Lista de Patologies
+              Lista de Patologias
             </h3>
             <p className='mt-1 max-w-2xl text-sm text-gray-500'>
               Gestiones sus patologias
             </p>
           </div>
           <div className='flex space-x-2'>
+            <select
+              className='border rounded h-10 px-2'
+              value={pageSize}
+              onChange={handlePageSizeChange}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
             <button
               className='bg-primary hover:bg-blue-700 text-sm text-white font-bold py-1 px-3 rounded h-10'
               onClick={openModal}
@@ -312,6 +326,7 @@ const Patologies = () => {
                 ))}
             </tbody>
           </table>
+          {renderPagination()}
         </div>
       </div>
       {/* Modal */}

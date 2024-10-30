@@ -13,11 +13,10 @@ CTRL.create = async (req, res, next, Model) => {
   }
 };
 
-CTRL.createOrUpdateBulk = async (req, res, next, Model) => {
+CTRL.createOrUpdateBulk = async (data, Model) => {
   try {
-    const data = req.body; // Obtener los datos enviados por el cliente
-    const createData = []; // Almacenar datos para creación
-    const updateData = []; // Almacenar datos para actualización
+    const createData = [];
+    const updateData = [];
 
     // Separar los datos para creación y actualización
     data.forEach((item) => {
@@ -31,20 +30,23 @@ CTRL.createOrUpdateBulk = async (req, res, next, Model) => {
     });
 
     // Crear nuevos registros
-    const createResult = await Model.bulkCreate(createData);
+    if (createData.length > 0) {
+      await Model.bulkCreate(createData);
+    }
 
     // Actualizar registros existentes
-    const updatePromises = updateData.map(async (item) => {
-      const { id, ...updateFields } = item; // Excluir el ID del objeto de actualización
-      await Model.update(updateFields, { where: { id } });
-    });
-    await Promise.all(updatePromises);
+    if (updateData.length > 0) {
+      const updatePromises = updateData.map(async (item) => {
+        const { id, ...updateFields } = item;
+        await Model.update(updateFields, { where: { id } });
+      });
+      await Promise.all(updatePromises);
+    }
 
-    // Enviar una respuesta al cliente
-    res.json(true);
+    return true; // Devolver éxito, para evitar modificar el response de Express directamente
   } catch (error) {
     console.error("Error al guardar o actualizar los datos:", error);
-    next(error);
+    throw error; // Lanzar el error para que el controlador lo capture y maneje
   }
 };
 
@@ -233,8 +235,6 @@ CTRL.delete = async (req, res, next, Model, where, returnData = false) => {
         return;
       }
       res.status(200).json(true);
-    } else {
-      res.status(404).json({ message: "Registro no encontrado" });
     }
   } catch (error) {
     console.error(error);

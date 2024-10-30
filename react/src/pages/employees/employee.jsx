@@ -6,7 +6,7 @@ import {
   FaMapMarkerAlt,
   FaPhoneSquareAlt,
   FaFileAlt,
-  FaClipboardList,
+  FaEnvelope,
 } from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
 import { getData, postData, putData, getStorage } from '../../api';
 import Spinner from '../../components/Spinner/Spinner';
@@ -213,7 +213,7 @@ const Employees = () => {
       <Breadcrumbs
         items={[
           { label: 'Inicio', route: '/' },
-          { label: 'Empleadores', route: '/employees' },
+          { label: 'Empleados', route: '/employees' },
           !isNewRecord
             ? {
                 label: cardData.full_name ? cardData.full_name : 'Nuevo',
@@ -229,20 +229,18 @@ const Employees = () => {
               <div className='col-span-1'>
                 <div className='w-full border-r-2 border-gray-200'>
                   {/* Contenido del lado izquierdo */}
-                  <div className='flex relative bg-white border-b-2 border-gray-200 h-40 '>
+                  <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>
                     <div className='w-10 bg-primary h-full'></div>
                     <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
                       {cardData.photo ? (
                         <img
                           src={cardData.photo}
                           alt=''
-                          className='h-12 rounded-full'
-                          style={{ objectFit: 'contain' }}
+                          className='h-12 w-12 rounded-full'
+                          style={{ objectFit: 'cover' }}
                         />
                       ) : (
-                        <>
-                          <FaUser className='text-gray-300 text-5xl p-2' />
-                        </>
+                        <FaUser className='text-gray-300 text-5xl p-2' />
                       )}
                     </div>
                     <div className='mt-8 ml-8'>
@@ -255,7 +253,7 @@ const Employees = () => {
                       <label className='font-light text-sm block '>
                         {cardData.fecha}
                       </label>
-                      {cardData.id && ( // Verifica si cardData.id existe
+                      {cardData.id && (
                         <div className='flex items-center'>
                           <label className='font-light text-sm block'>
                             ID CLIENTE
@@ -264,8 +262,7 @@ const Employees = () => {
                           <div className='ml-4 w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-2'>
                             <span className='text-lg font-bold'>
                               {cardData.id}
-                            </span>{' '}
-                            {/* Aplica estilos para hacerlo negrita y grande */}
+                            </span>
                           </div>
                         </div>
                       )}
@@ -283,23 +280,33 @@ const Employees = () => {
                   </label>
                 </div>
 
-                <div className='w-full ml-5 flex'>
-                  <label className='flex'>
-                    <FaMapMarkerAlt className=' mr-4 mb-4' />
-                  </label>
+                <div className='w-full ml-5 flex items-center'>
+                  <FaMapMarkerAlt className='mr-4 mb-4' />
                   <label className='flex'>
                     {cardData.address || 'Dirección'}
                   </label>
                 </div>
-                <EmailList emails={cardData.email} />
-                <div className='w-full ml-5 flex'>
-                  <label className='flex'>
-                    <FaPhoneSquareAlt className=' mr-4' />
-                  </label>
-                  <label className='flex'>
-                    {cardData.code_phone + ' '}
-                    {cardData.phone || 'Teléfono'}
-                  </label>
+
+                <div className='w-full ml-5 flex items-center'>
+                  <FaEnvelope className='mr-4' />
+                  <a
+                    href={`mailto:${cardData.email}`}
+                    className='truncate max-w-xs hover:text-blue-600 transition-colors text-wrap'
+                    title={cardData.email} // Mostrar el correo completo en un tooltip
+                  >
+                    {cardData.email || 'Enviar correo'}
+                  </a>
+                </div>
+
+                <div className='w-full ml-5 flex items-center'>
+                  <FaPhoneSquareAlt className='mr-4' />
+                  <a
+                    href={`tel:${cardData.code_phone}${cardData.phone}`}
+                    className='truncate max-w-xs hover:text-blue-600 transition-colors'
+                    title={`${cardData.code_phone} ${cardData.phone}`} // Mostrar el teléfono completo en un tooltip
+                  >
+                    {`${cardData.code_phone} ${cardData.phone || 'Teléfono'}`}
+                  </a>
                 </div>
               </div>
             </div>
@@ -308,16 +315,20 @@ const Employees = () => {
             {/* Contenido del lado derecho */}
             <div className='mb-4 border-b-2 border-gray-400 p-2'>
               <button
-                className={`tab ml-4 mr-4 pr-4 border-r-2 ${
-                  activeTab === 'general' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                  activeTab === 'general'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 }`}
                 onClick={() => handleTabChange('general')}
               >
                 General
               </button>
               <button
-                className={`tab mr-4 pr-4 border-r-2 ${
-                  activeTab === 'complementary' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                  activeTab === 'complementary'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('complementary')}
                 disabled={isNewRecord}
@@ -325,8 +336,10 @@ const Employees = () => {
                 Complementario
               </button>
               <button
-                className={`tab mr-4 pr-4 border-r-2 ${
-                  activeTab === 'laboral' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                  activeTab === 'laboral'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('laboral')}
                 disabled={isNewRecord}
@@ -334,8 +347,10 @@ const Employees = () => {
                 Laboral
               </button>
               <button
-                className={`tab mr-4 pr-4 border-r-2 ${
-                  activeTab === 'specific' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                  activeTab === 'specific'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('specific')}
                 disabled={isNewRecord}

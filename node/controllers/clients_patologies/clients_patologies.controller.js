@@ -20,6 +20,7 @@ CTRL.create = async (req, res, next) => {
     const condition = { client_id: clientId };
     const include = [];
 
+    // Obtener patologías existentes
     const existingPatologies = await Methods.getAll(
       req,
       res,
@@ -29,9 +30,11 @@ CTRL.create = async (req, res, next) => {
       include,
       true
     );
+
     const existingPatologyIds = existingPatologies.map((cp) => cp.patology_id);
     const newPatologyIds = clientsPatologiesData.map((cp) => cp.patology_id);
 
+    // Filtrar cuáles agregar y cuáles eliminar
     const patologiesToAdd = newPatologyIds.filter(
       (p) => !existingPatologyIds.includes(p)
     );
@@ -39,26 +42,29 @@ CTRL.create = async (req, res, next) => {
       (p) => !newPatologyIds.includes(p)
     );
 
+    // Eliminar patologías
     if (patologiesToRemove.length > 0) {
       const where = {
         client_id: clientId,
         patology_id: patologiesToRemove,
       };
-      const include = {};
       await Methods.delete(req, res, next, ClientPatology, where, true);
     }
+
+    // Agregar nuevas patologías
     if (patologiesToAdd.length > 0) {
       const dataToInsert = patologiesToAdd.map((patology_id) => ({
         client_id: clientId,
         patology_id,
       }));
-      req.body = dataToInsert;
-      await Methods.createOrUpdateBulk(req, res, next, ClientPatology);
+      await Methods.createOrUpdateBulk(dataToInsert, ClientPatology);
     }
-    res.status(200).json(true);
+
+    // Enviar una sola respuesta
+    return res.status(200).json(true);
   } catch (error) {
     console.log("error", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 };
 
