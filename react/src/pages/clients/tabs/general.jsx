@@ -255,6 +255,36 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   }, [codPost]);
 
   useEffect(() => {
+    if (onFormData.cod_post?.state?.country) {
+      const country = countries.find(
+        (c) => c.id === parseInt(onFormData.cod_post.state.country_id),
+      );
+
+      setSelectedCountry(country);
+      if (country) {
+        setSelectedState(country.states);
+
+        const state = country.states.find(
+          (c) => c.id === parseInt(onFormData.cod_post.state_id),
+        );
+
+        if (state) {
+          setPostalCodes(state.cod_posts);
+        } else {
+          setPostalCodes([]);
+        }
+
+        console.log('states', state);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          ['state_id']: onFormData.cod_post.state_id,
+          ['cod_post_id']: onFormData.cod_post.id,
+        }));
+      }
+    }
+  }, [countries, onFormData]);
+
+  useEffect(() => {
     if (
       loadingForm == false &&
       loadingFetch == false &&
@@ -318,6 +348,25 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           updatedFormData.full_name = `${firstName} ${lastName}`.trim();
         }
 
+        if (id === 'country_current_id') {
+          const country = countries.find((c) => c.id === parseInt(value));
+          setSelectedCountry(country);
+          setSelectedState(null); // Resetear el estado
+          setPostalCodes([]);
+        }
+        if (id === 'state_id') {
+          const state = selectedCountry.states.find(
+            (s) => s.id === parseInt(value),
+          );
+          setSelectedState(state);
+
+          // Establecer los códigos postales según el estado seleccionado
+          if (state) {
+            setPostalCodes(state.cod_posts); // Asumiendo que state.cod_posts es un array de códigos postales
+          } else {
+            setPostalCodes([]); // Resetear si no se encuentra el estado
+          }
+        }
         return updatedFormData;
       });
 
@@ -1100,6 +1149,56 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             </div>
             <div className='col-span-1'>
               <label
+                htmlFor='state_id'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Estado
+              </label>
+              <select
+                id='state_id'
+                name='state_id'
+                onChange={handleChange}
+                value={formData.state_id}
+                className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+              >
+                <option>Seleccione...</option>
+                {selectedCountry &&
+                  selectedCountry.states.map((state) => (
+                    <option key={state.id} value={state.id}>
+                      {state.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className='col-span-1'>
+              <label
+                htmlFor='cod_post_id'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Codigo Postal
+              </label>
+              <select
+                id='cod_post_id'
+                name='cod_post_id'
+                onChange={handleChange}
+                value={formData.cod_post_id}
+                className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+              >
+                <option>Seleccione...</option>
+                {selectedState &&
+                  postalCodes.map(
+                    (
+                      code, // Cambiado de codPosts a postalCodes
+                    ) => (
+                      <option key={code.id} value={code.id}>
+                        {code.code + ' | ' + code.name}
+                      </option>
+                    ),
+                  )}
+              </select>
+            </div>
+            {/* <div className='col-span-1'>
+              <label
                 htmlFor='asset'
                 className='block text-sm font-medium text-gray-700'
               >
@@ -1168,7 +1267,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   </div>
                 )}
               </div>
-            </div>
+            </div> */}
             <div className='col-span-2'>
               <label
                 htmlFor='address'

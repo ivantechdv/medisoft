@@ -16,6 +16,14 @@ const Employee = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+    dniFront: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
+    dniBack: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+    },
     first_name: {
       type: DataTypes.STRING(100),
       allowNull: true,

@@ -133,6 +133,7 @@ const ServicesTable = forwardRef(
           );
 
           if (optionEmployees) {
+            console.log('optionEmployees', optionEmployees);
             setEmployeePreselection(optionEmployees);
             let options = [{ value: 0, label: 'Sin asignar' }];
             options = options.concat(
@@ -220,6 +221,36 @@ const ServicesTable = forwardRef(
         setShowBtnPreselection(false);
         setModalExpanded(false);
         setActiveService(false);
+      } else if (field === 'service_id') {
+        const selectedServiceId = newValue;
+
+        // Filtrar empleados por el servicio seleccionado
+        console.log('employeePreselection', employeePreselection);
+        const filteredEmployees = employeePreselection.filter((employee) => {
+          // Verificar que employee_specific y services no sean undefined
+          const services = employee.employee_specific?.services;
+
+          if (services) {
+            const servicesArray = services.split(',').map(Number); // Convertir en array de números
+            return servicesArray.includes(selectedServiceId);
+          }
+
+          return false; // Si no hay servicios, excluir al empleado
+        });
+
+        console.log('Empleados filtrados', filteredEmployees);
+
+        // Generar las opciones del select
+        let options = [{ value: 0, label: 'Sin asignar' }];
+        options = options.concat(
+          filteredEmployees.map((item) => ({
+            value: item.id,
+            label: item.full_name,
+          })),
+        );
+
+        // Actualizar el estado con los empleados filtrados
+        setEmployees(options);
       }
     };
 

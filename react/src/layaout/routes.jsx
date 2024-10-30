@@ -6,6 +6,7 @@ import Clients from './../pages/clients';
 import Client from './../pages/clients/client';
 import Employees from './../pages/employees';
 import Employee from './../pages/employees/employee';
+import Services from '../pages/services';
 
 function RoutesApp() {
   return (
@@ -22,6 +23,7 @@ function RoutesApp() {
 
       {/* Patologies */}
       <Route path='/patologies' element={<Patologies />} />
+      <Route path='/services' element={<Services />} />
     </Routes>
   );
 }

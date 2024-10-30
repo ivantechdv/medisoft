@@ -18,6 +18,7 @@ export default {
         breadcrum: 'rgba(17, 24, 39,1) ',
         breadcrum_active: 'rgba(133, 102, 42,1)',
         tableHeader: 'rgba(249, 250, 251, 1) ',
+        tab: 'rgba(133, 102, 42, 1)',
       },
     },
   },

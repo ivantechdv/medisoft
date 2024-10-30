@@ -8,6 +8,7 @@ import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
+import Filter from './filter';
 const Clients = () => {
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(10);
@@ -23,6 +24,7 @@ const Clients = () => {
   const [photo, setPhoto] = useState('');
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
+  const [isFilter, setIsFilter] = useState(false);
 
   const navigateTo = useNavigate();
 
@@ -156,6 +158,27 @@ const Clients = () => {
       }
     });
   };
+  const handlePageSizeChange = (event) => {
+    setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+    setCurrentPage(1); // Reinicia a la primera página
+  };
+  const handleFilter = () => {
+    setIsFilter(!isFilter);
+  };
+  const closeFilter = () => {
+    setIsFilter(!isFilter);
+  };
+  const [filters, setFilters] = useState([
+    { field: '', condition: '', value: '', logic: 'AND', logicShow: 'AND' },
+  ]);
+  const [applyFilters, setApplyFilters] = useState('');
+
+  // Construcción de parámetros de consulta
+  const applyFilter = (rowsFilter) => {
+    setRows(rowsFilter);
+    setPageSize(10); // Actualiza el tamaño de la página
+    setCurrentPage(1); // Reinicia a la primera página
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -175,6 +198,16 @@ const Clients = () => {
             </p>
           </div>
           <div className='flex space-x-2'>
+            <select
+              className='border rounded h-10 px-2'
+              value={pageSize}
+              onChange={handlePageSizeChange}
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
             <button
               className='bg-primary text-lg text-textWhite font-bold py-2 px-3 rounded h-10'
               onClick={handleFormEmployee}
@@ -189,7 +222,10 @@ const Clients = () => {
             >
               <FaMinusCircle className='text-lg' />
             </button>
-            <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-3 rounded h-10'>
+            <button
+              className='bg-secondary text-lg text-textWhite font-bold py-1 px-3 rounded h-10'
+              onClick={handleFilter}
+            >
               <FaFilter className='text-lg' />
             </button>
           </div>
@@ -335,6 +371,14 @@ const Clients = () => {
             <p className='text-sm p-1'></p>
           </div>
         </div>
+      )}
+      {isFilter && (
+        <Filter
+          filters={filters}
+          setFilters={setFilters} // Pasar función para actualizar filtros
+          onCloseFilter={() => setIsFilter(false)} // Cierra el panel
+          onApplyFilter={applyFilter}
+        />
       )}
       {isLoading && <Spinner />}
     </div>

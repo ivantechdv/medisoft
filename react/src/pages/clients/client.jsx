@@ -288,16 +288,20 @@ const Clients = () => {
             {/* Contenido del lado derecho */}
             <div className='mb-4 border-b-2 border-gray-400 p-2'>
               <button
-                className={`tab ml-4 mr-4 pr-4 border-r-2 ${
-                  activeTab === 'general' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                  activeTab === 'general'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 }`}
                 onClick={() => handleTabChange('general')}
               >
                 General
               </button>
               <button
-                className={`tab mr-4 pr-4 border-r-2 ${
-                  activeTab === 'especifico' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                  activeTab === 'especifico'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('especifico')}
                 disabled={isNewRecord}
@@ -305,8 +309,10 @@ const Clients = () => {
                 Especifico
               </button>
               <button
-                className={`tab mr-4 pr-4 border-r-2 ${
-                  activeTab === 'servicios' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                  activeTab === 'servicios'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 }${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('servicios')}
                 disabled={isNewRecord}
@@ -314,8 +320,10 @@ const Clients = () => {
                 Servicios
               </button>
               <button
-                className={`tab ${
-                  activeTab === 'seguimientos' ? 'text-primary' : ''
+                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                  activeTab === 'seguimientos'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
                 }${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('seguimientos')}
                 disabled={isNewRecord}

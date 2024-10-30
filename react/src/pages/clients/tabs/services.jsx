@@ -85,6 +85,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
         }
         const optionEmployees = await getData(`employees/all?order=${order}`);
         if (optionEmployees) {
+          console.log('optionEmployees', optionEmployees);
           setEmployeePreselection(optionEmployees);
           let options = [{ value: 0, label: 'Sin asignar' }];
           options = options.concat(

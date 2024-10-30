@@ -20,8 +20,11 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const [images, setImages] = useState([]);
   const [patologies, setPatologies] = useState([]);
   const [selectedPatologies, setSelectedPatologies] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [selectedTasks, setSelectedTasks] = useState([]);
   const [recommendations, setRecommendations] = useState('');
   const [selectedPatologiesOld, setSelectedPatologiesOld] = useState([]);
+  const [selectedTasksOld, setSelectedTasksOld] = useState([]);
   const [recommendationsOld, setRecommendationsOld] = useState('');
   const [loadingCount, setLoadingCount] = useState(2);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +45,16 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
 
           setPatologies(options);
         }
+        const tasks = await getData(`employees/task/all?order=${order}`);
+
+        if (tasks) {
+          const options = tasks.map((item) => ({
+            value: item.id,
+            label: item.name,
+          }));
+
+          setTasks(options);
+        }
       } catch (error) {
         console.log('ERRR', error);
       } finally {
@@ -57,6 +70,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       setRecommendations(onFormData.recommendations);
       setRecommendationsOld(onFormData.recommendations);
       const clientPatologies = onFormData.clients_patologies
+        .filter((cp) => cp.patology && cp.patology.name) // Filtrar aquellos que tengan patología y nombre
         .map((cp) => ({
           value: cp.patology_id,
           label: cp.patology.name,
@@ -65,6 +79,17 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
 
       setSelectedPatologies(clientPatologies);
       setSelectedPatologiesOld(clientPatologies);
+
+      const clientTaks = onFormData.clients_tasks
+        .filter((cp) => cp.task && cp.task.name) // Filtrar aquellos que tengan patología y nombre
+        .map((cp) => ({
+          value: cp.task_id,
+          label: cp.task.name,
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label));
+
+      setSelectedTasks(clientTaks);
+      setSelectedTasksOld(clientTaks);
 
       const isQuillEmpty = isQuillContentEmpty(onFormData.recommendations);
       let recommendations = '';
@@ -112,7 +137,9 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const handleSelectChange = (selected) => {
     setSelectedPatologies(selected);
   };
-
+  const handleSelectTasks = (selected) => {
+    setSelectedTasks(selected);
+  };
   const isQuillContentEmpty = (content) => {
     // Eliminar todas las etiquetas HTML del contenido y comprobar si el resultado está vacío
     const strippedContent = content.replace(/<\/?[^>]+(>|$)/g, '');
@@ -153,6 +180,14 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       response = await postData('clients-patologies', clientsPatologiesData);
       console.log('response', response);
 
+      const clientsTasksData = selectedTasks.map((task) => ({
+        task_id: task.value, // Suponiendo que el valor es el id de la patología
+        client_id: id,
+      }));
+      let responseTask = false;
+      responseTask = await postData('clients-tasks', clientsTasksData);
+      console.log('responseTask', responseTask);
+
       const dataToSend = {
         recommendations: recommendations,
       };
@@ -190,6 +225,22 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
               options={patologies}
               onChange={handleSelectChange}
               defaultValue={selectedPatologies}
+              isMulti={true} // Enable multi-selection
+            />
+          </div>
+          <div className='col-span-2'>
+            <label
+              htmlFor='email'
+              className='block text-sm font-medium text-gray-700'
+            >
+              Tareas
+            </label>
+            <Select
+              id='task_id'
+              name='task_id'
+              options={tasks}
+              onChange={handleSelectTasks}
+              defaultValue={selectedTasks}
               isMulti={true} // Enable multi-selection
             />
           </div>

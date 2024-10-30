@@ -10,7 +10,7 @@ import {
 import { json, useNavigate } from 'react-router-dom';
 import Select from '../../../components/Select';
 import ToastNotify from '../../../components/toast/toast';
-import { FaExpand, FaMinusCircle } from 'react-icons/fa';
+import { FaExpand, FaMinusCircle, FaEye } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
 import ChangeLogger from '../../../components/changeLogger';
 import {
@@ -48,6 +48,8 @@ const Form = ({
     photo: '',
     dniFront: '',
     dniBack: '',
+    attach_reference: '',
+    attach_curriculum: '',
     is_active: true,
     country_id: '',
     type: '1',
@@ -74,6 +76,8 @@ const Form = ({
     photo: '',
     dniFront: '',
     dniBack: '',
+    attach_reference: '',
+    attach_curriculum: '',
     is_active: true,
     country_id: '',
     type: '1',
@@ -156,7 +160,7 @@ const Form = ({
           }));
         }
 
-        console.log('photo', onFormData.photo);
+        console.log('formdata', onFormData);
         if (onFormData.photo) {
           setImages((prevImages) => ({
             ...prevImages,
@@ -201,14 +205,33 @@ const Form = ({
       const country = countries.find(
         (c) => c.id === parseInt(onFormData.cod_post.state.country_id),
       );
-      console.log('country', country);
-      setSelectedCountry(country);
 
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        ['state_id']: onFormData.cod_post.state_id,
-      }));
-      setSelectedState(onFormData.cod_post.state);
+      setSelectedCountry(country);
+      if (country) {
+        setSelectedState(country.states);
+
+        const state = country.states.find(
+          (c) => c.id === parseInt(onFormData.cod_post.state_id),
+        );
+
+        if (state) {
+          setPostalCodes(state.cod_posts);
+        } else {
+          setPostalCodes([]);
+        }
+
+        console.log('states', state);
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          ['state_id']: onFormData.cod_post.state_id,
+          ['cod_post_id']: onFormData.cod_post.id,
+        }));
+        setOldData((prevOldData) => ({
+          ...prevOldData,
+          ['state_id']: onFormData.cod_post.state_id,
+          ['cod_post_id']: onFormData.cod_post.id,
+        }));
+      }
     }
   }, [countries, onFormData]);
 
@@ -351,7 +374,13 @@ const Form = ({
           (s) => s.id === parseInt(value),
         );
         setSelectedState(state);
-        setPostalCodes(state.cod_posts); // Establecer los códigos postales
+
+        // Establecer los códigos postales según el estado seleccionado
+        if (state) {
+          setPostalCodes(state.cod_posts); // Asumiendo que state.cod_posts es un array de códigos postales
+        } else {
+          setPostalCodes([]); // Resetear si no se encuentra el estado
+        }
       }
     }
   };
@@ -532,7 +561,7 @@ const Form = ({
   const deleteImage = async (image, key) => {
     try {
       const filename = image.split('/').pop();
-      await deleteStorage(filename, 'client');
+      await deleteStorage(filename, 'employee');
 
       setImages((prevImages) => ({
         ...prevImages,
@@ -550,7 +579,7 @@ const Form = ({
       const dataToSend = {
         [key]: '',
       };
-      const response = await putData('clients/' + id, dataToSend);
+      const response = await putData('employees/' + id, dataToSend);
       let message = 'Imagen eliminada con exito';
       if (response) {
         ToastNotify({
@@ -725,6 +754,21 @@ const Form = ({
       onHandleHasChange(false);
     }
   }, [formData]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData({ ...formData, [e.target.name]: file });
+    }
+  };
+
+  // Manejador para abrir el PDF en una nueva pestaña
+  const handleViewFile = (file) => {
+    if (file) {
+      const fileURL = URL.createObjectURL(file);
+      window.open(fileURL, '_blank'); // Abre el PDF en una nueva pestaña
+    }
+  };
   return (
     <form className=''>
       {loadingForm && <Spinner />}
@@ -895,6 +939,48 @@ const Form = ({
                       />
                     </label>
                   </>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input
+                  type='file'
+                  accept='.pdf'
+                  name='attach_curriculum'
+                  id='attach_curriculum'
+                  onChange={handleFileChange}
+                  style={{ margin: '15px', width: '100%' }}
+                />
+
+                {/* Botón "Ver" solo si hay un archivo cargado */}
+                {formData.attach_curriculum && (
+                  <a
+                    href={getStorage(formData.attach_curriculum)}
+                    target='_blank'
+                    className='p-1 bg-green-500 rounded-lg'
+                  >
+                    <FaEye />
+                  </a>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <input
+                  type='file'
+                  accept='.pdf'
+                  name='attach_reference'
+                  id='attach_reference'
+                  onChange={handleFileChange}
+                  style={{ margin: '15px', width: '100%' }}
+                />
+
+                {/* Botón "Ver" solo si hay un archivo cargado */}
+                {formData.attach_reference && (
+                  <a
+                    href={getStorage(formData.attach_reference)}
+                    target='_blank'
+                    className='p-1 bg-green-500 rounded-lg'
+                  >
+                    <FaEye />
+                  </a>
                 )}
               </div>
             </div>
@@ -1303,11 +1389,15 @@ const Form = ({
                 >
                   <option>Seleccione...</option>
                   {selectedState &&
-                    codPosts.map((code) => (
-                      <option key={code.id} value={code.id}>
-                        {code.code + ' | ' + code.name}
-                      </option>
-                    ))}
+                    postalCodes.map(
+                      (
+                        code, // Cambiado de codPosts a postalCodes
+                      ) => (
+                        <option key={code.id} value={code.id}>
+                          {code.code + ' | ' + code.name}
+                        </option>
+                      ),
+                    )}
                 </select>
               </div>
               {/* <div className='col-span-1'>
