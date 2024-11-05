@@ -165,13 +165,19 @@ const Clients = () => {
   const handleFilter = () => {
     setIsFilter(!isFilter);
   };
-  const closeFilter = () => {
-    setIsFilter(!isFilter);
-  };
+
   const [filters, setFilters] = useState([
     { field: '', condition: '', value: '', logic: 'AND', logicShow: 'AND' },
   ]);
   const [applyFilters, setApplyFilters] = useState('');
+
+  const eraseFilter = () => {
+    setIsFilter(!isFilter);
+    setFilters([
+      { field: '', condition: '', value: '', logic: 'AND', logicShow: 'AND' },
+    ]);
+    getRows();
+  };
 
   // Construcción de parámetros de consulta
   const applyFilter = (rowsFilter) => {
@@ -264,7 +270,10 @@ const Clients = () => {
                     }
                     onClick={(e) => handleRowClick(row, e)}
                     onDoubleClick={() => handleViewClient(row.id)}
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #ccc', // Define el borde inferior aquí
+                    }}
                   >
                     <td className='text-center'>
                       <input
@@ -360,15 +369,6 @@ const Clients = () => {
               {selectedRow.cod_post?.state?.country?.name}
             </p>
             <div className='border-2 border-gray-200 w-full mt-6'></div>
-            <h2 className='text-center'>
-              <strong>Patologias</strong>
-            </h2>
-
-            <div className='border-2 border-gray-200 w-full mt-6'></div>
-            <h2 className='text-center'>
-              <strong>Recomendaciones </strong>
-            </h2>
-            <p className='text-sm p-1'></p>
           </div>
         </div>
       )}
@@ -377,6 +377,7 @@ const Clients = () => {
           filters={filters}
           setFilters={setFilters} // Pasar función para actualizar filtros
           onCloseFilter={() => setIsFilter(false)} // Cierra el panel
+          onEraseFilter={eraseFilter} // Cierra el panel
           onApplyFilter={applyFilter}
         />
       )}

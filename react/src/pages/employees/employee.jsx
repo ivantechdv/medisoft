@@ -64,7 +64,10 @@ const Employees = () => {
     dni: '',
     photo: '',
     address: '',
+    address_num: '',
+    address_flat: '',
     email: '',
+    cod_post: '',
     phone: '',
     id: '',
     code_phone: '',
@@ -86,6 +89,15 @@ const Employees = () => {
             ['photo']: getStorage(response.photo),
           }));
         }
+        setCardData((prevCardData) => ({
+          ...prevCardData,
+          ['cod_post']:
+            response.cod_post?.code +
+            ' ' +
+            response.cod_post?.name +
+            ' ' +
+            response.cod_post?.state?.name,
+        }));
       }
     } catch (error) {
       console.error('Error al obtener el registro por id:', error);
@@ -224,13 +236,13 @@ const Employees = () => {
       />
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-110px)]'>
         <div className='grid grid-cols-1 md:grid-cols-4'>
-          <div className='col-span-1'>
+          <div className='col-span-1  border-r-2 border-gray-200 h-full'>
             <div className='grid grid-cols-2 md:grid-cols-1'>
               <div className='col-span-1'>
                 <div className='w-full border-r-2 border-gray-200'>
                   {/* Contenido del lado izquierdo */}
                   <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>
-                    <div className='w-10 bg-primary h-full'></div>
+                    <div className='w-10 bg-blue-300 h-full border-l'></div>
                     <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
                       {cardData.photo ? (
                         <img
@@ -259,36 +271,46 @@ const Employees = () => {
                             ID CLIENTE
                           </label>
                           {'  '}
-                          <div className='ml-4 w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-2'>
+                          <div className='ml-4 w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center mr-2'>
                             <span className='text-lg font-bold'>
                               {cardData.id}
                             </span>
                           </div>
                         </div>
                       )}
-                      <button type='button' onClick={handleLogs}>
+                      {/* <button type='button' onClick={handleLogs}>
                         <FaFileAlt size={32} />
-                      </button>
+                      </button> */}
                     </div>
                   </div>
                 </div>
               </div>
-              <div className='col-span-1 mt-8'>
+              <div className='col-span-1 mt-8 pr-4 text-xs'>
                 <div className='w-full ml-5'>
-                  <label className='text-primary mt-4 mb-4 mt-12'>
+                  <label className='text-primary mt-4 mb-4 mt-12 text-base'>
                     Datos de contacto
                   </label>
                 </div>
 
+                <div className='w-full ml-5 flex items-center '>
+                  <FaMapMarkerAlt className='mr-2' />
+                  <label className='flex truncate text-wrap'>
+                    {cardData.address +
+                      ', calle ' +
+                      cardData.address_num +
+                      ' numero ' +
+                      cardData.address_flat}
+                  </label>
+                </div>
                 <div className='w-full ml-5 flex items-center'>
-                  <FaMapMarkerAlt className='mr-4 mb-4' />
-                  <label className='flex'>
-                    {cardData.address || 'Dirección'}
+                  <FaMapMarkerAlt className='mr-2' />
+                  <label className='flex truncate text-wrap'>
+                    {cardData.cod_post}
                   </label>
                 </div>
 
                 <div className='w-full ml-5 flex items-center'>
-                  <FaEnvelope className='mr-4' />
+                  <FaEnvelope className='mr-2' />
                   <a
                     href={`mailto:${cardData.email}`}
                     className='truncate max-w-xs hover:text-blue-600 transition-colors text-wrap'
@@ -299,7 +321,7 @@ const Employees = () => {
                 </div>
 
                 <div className='w-full ml-5 flex items-center'>
-                  <FaPhoneSquareAlt className='mr-4' />
+                  <FaPhoneSquareAlt className='mr-2' />
                   <a
                     href={`tel:${cardData.code_phone}${cardData.phone}`}
                     className='truncate max-w-xs hover:text-blue-600 transition-colors'

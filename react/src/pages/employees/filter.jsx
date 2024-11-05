@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { getData, postData, putData } from '../../api';
 
-const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
+const Filter = ({
+  filters,
+  setFilters,
+  onCloseFilter,
+  onEraseFilter,
+  onApplyFilter,
+}) => {
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [selectedRow, setSelectedRow] = useState({ full_name: 'John Doe' }); // Ejemplo de datos iniciales
   const [fieldFilters, setFieldFilters] = useState([]);
@@ -54,10 +60,9 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
 
   const handleLogicToggle = (index) => {
     const newFilters = [...filters];
-    newFilters[index + 1].logic =
-      newFilters[index + 1].logic === 'AND' ? 'OR' : 'AND';
     newFilters[index].logicShow =
       newFilters[index].logicShow === 'AND' ? 'OR' : 'AND';
+    newFilters[index].logic = newFilters[index].logicShow; // Aseguramos que la lógica real también cambie
     setFilters(newFilters);
   };
   const conditionMapping = {
@@ -69,18 +74,19 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
   const buildQueryParameters = (filters) => {
     const queryParameters = new URLSearchParams();
 
-    filters.forEach(({ field, condition, value }, index) => {
+    filters.forEach(({ field, condition, value, logic }, index) => {
       const operator = conditionMapping[condition.toLowerCase()];
       if (!operator || !field || !value) return;
 
       // Formatear el valor para LIKE si es necesario
       const formattedValue = operator === 'LIKE' ? `%${value}%` : value;
 
-      // Obtener la lógica de unión para el filtro siguiente
-      const logic = index > 0 ? filters[index].logic : ''; // No se aplica lógica al primer filtro
+      // Determinar si el filtro actual necesita compuerta lógica
+      const hasNextFilter = index < filters.length - 1;
+      const logicPrefix = index > 0 ? `${filters[index - 1].logic}-` : ''; // Utilizar la compuerta lógica del filtro anterior
 
       // Construir el parámetro como "logic-field=operator:value"
-      const key = `${logic ? `${logic}-` : ''}${field}`; // Solo añadir lógica si no es el primer filtro
+      const key = `${logicPrefix}${field}`;
       const paramValue = `${operator}:${formattedValue}`;
 
       queryParameters.append(key, paramValue);
@@ -116,10 +122,13 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
     const queryString = queryParameters.toString();
     setApplyFilters(queryString);
   };
+  const handleCancelFilters = () => {
+    setApplyFilters('');
+  };
 
   return (
     <div
-      className='fixed bg-panel border-2 border-gray-300 shadow-lg w-[500px] mb-6'
+      className='fixed bg-panel border-2 border-gray-300 shadow-lg w-[600px] mb-6'
       style={{
         top: `${tableTopPosition}px`,
         right: 0,
@@ -174,9 +183,12 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
           console.log('relateddata', relatedData);
 
           return (
-            <div key={index} className='flex items-center mb-2'>
+            <div
+              key={index}
+              className='grid grid-cols-6 gap-1 mb-2 items-center'
+            >
               <select
-                className='mr-2 w-full border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                className='col-span-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 value={filter.field}
                 onChange={(e) =>
                   handleFilterChange(index, 'field', e.target.value)
@@ -198,7 +210,7 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
               </select>
 
               <select
-                className='mr-2 w-full border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                className='border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 value={filter.condition}
                 onChange={(e) =>
                   handleFilterChange(index, 'condition', e.target.value)
@@ -214,9 +226,8 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
 
               {selectedField?.type === 'Select' &&
               selectedField?.origin === 'Lista' ? (
-                // Mostrar "Sí" y "No" con valores 1 y 0
                 <select
-                  className='mr-2 w-full border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className=' col-span-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   value={filter.value}
                   onChange={(e) =>
                     handleFilterChange(index, 'value', e.target.value)
@@ -227,9 +238,8 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
                   <option value='0'>No</option>
                 </select>
               ) : selectedField?.type === 'Select' ? (
-                // Mostrar opciones basadas en relatedData
                 <select
-                  className='mr-2 w-full border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className=' col-span-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   value={filter.value}
                   onChange={(e) =>
                     handleFilterChange(index, 'value', e.target.value)
@@ -243,9 +253,8 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
                   ))}
                 </select>
               ) : (
-                // Mostrar input de texto
                 <input
-                  className='mr-2 w-full border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className='col-span-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   type='text'
                   value={filter.value}
                   onChange={(e) =>
@@ -253,17 +262,22 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
                   }
                 />
               )}
-              <div className='flex justify-between items-end'>
+              <div className='flex justify-center items-end space-x-2'>
                 <button
-                  className='mr-2'
                   onClick={() => handleLogicToggle(index)}
+                  className='border border-gray-300 w-12 rounded-lg'
                 >
                   {filter.logicShow}
                 </button>
-                <button onClick={handleAddFilter}>+</button>
                 <button
-                  className='mr-2'
+                  onClick={handleAddFilter}
+                  className='border border-gray-300 w-8 rounded-lg'
+                >
+                  +
+                </button>
+                <button
                   onClick={() => handleRemoveFilter(index)}
+                  className='border border-gray-300 w-8 rounded-lg'
                 >
                   -
                 </button>
@@ -274,13 +288,9 @@ const Filter = ({ filters, setFilters, onCloseFilter, onApplyFilter }) => {
         <div className='flex justify-end mt-4'>
           <button
             className='mr-4 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-blue-600'
-            onClick={() =>
-              document
-                .getElementById('filter-window')
-                .classList.toggle('hidden')
-            }
+            onClick={onEraseFilter}
           >
-            Cancelar
+            Borrar filtros
           </button>
           <button
             className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600'

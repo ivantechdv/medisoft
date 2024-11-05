@@ -1,0 +1,57 @@
+1) Empleadores. En página principal, recuadro donde se muestra información resumida del empleador, se muestra icono para acceder a registros. No se puede hacer ninguna acción, ni tan solo cerrar la ventana emergente.
+r) pendiente por realizar.
+
+2) Empleadores: En apartado "Específicos", al salir de la ventana se solicita siempre confirmación.
+r) actualmente revisando el modulo de empleados, queda pendiente para revision y ajustes 
+
+3) Empleados: He accedido al empleado número 1 (Agripina Feliz Cabrera)
+- No se indica a qué corresponde cada archivo
+r) revisado y ajustado (listo)
+- Al pulsar sobre el icono del "ojo" para ver el primero, se ha mostrado tu factura hacia mi empresa
+r) revisado y cambiado (fue probando que subi por error la factura)
+
+4) Empleados: La alineación de los Datos de contacto (ventana izquierda) no es correcta
+r) se revision la alineacion y se ajusto con el mismo margen.
+
+5) Empleados: se muestra la aceptación sin fecha.  Puedes revisar si el traspaso de la bbdd ha sido correcto para ese campo de la tabla?
+r) se subio nuevamente el excel de employee_specific faltaba subir el campo date
+
+6) Faltan datos de las direcciones de los empleados, solo muestra la dirección, sin el número de la calle y el piso
+r) agregados los datos se anexo al modelo, al controlador y a la bd campos nuevos que no estaban se añadio en las consultas y en el formulario de empleados.
+
+ Te comento temas:
+Filtros: No funciona correctamente: 
+r) funciona solo hay que realizar ajustes segun requisitos.
+1. Si pulso sobre el botón de filtrado, después no puedo cancelar, solo pulsar sobre X para cerrar ventana, pero entonces pierdo la selección del filtro.
+r) ajustado y ya al presionar la x no se van los filtros
+2. Faltaría añadir botón con opción "Borrar filtros"
+r) se cambio cancelar por borrar filtros en este si borra los filtros seleccionados y vuelve el listado a su origen
+3. Si creo una primera linea de filtro, la opción "AND" u "OR" no funciona hasta pulsar "+" para añadir una nueva linea de filtrado.
+r) ajustado segun lo solicitado, se estructuro de nuevo la funcion ya que poseia unas condiciones y una forma de construir la consulta basado en lo seleccionado
+4. Al abrir los Filtros, ampliar los campos que se muestre el texto completo del contenido.  Ahora queda cortado
+r) ajustado los texto, se dejo un ancho del contenedor de los filtros en 600px
+
+Punto 1: Vista previa de los "Empleadores"
+1. Faltaría añadir el apartado: "Servicios Contratados" que estén activos .  Crear después de "Patologías"
+2. Deberá incluir: "Tipo de servicio" + "Empleado asignado" + "F. Alta"
+3. El apartado "Dirección" no muestra el Código Postal (solo la población), ni la "Dirección" del domicilio
+4. Apartado "Datos Personales" Faltaría añadir campo "Edad" y "Género"
+
+seccion se revisara luego punto a punto
+
+
+Punto 2: Vista previa de los "Empleados"
+1. Datos Personales y Dirección, igual que la de los "Empleadores"
+r) en proceso
+2. Quitar apartados "Patología" y "Recomendaciones"
+r) hecho 
+3. Añadir apartado "Servicios activos", incluyendo la siguiente información: "Tipo de Servicio" + "Empleador asignado" + "F. Alta"
+r) en proceso
+
+Otros detalles:
+1. Parte superior derecha, donde se muestra el nombre del usuario activo: La función "X" no le encuentro aplicación aquí, pues expande o retrae el menú de opciones. Debería encontrarse en el mismo menú (es lo habitual)
+r) por revisar 
+2. Las pantallas de gestión de cada maestro (Empleadores, Empleados, etc.), debería mostrar una linea fina de separación entre registros, para hacer más fácil su lectura horizontal
+r) hecho
+3. Empleadores-General: Al modificar algún campo, al pulsar "Actualizar" muestra error: "Error al procesar el formulario"
+r) probado y funcionando, por revisar nuevamente.
