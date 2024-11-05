@@ -45,6 +45,8 @@ const Form = ({
     cod_post_id: 0,
     num_social_security: '',
     address: '',
+    address_num: '',
+    address_flat: '',
     photo: '',
     dniFront: '',
     dniBack: '',
@@ -73,6 +75,8 @@ const Form = ({
     cod_post_id: 0,
     num_social_security: '',
     address: '',
+    address_num: '',
+    address_flat: '',
     photo: '',
     dniFront: '',
     dniBack: '',
@@ -941,6 +945,11 @@ const Form = ({
                   </>
                 )}
               </div>
+              <div className='flex'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Curriculum
+                </label>
+              </div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <input
                   type='file'
@@ -948,7 +957,7 @@ const Form = ({
                   name='attach_curriculum'
                   id='attach_curriculum'
                   onChange={handleFileChange}
-                  style={{ margin: '15px', width: '100%' }}
+                  style={{ width: '100%' }}
                 />
 
                 {/* Botón "Ver" solo si hay un archivo cargado */}
@@ -956,11 +965,16 @@ const Form = ({
                   <a
                     href={getStorage(formData.attach_curriculum)}
                     target='_blank'
-                    className='p-1 bg-green-500 rounded-lg'
+                    className='p-2 bg-green-500 rounded-lg'
                   >
                     <FaEye />
                   </a>
                 )}
+              </div>
+              <div className='flex'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Referencia
+                </label>
               </div>
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <input
@@ -969,7 +983,7 @@ const Form = ({
                   name='attach_reference'
                   id='attach_reference'
                   onChange={handleFileChange}
-                  style={{ margin: '15px', width: '100%' }}
+                  style={{ width: '100%' }}
                 />
 
                 {/* Botón "Ver" solo si hay un archivo cargado */}
@@ -977,7 +991,7 @@ const Form = ({
                   <a
                     href={getStorage(formData.attach_reference)}
                     target='_blank'
-                    className='p-1 bg-green-500 rounded-lg'
+                    className='p-2 bg-green-500 rounded-lg'
                   >
                     <FaEye />
                   </a>
@@ -1025,10 +1039,10 @@ const Form = ({
                   onChange={handleChange}
                   value={formData.type}
                 >
-                  <option value='Cuidador' key={'1'}>
+                  <option value='1' key={'1'}>
                     Cuidador
                   </option>
-                  <option value='Pendiente' key={'2'}>
+                  <option value='2' key={'2'}>
                     Pendiente
                   </option>
                 </select>
@@ -1320,6 +1334,7 @@ const Form = ({
                   value={formData.country_id}
                   className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
                 >
+                  <option value=''>Seleccione...</option>
                   {countries.length > 0 &&
                     countries.map((option) => (
                       <option key={option.id} value={option.id}>
@@ -1342,6 +1357,7 @@ const Form = ({
                   value={formData.country_current_id}
                   className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
                 >
+                  <option value=''>Seleccione...</option>
                   {countries.length > 0 &&
                     countries.map((option) => (
                       <option key={option.id} value={option.id}>
@@ -1475,6 +1491,38 @@ const Form = ({
                   )}
                 </div>
               </div> */}
+            </div>
+            <div className='col-span-1'>
+              <label
+                htmlFor='address_num'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Calle
+              </label>
+              <input
+                type='text'
+                id='address_num'
+                name='address_num'
+                value={formData.address_num}
+                onChange={handleChange}
+                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              />
+            </div>
+            <div className='col-span-1'>
+              <label
+                htmlFor='address_flat'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Numero
+              </label>
+              <input
+                type='text'
+                id='address_flat'
+                name='address_flat'
+                value={formData.address_flat}
+                onChange={handleChange}
+                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              />
             </div>
             <div className='col-span-2'>
               <label

@@ -75,12 +75,21 @@ const Employee = sequelize.define(
     phone2: {
       type: DataTypes.STRING(100),
       allowNull: true,
+      defaultValue: 0,
     },
     email: {
       type: DataTypes.STRING(100),
       allowNull: true,
     },
     address: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    address_num: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    address_flat: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
