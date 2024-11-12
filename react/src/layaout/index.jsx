@@ -50,7 +50,7 @@ function Layaout() {
                           ></path>
                         </svg>
                       </button>
-                      <h1 className='flex-1 text-lg text-sm text-right'>
+                      {/* <h1 className='flex-1 text-lg text-sm text-right'>
                         Ivantechdv
                       </h1>
                       <button
@@ -88,7 +88,7 @@ function Layaout() {
                             ></path>
                           </svg>
                         )}
-                      </button>
+                      </button> */}
                     </div>
                   </nav>
                   <div className='p-1'>

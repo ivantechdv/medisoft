@@ -30,6 +30,7 @@ const Form = ({
     text: '¿Esta seguro que desea enviar los datos?',
     icon: 'question',
   });
+  const [isFormValid, setIsFormValid] = useState(false);
   const [formData, setFormData] = useState({
     dni: '',
     start_date: '',
@@ -195,6 +196,17 @@ const Form = ({
           name: onFormData.cod_post?.name,
           state: onFormData.cod_post?.state?.name,
         });
+
+        if (onFormData.cod_post?.state?.country_id != '') {
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            ['country_current_id']: onFormData.cod_post?.state?.country_id,
+          }));
+          setOldData((prevFormData) => ({
+            ...prevFormData,
+            ['country_current_id']: onFormData.cod_post?.state?.country_id,
+          }));
+        }
       }
     } catch (error) {
       console.log('error=>', error);
@@ -388,17 +400,27 @@ const Form = ({
       }
     }
   };
+
+  const requiredFields = [
+    { field: 'dni', label: 'DNI' },
+    { field: 'start_date', label: 'fecha de inicio' },
+    { field: 'first_name', label: 'nombres' },
+    { field: 'last_name', label: 'apellidos' },
+    { field: 'phone', label: 'teléfono' },
+    { field: 'email', label: 'correo electrónico' },
+    { field: 'born_date', label: 'fecha de nacimiento' },
+    { field: 'cod_post_id', label: 'código postal' },
+    { field: 'num_social_security', label: 'número de seguridad social' },
+    { field: 'address', label: 'dirección' },
+    { field: 'address_num', label: 'número de dirección' },
+    { field: 'address_flat', label: 'piso de dirección' },
+    { field: 'country_id', label: 'país' },
+    { field: 'type', label: 'tipo' },
+    { field: 'statu_id', label: 'situacion' },
+    { field: 'level_id', label: 'nivel' },
+    { field: 'state_id', label: 'estado o provincia' },
+  ];
   const validateRequiredFields = () => {
-    const requiredFields = [
-      { field: 'dni', label: 'DNI' },
-      { field: 'first_name', label: 'nombres' },
-      { field: 'last_name', label: 'apellidos' },
-      { field: 'born_date', label: 'fecha de nacimiento' },
-      { field: 'gender_id', label: 'género' },
-      { field: 'email', label: 'correo electrónico' },
-      { field: 'phone', label: 'teléfono' },
-      { field: 'address', label: 'dirección' },
-    ];
     let isValid = true;
 
     requiredFields.forEach((required) => {
@@ -424,6 +446,20 @@ const Form = ({
     return true;
   };
 
+  useEffect(() => {
+    let isValid = true;
+    requiredFields.forEach((required) => {
+      if (
+        formData[required.field] === undefined ||
+        formData[required.field] === ''
+      ) {
+        isValid = false;
+      }
+    });
+    if (isValid) {
+      setIsFormValid(isValid);
+    }
+  }, [formData]);
   function changeValueSelect(data) {
     const newData = { ...data };
     for (const key in data) {
@@ -780,9 +816,9 @@ const Form = ({
         <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
           <button
             type='button'
-            className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+            className={`bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
             onClick={
-              formData.is_active == 'false' &&
+              formData.is_active === 'false' &&
               (oldData.is_active === true || oldData.is_active === 'true')
                 ? handleOpenReason
                 : handleSubmit
@@ -794,6 +830,11 @@ const Form = ({
         <div className='md:grid md:grid-cols-4 gap-2'>
           <div className='grid grid-cols-2 md:grid-cols-1'>
             <div className='col-span-1'>
+              <div className='flex'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  Foto Principal
+                </label>
+              </div>
               <div className='relative h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
                 {images.photo != '' ? (
                   <>
@@ -839,6 +880,11 @@ const Form = ({
               </div>
             </div>
             <div className='col-span-1'>
+              <div className='flex'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  DNI Frontal
+                </label>
+              </div>
               <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
                 {images.dniFront != '' ? (
                   <>
@@ -891,6 +937,11 @@ const Form = ({
                     </label>
                   </>
                 )}
+              </div>
+              <div className='flex'>
+                <label className='block text-sm font-medium text-gray-700'>
+                  DNI Posterior
+                </label>
               </div>
               <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
                 {images.dniBack != '' ? (
@@ -1068,7 +1119,7 @@ const Form = ({
                   htmlFor='level_id'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  Level
+                  Nivel
                 </label>
                 <select
                   className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
@@ -1091,7 +1142,7 @@ const Form = ({
                   htmlFor='statu_id'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  Status
+                  Situacion
                 </label>
                 <select
                   className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
@@ -1492,53 +1543,55 @@ const Form = ({
                 </div>
               </div> */}
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='address_num'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Calle
-              </label>
-              <input
-                type='text'
-                id='address_num'
-                name='address_num'
-                value={formData.address_num}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='address_flat'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Numero
-              </label>
-              <input
-                type='text'
-                id='address_flat'
-                name='address_flat'
-                value={formData.address_flat}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='col-span-2'>
-              <label
-                htmlFor='address'
-                className='block text-sm font-medium text-gray-700'
-              >
-                Dirección
-              </label>
-              <textarea
-                id='address'
-                name='address'
-                rows='3'
-                value={formData.address}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              ></textarea>
+            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='address'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Calle
+                </label>
+                <input
+                  id='address'
+                  name='address'
+                  rows='3'
+                  value={formData.address}
+                  onChange={handleChange}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                ></input>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='address_num'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Numero
+                </label>
+                <input
+                  type='text'
+                  id='address_num'
+                  name='address_num'
+                  value={formData.address_num}
+                  onChange={handleChange}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='address_flat'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Piso
+                </label>
+                <input
+                  type='text'
+                  id='address_flat'
+                  name='address_flat'
+                  value={formData.address_flat}
+                  onChange={handleChange}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
             </div>
           </div>
         </div>
