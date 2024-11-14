@@ -59,6 +59,7 @@ const Clients = () => {
     phone: '',
     id: '',
     code_phone: '',
+    cod_post: '',
   });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
@@ -77,6 +78,15 @@ const Clients = () => {
             ['photo']: getStorage(response.photo),
           }));
         }
+        setCardData((prevCardData) => ({
+          ...prevCardData,
+          ['cod_post']:
+            response.cod_post?.code +
+            ' ' +
+            response.cod_post?.name +
+            ' ' +
+            response.cod_post?.state?.name,
+        }));
       }
     } catch (error) {
       console.error('Error al obtener el registro por id:', error);
@@ -179,18 +189,24 @@ const Clients = () => {
     const emailArray = emails.split(';');
 
     return (
-      <div className='w-full ml-5 flex'>
-        <label className='flex'>
-          <FaRegEnvelope className='mr-4 mb-4' />
-        </label>
-        <div className='flex flex-col'>
-          {emailArray.map((email, index) => (
-            <label key={index} className='flex'>
-              {email.trim() || 'Email'}
-            </label>
-          ))}
+      <>
+        <div className='w-full ml-5 flex items-center'>
+          <FaRegEnvelope className='mr-2' />
+          <label className='flex truncate text-wrap'>
+            {emailArray.map((email, index) => (
+              <span key={index} className='mr-1'>
+                <a
+                  href={`mailto:${email.trim()}`}
+                  className='truncate max-w-xs hover:text-blue-600 transition-colors text-wrap'
+                >
+                  {' '}
+                  {email.trim()}
+                </a>
+              </span>
+            ))}
+          </label>
         </div>
-      </div>
+      </>
     );
   };
   const handleLogs = () => {
@@ -212,17 +228,17 @@ const Clients = () => {
       />
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-110px)]'>
         <div className='grid grid-cols-1 md:grid-cols-4'>
-          <div className='md:col-span-1'>
+          <div className='col-span-1  border-r-2 border-gray-200 h-full'>
             <div className='w-full border-r-2 border-gray-200 md:h-screen'>
               {/* Contenido del lado izquierdo */}
               <div className='flex relative bg-white border-b-2 border-gray-200 h-40 '>
-                <div className='w-10 bg-primary h-full'></div>
+                <div className='w-10 bg-blue-300  h-full'></div>
                 <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
                   {cardData.photo ? (
                     <img
                       src={cardData.photo}
                       alt=''
-                      className='h-12 rounded-full'
+                      className='h-12 w-12 rounded-full'
                       style={{ objectFit: 'contain' }}
                     />
                   ) : (
@@ -247,40 +263,48 @@ const Clients = () => {
                         ID CLIENTE
                       </label>
                       {'  '}
-                      <div className='ml-4 w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center mr-2'>
+                      <div className='ml-4 w-10 h-10 bg-blue-300  rounded-full flex items-center justify-center mr-2'>
                         <span className='text-lg font-bold'>{cardData.id}</span>{' '}
                         {/* Aplica estilos para hacerlo negrita y grande */}
                       </div>
                     </div>
                   )}
-                  <button type='button' onClick={handleLogs}>
+                  {/* <button type='button' onClick={handleLogs}>
                     <FaFileAlt size={32} />
-                  </button>
+                  </button> */}
                 </div>
               </div>
-              <div className='w-full ml-5 flex'>
-                <label className='text-primary mt-4 mb-4'>
-                  Datos de contacto
-                </label>
-              </div>
+              <div className='col-span-1 mt-8 pr-4 text-xs'>
+                <div className='w-full ml-5 flex'>
+                  <label className='text-primary mt-4 mb-4  text-base'>
+                    Datos de contacto
+                  </label>
+                </div>
 
-              <div className='w-full ml-5 flex'>
-                <label className='flex'>
-                  <FaMapMarkerAlt className=' mr-4 mb-4' />
-                </label>
-                <label className='flex'>
-                  {cardData.address || 'Dirección'}
-                </label>
-              </div>
-              <EmailList emails={cardData.email} />
-              <div className='w-full ml-5 flex'>
-                <label className='flex'>
-                  <FaPhoneSquareAlt className=' mr-4' />
-                </label>
-                <label className='flex'>
-                  {cardData.code_phone + ' '}
-                  {cardData.phone || 'Teléfono'}
-                </label>
+                <div className='w-full ml-5 flex items-center '>
+                  <FaMapMarkerAlt className='mr-2' />
+                  <label className='flex truncate text-wrap'>
+                    {cardData.address || 'Dirección'}
+                  </label>
+                </div>
+                <div className='w-full ml-5 flex items-center'>
+                  <FaMapMarkerAlt className='mr-2' />
+                  <label className='flex truncate text-wrap'>
+                    {cardData.cod_post}
+                  </label>
+                </div>
+                <EmailList emails={cardData.email} />
+
+                <div className='w-full ml-5 flex items-center'>
+                  <FaPhoneSquareAlt className='mr-2' />
+                  <a
+                    href={`tel:${cardData.code_phone}${cardData.phone}`}
+                    className='truncate max-w-xs hover:text-blue-600 transition-colors'
+                    title={`${cardData.code_phone} ${cardData.phone}`} // Mostrar el teléfono completo en un tooltip
+                  >
+                    {`${cardData.code_phone} ${cardData.phone || 'Teléfono'}`}
+                  </a>
+                </div>
               </div>
             </div>
           </div>
