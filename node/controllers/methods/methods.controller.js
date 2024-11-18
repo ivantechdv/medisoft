@@ -18,35 +18,41 @@ CTRL.createOrUpdateBulk = async (data, Model) => {
     const createData = [];
     const updateData = [];
 
+    console.log("Data recibida:", data);
+
     // Separar los datos para creación y actualización
     data.forEach((item) => {
       if (item.id) {
-        // Si el registro tiene un ID, se trata de una actualización
-        updateData.push(item);
+        updateData.push(item); // Para actualización
       } else {
-        // Si no tiene ID, es una creación
-        createData.push(item);
+        createData.push(item); // Para creación
       }
     });
 
     // Crear nuevos registros
     if (createData.length > 0) {
-      await Model.bulkCreate(createData);
+      console.log("Registros a crear:", createData);
+      const created = await Model.bulkCreate(createData, { validate: true });
+      console.log("Registros creados con éxito:", created);
     }
 
     // Actualizar registros existentes
     if (updateData.length > 0) {
+      console.log("Registros a actualizar:", updateData);
       const updatePromises = updateData.map(async (item) => {
         const { id, ...updateFields } = item;
-        await Model.update(updateFields, { where: { id } });
+        const [updatedCount] = await Model.update(updateFields, {
+          where: { id },
+        });
+        console.log(`Registros actualizados para ID ${id}:`, updatedCount);
       });
       await Promise.all(updatePromises);
     }
 
-    return true; // Devolver éxito, para evitar modificar el response de Express directamente
+    return true; // Devolver éxito
   } catch (error) {
     console.error("Error al guardar o actualizar los datos:", error);
-    throw error; // Lanzar el error para que el controlador lo capture y maneje
+    throw error;
   }
 };
 

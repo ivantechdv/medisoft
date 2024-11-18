@@ -357,6 +357,7 @@ const ServicesTable = forwardRef(
       setIsLoading(true);
 
       try {
+        console.log('preseleccion guardar ', preselection);
         const dataPreselection = preselection.map((employee) => {
           const preselectionData = {
             employee_id: employee.employee_id,
@@ -393,19 +394,21 @@ const ServicesTable = forwardRef(
             dataToSend,
           );
           if (responseClientService) {
-            dataPreselection.forEach((item) => {
-              item.client_service_id = responseClientService.id;
-            });
-            console.log('responseClientService', responseClientService);
-            if (formData.employee_id === 0) {
-              console.log('usuarios preseleccionado =>', dataPreselection);
+            if (dataPreselection.length > 0) {
+              dataPreselection.forEach((item) => {
+                item.client_service_id = responseClientService.id;
+              });
+              console.log('responseClientService', responseClientService);
+              if (formData.employee_id === 0) {
+                console.log('usuarios preseleccionado =>', dataPreselection);
 
-              const responseClientServicePreselection = await postData(
-                'client-service-preselection/bulk',
-                dataPreselection,
-              );
-              if (!responseClientServicePreselection) {
-                throw new Error('Error al guardar la preselección');
+                const responseClientServicePreselection = await postData(
+                  'client-service-preselection/bulk',
+                  dataPreselection,
+                );
+                if (!responseClientServicePreselection) {
+                  throw new Error('Error al guardar la preselección');
+                }
               }
             }
           }
@@ -419,15 +422,17 @@ const ServicesTable = forwardRef(
             dataToSend,
           );
           if (responseClientService) {
-            dataPreselection.forEach((item) => {
-              item.client_service_id = formData.id;
-            });
-            const responseClientServicePreselection = await postData(
-              'client-service-preselection/bulk',
-              dataPreselection,
-            );
-            if (!responseClientServicePreselection) {
-              throw new Error('Error al guardar la preselección');
+            if (dataPreselection.length > 0) {
+              dataPreselection.forEach((item) => {
+                item.client_service_id = formData.id;
+              });
+              const responseClientServicePreselection = await postData(
+                'client-service-preselection/bulk',
+                dataPreselection,
+              );
+              if (!responseClientServicePreselection) {
+                throw new Error('Error al guardar la preselección');
+              }
             }
           }
           action = 'actualizado';
@@ -531,6 +536,20 @@ const ServicesTable = forwardRef(
           // Asignar preselectionEmployees a setPreselection
           setPreselection(preselectionEmployees);
           setActiveService(true);
+
+          const optionEmployees = await getData(`employees/all`);
+
+          if (optionEmployees) {
+            setEmployeePreselection(optionEmployees);
+            let options = [{ value: 0, label: 'Sin asignar' }];
+            options = options.concat(
+              optionEmployees.map((item) => ({
+                value: item.id,
+                label: item.full_name,
+              })),
+            );
+            setEmployees(options);
+          }
         }
 
         if (row.employee_id == 0) {

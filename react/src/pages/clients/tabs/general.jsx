@@ -30,13 +30,16 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     dniFront: '',
     dniBack: '',
     is_active: true,
+    state_id: '',
+    country_current_id: '',
     type: 'Cliente',
     recommendations: '',
+    age: '',
   });
   const [oldData, setOldData] = useState({
     dni: '',
-    first_name: '',
     start_date: '',
+    first_name: '',
     last_name: '',
     full_name: '',
     code_phone: '',
@@ -48,8 +51,10 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     photo: '',
     dniFront: '',
     dniBack: '',
-    is_active: '',
-    type: '',
+    is_active: true,
+    state_id: '',
+    type: 'Cliente',
+    country_current_id: '',
     recommendations: '',
     age: '',
   });
@@ -279,6 +284,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           ...prevFormData,
           ['state_id']: onFormData.cod_post.state_id,
           ['cod_post_id']: onFormData.cod_post.id,
+          ['country_current_id']: onFormData.cod_post.state.country_id,
         }));
       }
     }
@@ -381,25 +387,27 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       }
     }
   };
-  const validateRequiredFields = () => {
-    const requiredFields = [
-      { field: 'dni', label: 'DNI' },
-      { field: 'first_name', label: 'nombres' },
-      { field: 'last_name', label: 'apellidos' },
-      { field: 'born_date', label: 'fecha de nacimiento' },
-      { field: 'gender_id', label: 'género' },
-      { field: 'email', label: 'correo electrónico' },
-      { field: 'phone', label: 'teléfono' },
-      { field: 'address', label: 'dirección' },
-    ];
-    let isValid = true;
 
+  const requiredFields = [
+    { field: 'dni', label: 'DNI' },
+    { field: 'start_date', label: 'Fecha de alta' },
+    { field: 'first_name', label: 'Nombres' },
+    { field: 'last_name', label: 'Apellidos' },
+    { field: 'born_date', label: 'Fecha de nacimiento' },
+    { field: 'gender_id', label: 'Género' },
+    { field: 'email', label: 'Correo electrónico' },
+    { field: 'phone', label: 'Teléfono' },
+    { field: 'address', label: 'Dirección' },
+    { field: 'cod_post_id', label: 'Codigo postal' },
+  ];
+
+  const validateRequiredFields = () => {
+    let isValid = true;
     requiredFields.forEach((required) => {
       if (
         formData[required.field] === undefined ||
         formData[required.field] === ''
       ) {
-        // Si el campo requerido está vacío, mostrar mensaje de error y marcar como no válido
         ToastNotify({
           message: `El campo ${required.label} es requerido.`,
           position: 'top-left',
@@ -450,13 +458,11 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
 
       if (!isValid) {
         setLoadingForm(false);
-        // Detener el envío del formulario si algún campo requerido está vacío
         return;
       }
 
       setLoadingForm(true);
       setLoading(true);
-      // Validar campos requeridos antes de enviar el formulario
 
       let response = false;
 
@@ -898,8 +904,13 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   name='is_active'
                   id='is_active'
                   onChange={handleChange}
-                  value={formData.is_active}
+                  value={
+                    formData.is_active !== undefined ? formData.is_active : true
+                  }
                 >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
                   {[
                     { value: true, label: 'Activo', key: 'activo' },
                     { value: false, label: 'Inactivo', key: 'inactivo' },
@@ -924,6 +935,9 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   onChange={handleChange}
                   value={formData.type}
                 >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
                   <option value='Cliente' key={'1'}>
                     Cliente
                   </option>
@@ -1072,6 +1086,9 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   value={formData.code_phone}
                   className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
                 >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
                   {countries?.length > 0 &&
                     countries.map((option) => (
                       <option key={option.code_phone} value={option.code_phone}>
@@ -1139,6 +1156,9 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 value={formData.country_current_id}
                 className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
               >
+                <option value='' disabled>
+                  Seleccione...
+                </option>
                 {countries.length > 0 &&
                   countries.map((option) => (
                     <option key={option.id} value={option.id}>

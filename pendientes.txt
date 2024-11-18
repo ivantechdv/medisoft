@@ -55,3 +55,8 @@ r) por revisar
 r) hecho
 3. Empleadores-General: Al modificar algún campo, al pulsar "Actualizar" muestra error: "Error al procesar el formulario"
 r) probado y funcionando, por revisar nuevamente.
+
+
+
+3. Gestión Empleadores: He creado un servicio. Al intentar crear el Servicio Facturable, no puedo modificar el Periodo de Pago
+4. Al seleccionar algún servicio, la pantalla se queda en blanco

@@ -17,7 +17,8 @@ CTRL.create = async (req, res, next) => {
 
 CTRL.createBulk = async (req, res, next) => {
   try {
-    Methods.createOrUpdateBulk(req, res, next, ClientsServicesPreselections);
+    Methods.createOrUpdateBulk(req.body, ClientsServicesPreselections);
+    return res.status(200).json(true);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ error: error.message });

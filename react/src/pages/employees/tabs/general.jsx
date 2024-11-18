@@ -1066,6 +1066,9 @@ const Form = ({
                   onChange={handleChange}
                   value={formData.is_active}
                 >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
                   {[
                     { value: true, label: 'Activo', key: '1' },
                     { value: false, label: 'Inactivo', key: '0' },
@@ -1090,6 +1093,9 @@ const Form = ({
                   onChange={handleChange}
                   value={formData.type}
                 >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
                   <option value='1' key={'1'}>
                     Cuidador
                   </option>
@@ -1284,6 +1290,9 @@ const Form = ({
                   value={formData.code_phone}
                   className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
                 >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
                   {countries.length > 0 &&
                     countries.map((option) => (
                       <option key={option.id} value={option.code_phone}>
@@ -1317,6 +1326,9 @@ const Form = ({
                   value={formData.code_phone2}
                   className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
                 >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
                   {countries.length > 0 &&
                     countries.map((option) => (
                       <option key={option.id} value={option.code_phone}>
