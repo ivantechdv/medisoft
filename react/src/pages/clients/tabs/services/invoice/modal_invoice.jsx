@@ -158,25 +158,27 @@ const ModalInvoices = ({
   };
 
   useEffect(() => {
-    console.log('Effect triggered:', {
-      service_start: formData.service_start,
-      base: formData.base,
-      unit: formData.unit,
-    });
+    if (!isEditingService) {
+      console.log('Effect triggered:', {
+        service_start: formData.service_start,
+        base: formData.base,
+        unit: formData.unit,
+      });
 
-    if (formData.service_start && formData.base) {
-      const nextPaymentDate = calculateNextPaymentDate(
-        formData.service_start,
-        formData.base,
-        formData.unit,
-      );
+      if (formData.service_start && formData.base) {
+        const nextPaymentDate = calculateNextPaymentDate(
+          formData.service_start,
+          formData.base,
+          formData.unit,
+        );
 
-      console.log('Next Payment Date Calculated:', nextPaymentDate);
+        console.log('Next Payment Date Calculated:', nextPaymentDate);
 
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        next_payment: nextPaymentDate,
-      }));
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          next_payment: nextPaymentDate,
+        }));
+      }
     }
   }, [formData.service_start, formData.base]);
 
@@ -196,9 +198,7 @@ const ModalInvoices = ({
       if (serviceEntry) {
         setFormData((prevFormData) => ({
           ...prevFormData,
-          pvp: serviceEntry.service.cost.toFixed(2),
-          discount: 0,
-          total: serviceEntry.service.cost.toFixed(2),
+
           service_start: serviceEntry.service_start,
         }));
       }
@@ -212,6 +212,9 @@ const ModalInvoices = ({
           period: conceptEntry.payment_period.name,
           base: conceptEntry.payment_period.calculation_base,
           unit: conceptEntry.payment_period.calculation_unit,
+          pvp: conceptEntry.pvp.toFixed(2),
+          discount: 0,
+          total: conceptEntry.pvp.toFixed(2),
         }));
       }
     }
@@ -285,7 +288,8 @@ const ModalInvoices = ({
     try {
       let action = '';
       if (!isEditingService) {
-        const dataToSend = { ...formData, client_id: 1 };
+        console.log('formcliet_id', formData.id);
+        const dataToSend = { ...formData, client_id: onFormData?.id };
         const responseClientService = await postData(
           'client-invoice',
           dataToSend,
@@ -316,16 +320,6 @@ const ModalInvoices = ({
           dataToSend,
         );
         if (responseClientInvoice) {
-          // dataPreselection.forEach((item) => {
-          //   item.client_service_id = formData.id;
-          // });
-          // const responseClientServicePreselection = await postData(
-          //   'client-service-preselection/bulk',
-          //   dataPreselection,
-          // );
-          // if (!responseClientServicePreselection) {
-          //   throw new Error('Error al guardar la preselección');
-          // }
         }
         action = 'actualizado';
       }
@@ -513,8 +507,9 @@ const ModalInvoices = ({
                 <input
                   type='date'
                   id='next_payment'
+                  onChange={handleChange}
+                  disabled={isEditingService}
                   value={formData.next_payment}
-                  disabled={true}
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>
