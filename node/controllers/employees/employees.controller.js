@@ -40,7 +40,14 @@ CTRL.getAll = async (req, res, next) => {
     // const include = {
     //   model: Client,
     // };
-    const include = null;
+    const include = [
+      {
+        model: EmployeeSpecific,
+      },
+      {
+        model: EmployeeComplementary,
+      },
+    ];
     Methods.getAll(req, res, next, Employee, condition, include);
   } catch (error) {
     console.error("Error al ejecutar la consulta:", error);

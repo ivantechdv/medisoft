@@ -405,17 +405,23 @@ const InvoicesTable = forwardRef(
 
               if (initialResponse) {
                 const responseClientInvoice = await getData(
-                  `client-invoice/all?client_service_id=${initialResponse.client_service_id}`,
+                  `client-invoice/all?id=${invoiceId}`,
+                );
+                const client_service_id =
+                  responseClientInvoice[0].client_service_id;
+
+                const responseAllClientInvoice = await getData(
+                  `client-invoice/all?client_service_id=${client_service_id}`,
                 );
 
-                const invoiceUpdatePromises = responseClientInvoice.map(
+                const invoiceUpdatePromises = responseAllClientInvoice.map(
                   async (invoice) => {
                     await putData(`client-invoice/${invoice.id}`, dataToSend);
                   },
                 );
                 await Promise.all(invoiceUpdatePromises);
                 await putData(
-                  `client-service/${initialResponse.client_service_id}`,
+                  `client-service/${client_service_id}`,
                   dataToSend,
                 );
               }
@@ -580,6 +586,7 @@ const InvoicesTable = forwardRef(
                                 name={`selectrow-${row.id}`}
                                 onChange={() => handleCheckboxChange(row.id)}
                                 checked={selectedInvoices.includes(row.id)}
+                                disabled={row.service_end}
                               />
                             </td>
                             <td className='px-2 whitespace-nowrap border-2'>
