@@ -44,9 +44,11 @@ const deleteFile = (req, res) => {
 
   fs.unlink(filePath, (err) => {
     if (err) {
+      console.log("File not found or error deleting file:", err.message);
+      // No interrumpas el flujo, simplemente continúa
       return res
-        .status(500)
-        .json({ error: "File not found or error deleting file" });
+        .status(200)
+        .json({ message: "File not found, but process continued" });
     }
     res.status(200).json({ message: "File deleted successfully" });
   });

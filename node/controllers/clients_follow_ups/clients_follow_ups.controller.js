@@ -32,7 +32,8 @@ CTRL.getAll = async (req, res, next) => {
       },
       {
         model: Employee,
-        attributes: ["id", "name"],
+        attributes: ["id", "full_name"],
+        required: false, // Indica que la relación es opcional
       },
     ];
     Methods.getAll(req, res, next, ClientFollowUp, condition, include);

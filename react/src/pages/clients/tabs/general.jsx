@@ -35,6 +35,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     type: 'Cliente',
     recommendations: '',
     age: '',
+    observations: '',
   });
   const [oldData, setOldData] = useState({
     dni: '',
@@ -57,6 +58,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     country_current_id: '',
     recommendations: '',
     age: '',
+    observations: '',
   });
   const [images, setImages] = useState({
     photo: '',
@@ -404,16 +406,27 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const validateRequiredFields = () => {
     let isValid = true;
     requiredFields.forEach((required) => {
-      if (
-        formData[required.field] === undefined ||
-        formData[required.field] === ''
-      ) {
+      const value = formData[required.field];
+
+      // Validar campos vacíos
+      if (value === undefined || value === '') {
         ToastNotify({
           message: `El campo ${required.label} es requerido.`,
           position: 'top-left',
           type: 'error',
         });
         isValid = false;
+      }
+      if (required.field === 'born_date') {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // Formato: YYYY-MM-DD
+        if (!dateRegex.test(value) || isNaN(new Date(value).getTime())) {
+          ToastNotify({
+            message: `El campo ${required.label} debe ser una fecha válida`,
+            position: 'top-left',
+            type: 'error',
+          });
+          isValid = false;
+        }
       }
     });
 
@@ -717,7 +730,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   return (
     <form className=''>
       {loading && <Spinner />}
-      <div className='rounded min-h-[calc(100vh-235px)]'>
+      <div className='rounded min-h-[calc(100vh-235px)] mb-20'>
         <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
           <button
             type='button'
@@ -1295,14 +1308,30 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               >
                 Dirección
               </label>
-              <textarea
+              <input
+                type='text'
                 id='address'
                 name='address'
-                rows='3'
+                maxLength={70} // Limitar a 70 caracteres
                 value={formData.address}
                 onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              ></textarea>
+                className='w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              />
+            </div>
+            <div className='col-span-2'>
+              <label
+                htmlFor='observations'
+                className='block text-sm font-medium text-gray-700'
+              >
+                Observaciones
+              </label>
+              <textarea
+                id='observations'
+                name='observations'
+                value={formData.observations}
+                onChange={handleChange}
+                className='w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+              />
             </div>
           </div>
         </div>
