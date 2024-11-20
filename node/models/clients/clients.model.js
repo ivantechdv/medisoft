@@ -80,6 +80,10 @@ const Client = sequelize.define("clients", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  observations: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   born_date: {
     type: DataTypes.DATEONLY,
     allowNull: true,

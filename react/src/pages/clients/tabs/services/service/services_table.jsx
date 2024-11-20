@@ -537,7 +537,7 @@ const ServicesTable = forwardRef(
           setPreselection(preselectionEmployees);
           setActiveService(true);
 
-          const optionEmployees = await getData(`employees/all`);
+          const optionEmployees = await getData(`employees/filter/all`);
 
           if (optionEmployees) {
             setEmployeePreselection(optionEmployees);
@@ -1013,11 +1013,7 @@ const ServicesTable = forwardRef(
                                 name={`selectrow-${row.id}`}
                                 onChange={() => handleCheckboxChange(row.id)}
                                 checked={selectedServices.includes(row.id)}
-                                disabled={
-                                  !row.service_start ||
-                                  !row.employee ||
-                                  row.service_end
-                                }
+                                disabled={row.service_end}
                               />
                             </td>
                             <td className='px-2 whitespace-nowrap border-2'>

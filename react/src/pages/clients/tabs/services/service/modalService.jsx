@@ -164,7 +164,7 @@ const ServicesModal = ({
                     formData.service_start == null ? '' : formData.service_start
                   }
                   onChange={handleChange}
-                  disabled={activeService}
+                  disabled={formData.service_start != null}
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>
