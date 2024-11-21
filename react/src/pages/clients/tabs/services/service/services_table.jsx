@@ -203,10 +203,40 @@ const ServicesTable = forwardRef(
 
     const handleChange = (event) => {
       const { id, value, checked, type } = event.target;
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [id]: type === 'checkbox' ? checked : value,
-      }));
+
+      setFormData((prevFormData) => {
+        console.log(
+          'prevFormData',
+          prevFormData.service_demand,
+          ' value',
+          value,
+        );
+        if (id === 'service_start') {
+          // Validar que service_start no sea mayor que service_demand
+          if (value < prevFormData.service_demand) {
+            alert(
+              'La fecha de activación no puede ser menor que la fecha de alta del servicio.',
+            );
+            return prevFormData; // No actualizar el estado
+          }
+        }
+
+        if (id === 'service_demand') {
+          // Validar que service_demand no sea menor que service_start
+          if (value > prevFormData.service_start) {
+            alert(
+              'La fecha de alta no puede ser mayor que la fecha de activación.',
+            );
+            return prevFormData; // No actualizar el estado
+          }
+        }
+
+        // Actualizar el estado si la validación pasa
+        return {
+          ...prevFormData,
+          [id]: type === 'checkbox' ? checked : value,
+        };
+      });
     };
     const handleChangeSelect = (event, field) => {
       const newValue = event.value;

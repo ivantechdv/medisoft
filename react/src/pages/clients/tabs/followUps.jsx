@@ -97,7 +97,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
         if (services) {
           const options = services.map((item) => ({
             value: item.employee?.id,
-            label: item.employee?.name,
+            label: item.employee?.full_name,
           }));
           setEmployees(options);
         }
