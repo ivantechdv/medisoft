@@ -374,24 +374,27 @@ const InvoicesTable = forwardRef(
             dataToSend,
           );
           if (responseServiceEnd) {
-            const responseInvoice = await getData(
-              `client-invoice/${invoiceIdRef.current}`,
-            );
-            if (responseInvoice) {
-              const responseClientInvoice = await getData(
-                `client-invoice/all?client_service_id=${responseInvoice.client_service_id}`,
+            if (isCheckedOne) {
+              const responseInvoice = await getData(
+                `client-invoice/${invoiceIdRef.current}`,
               );
-              const invoiceUpdatePromises = responseClientInvoice.map(
-                async (invoice) => {
-                  await putData(`client-invoice/${invoice.id}`, dataToSend);
-                },
-              );
-
-              await Promise.all(invoiceUpdatePromises);
-              await putData(
-                `client-service/${responseInvoice.client_service_id}`,
-                dataToSend,
-              );
+              if (responseInvoice) {
+                if (isCheckedTwo) {
+                  const responseClientInvoice = await getData(
+                    `client-invoice/all?client_service_id=${responseInvoice.client_service_id}`,
+                  );
+                  const invoiceUpdatePromises = responseClientInvoice.map(
+                    async (invoice) => {
+                      await putData(`client-invoice/${invoice.id}`, dataToSend);
+                    },
+                  );
+                  await Promise.all(invoiceUpdatePromises);
+                }
+                await putData(
+                  `client-service/${responseInvoice.client_service_id}`,
+                  dataToSend,
+                );
+              }
             }
           }
         } else {
@@ -404,26 +407,32 @@ const InvoicesTable = forwardRef(
               );
 
               if (initialResponse) {
-                const responseClientInvoice = await getData(
-                  `client-invoice/all?id=${invoiceId}`,
-                );
-                const client_service_id =
-                  responseClientInvoice[0].client_service_id;
+                if (isCheckedOne) {
+                  const responseClientInvoice = await getData(
+                    `client-invoice/all?id=${invoiceId}`,
+                  );
+                  const client_service_id =
+                    responseClientInvoice[0].client_service_id;
 
-                const responseAllClientInvoice = await getData(
-                  `client-invoice/all?client_service_id=${client_service_id}`,
-                );
-
-                const invoiceUpdatePromises = responseAllClientInvoice.map(
-                  async (invoice) => {
-                    await putData(`client-invoice/${invoice.id}`, dataToSend);
-                  },
-                );
-                await Promise.all(invoiceUpdatePromises);
-                await putData(
-                  `client-service/${client_service_id}`,
-                  dataToSend,
-                );
+                  if (isCheckedTwo) {
+                    const responseAllClientInvoice = await getData(
+                      `client-invoice/all?client_service_id=${client_service_id}`,
+                    );
+                    const invoiceUpdatePromises = responseAllClientInvoice.map(
+                      async (invoice) => {
+                        await putData(
+                          `client-invoice/${invoice.id}`,
+                          dataToSend,
+                        );
+                      },
+                    );
+                    await Promise.all(invoiceUpdatePromises);
+                  }
+                  await putData(
+                    `client-service/${client_service_id}`,
+                    dataToSend,
+                  );
+                }
               }
             });
             responseServiceEnd = await Promise.all(promises);
@@ -792,6 +801,7 @@ const InvoicesTable = forwardRef(
                     type='checkbox'
                     className='form-checkbox h-5 w-5 text-blue-600'
                     checked={isCheckedTwo}
+                    disabled={!isCheckedOne}
                     onChange={handleCheckboxConfirmTwo}
                   />
                   <span className='ml-2'>
@@ -811,12 +821,20 @@ const InvoicesTable = forwardRef(
                 <button
                   type='button'
                   className={`bg-red-500 text-white font-bold py-2 px-4 text-sm rounded mr-2 ${
-                    !(isCheckedOne && isCheckedTwo)
-                      ? 'opacity-50 cursor-not-allowed'
-                      : ''
+                    !isCheckedOne
+                      ? false
+                      : isCheckedOne && isCheckedTwo
+                      ? false
+                      : 'cursor-not-allowed opacity-50'
                   }`}
                   onClick={handleSendServiceEnd}
-                  disabled={!(isCheckedOne && isCheckedTwo)}
+                  disabled={
+                    !isCheckedOne
+                      ? false
+                      : isCheckedOne && isCheckedTwo
+                      ? false
+                      : true
+                  }
                 >
                   Confirmar
                 </button>
