@@ -48,7 +48,7 @@ const ClientsServices = sequelize.define("clients_services", {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  service_demand: {
+  service_alta: {
     type: DataTypes.DATE,
     allowNull: true,
   },

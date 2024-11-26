@@ -165,17 +165,17 @@ const Clients = () => {
       <Breadcrumbs
         items={[
           { label: 'Inicio', route: '/' },
-          { label: 'Empleadores', route: '/Clients' },
+          { label: 'Clientes', route: '/Clients' },
         ]}
       />
       <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400'>
         <div className='flex justify-between px-4 py-5 sm:px-6'>
           <div>
             <h3 className='text-lg font-semibold leading-6 text-gray-900'>
-              Lista de Empleadores
+              Lista de Clientes
             </h3>
             <p className='mt-1 max-w-2xl text-sm text-gray-500'>
-              Gestion de empleadores.
+              Gestion de clientes.
             </p>
           </div>
           <div className='flex space-x-2'>
@@ -242,7 +242,10 @@ const Clients = () => {
                     }
                     onClick={(e) => handleRowClick(row, e)}
                     onDoubleClick={() => handleViewClient(row.id)}
-                    style={{ cursor: 'pointer' }}
+                    style={{
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #ccc',
+                    }}
                   >
                     <td className='text-center'>
                       <input

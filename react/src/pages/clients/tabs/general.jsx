@@ -166,6 +166,17 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           );
           setSelectedLanguages(selectedLanguages);
         }
+
+        if (
+          !onFormData.final_date || // Verifica si está vacía o indefinida
+          onFormData.final_date === '0000-00-00' || // Fecha específica no válida
+          isNaN(new Date(onFormData.final_date).getTime()) // Verifica si no es una fecha válida
+        ) {
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            final_date: null, // Establece la fecha como null
+          }));
+        }
       }
     } catch (error) {
       console.log('error=>', error);
@@ -908,7 +919,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               <div className='col-span-1'>
                 <label
                   htmlFor='is_active'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Estado
                 </label>
@@ -937,7 +948,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               <div className='col-span-1'>
                 <label
                   htmlFor='type'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Tipo
                 </label>
@@ -962,7 +973,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               <div className='col-span-1'>
                 <label
                   htmlFor='date_start'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Fecha de alta
                 </label>
@@ -978,7 +989,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               <div className='col-span-1'>
                 <label
                   htmlFor='dni'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   DNI
                 </label>
@@ -997,7 +1008,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               <div className='col-span-1'>
                 <label
                   htmlFor='born_date'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Fecha de nacimiento
                 </label>
@@ -1014,7 +1025,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               <div className='col-span-1'>
                 <label
                   htmlFor='age'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Edad
                 </label>
@@ -1031,7 +1042,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='first_name'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Nombre
               </label>
@@ -1047,7 +1058,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='last_name'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Apellidos
               </label>
@@ -1063,7 +1074,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='gender_id'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Genero
               </label>
@@ -1087,7 +1098,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='phone'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Teléfono
               </label>
@@ -1123,7 +1134,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-2'>
               <label
                 htmlFor='email'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Correo(s) electrónico(s) separe con ;
               </label>
@@ -1141,7 +1152,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='language_id'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Idiomas
               </label>
@@ -1158,7 +1169,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='country_current_id'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Pais de residencia
               </label>
@@ -1183,7 +1194,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='state_id'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Estado
               </label>
@@ -1206,7 +1217,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-1'>
               <label
                 htmlFor='cod_post_id'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Codigo Postal
               </label>
@@ -1233,7 +1244,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             {/* <div className='col-span-1'>
               <label
                 htmlFor='asset'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Código postal
               </label>
@@ -1304,7 +1315,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-2'>
               <label
                 htmlFor='address'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Dirección
               </label>
@@ -1321,7 +1332,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             <div className='col-span-2'>
               <label
                 htmlFor='observations'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Observaciones
               </label>
@@ -1354,7 +1365,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
           <div className='bg-white p-2 rounded shadow-lg w-3/4'>
             <button
-              className='absolute top-0 right-2 text-white hover:text-gray-700 text-lg bg-gray-800'
+              className='absolute top-0 right-2 text-white hover:text-blue-500 text-lg bg-gray-800'
               onClick={closeExpandImage}
             >
               <svg

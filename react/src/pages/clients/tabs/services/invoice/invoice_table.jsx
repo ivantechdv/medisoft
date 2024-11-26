@@ -88,14 +88,15 @@ const InvoicesTable = forwardRef(
       try {
         const queryParameters = new URLSearchParams();
         let services = '';
+        const order = 'service_start-desc';
         if (isActive) {
           services = await getData(
-            `client-invoice/all?client_id=${onFormData?.id}`,
+            `client-invoice/all?client_id=${onFormData?.id}&order=${order}`,
           );
         } else {
           queryParameters.append('statu', 1);
           services = await getData(
-            `client-invoice/all?client_id=${onFormData?.id}&${queryParameters}`,
+            `client-invoice/all?client_id=${onFormData?.id}&${queryParameters}&order=${order}`,
           );
         }
         setInvoicesList(services);
@@ -374,22 +375,20 @@ const InvoicesTable = forwardRef(
             dataToSend,
           );
           if (responseServiceEnd) {
-            if (isCheckedOne) {
+            if (isCheckedTwo) {
               const responseInvoice = await getData(
                 `client-invoice/${invoiceIdRef.current}`,
               );
               if (responseInvoice) {
-                if (isCheckedTwo) {
-                  const responseClientInvoice = await getData(
-                    `client-invoice/all?client_service_id=${responseInvoice.client_service_id}`,
-                  );
-                  const invoiceUpdatePromises = responseClientInvoice.map(
-                    async (invoice) => {
-                      await putData(`client-invoice/${invoice.id}`, dataToSend);
-                    },
-                  );
-                  await Promise.all(invoiceUpdatePromises);
-                }
+                const responseClientInvoice = await getData(
+                  `client-invoice/all?client_service_id=${responseInvoice.client_service_id}`,
+                );
+                const invoiceUpdatePromises = responseClientInvoice.map(
+                  async (invoice) => {
+                    await putData(`client-invoice/${invoice.id}`, dataToSend);
+                  },
+                );
+                await Promise.all(invoiceUpdatePromises);
                 await putData(
                   `client-service/${responseInvoice.client_service_id}`,
                   dataToSend,
@@ -407,27 +406,22 @@ const InvoicesTable = forwardRef(
               );
 
               if (initialResponse) {
-                if (isCheckedOne) {
+                if (isCheckedTwo) {
                   const responseClientInvoice = await getData(
                     `client-invoice/all?id=${invoiceId}`,
                   );
                   const client_service_id =
                     responseClientInvoice[0].client_service_id;
 
-                  if (isCheckedTwo) {
-                    const responseAllClientInvoice = await getData(
-                      `client-invoice/all?client_service_id=${client_service_id}`,
-                    );
-                    const invoiceUpdatePromises = responseAllClientInvoice.map(
-                      async (invoice) => {
-                        await putData(
-                          `client-invoice/${invoice.id}`,
-                          dataToSend,
-                        );
-                      },
-                    );
-                    await Promise.all(invoiceUpdatePromises);
-                  }
+                  const responseAllClientInvoice = await getData(
+                    `client-invoice/all?client_service_id=${client_service_id}`,
+                  );
+                  const invoiceUpdatePromises = responseAllClientInvoice.map(
+                    async (invoice) => {
+                      await putData(`client-invoice/${invoice.id}`, dataToSend);
+                    },
+                  );
+                  await Promise.all(invoiceUpdatePromises);
                   await putData(
                     `client-service/${client_service_id}`,
                     dataToSend,
@@ -481,6 +475,9 @@ const InvoicesTable = forwardRef(
 
     const handleCheckboxConfirmOne = () => {
       setIsCheckedOne(!isCheckedOne);
+      if (isCheckedOne == true) {
+        setIsCheckedTwo(false);
+      }
     };
     const handleCheckboxConfirmTwo = () => {
       setIsCheckedTwo(!isCheckedTwo);
@@ -790,8 +787,8 @@ const InvoicesTable = forwardRef(
                     onChange={handleCheckboxConfirmOne}
                   />
                   <span className='ml-2'>
-                    Se procederá con la baja de los servicios contratados
-                    asociadas a esta factura
+                    Se procedera con la baja del servicio facturable
+                    seleccionado
                   </span>
                 </label>
               </div>
@@ -805,8 +802,8 @@ const InvoicesTable = forwardRef(
                     onChange={handleCheckboxConfirmTwo}
                   />
                   <span className='ml-2'>
-                    Se procederá con la baja de las facturas asociadas al
-                    servicio
+                    Se procederá con la baja de los Servicios Contratados
+                    asociados
                   </span>
                 </label>
               </div>
@@ -821,20 +818,17 @@ const InvoicesTable = forwardRef(
                 <button
                   type='button'
                   className={`bg-red-500 text-white font-bold py-2 px-4 text-sm rounded mr-2 ${
-                    !isCheckedOne
-                      ? false
-                      : isCheckedOne && isCheckedTwo
-                      ? false
-                      : 'cursor-not-allowed opacity-50'
+                    !isCheckedOne ? ' cursor-not-allowed opacity-80' : ''
                   }`}
                   onClick={handleSendServiceEnd}
-                  disabled={
-                    !isCheckedOne
-                      ? false
-                      : isCheckedOne && isCheckedTwo
-                      ? false
-                      : true
-                  }
+                  disabled={!isCheckedOne}
+                  // disabled={
+                  //   !isCheckedOne
+                  //     ? false
+                  //     : isCheckedOne && isCheckedTwo
+                  //     ? false
+                  //     : true
+                  // }
                 >
                   Confirmar
                 </button>
