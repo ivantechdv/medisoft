@@ -217,7 +217,7 @@ const Clients = () => {
       <Breadcrumbs
         items={[
           { label: 'Inicio', route: '/' },
-          { label: 'Empleadores', route: '/Clients' },
+          { label: 'Clientes', route: '/Clients' },
           !isNewRecord
             ? {
                 label: cardData.full_name ? cardData.full_name : 'Nuevo',

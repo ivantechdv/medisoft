@@ -45,7 +45,7 @@ const ServicesTable = forwardRef(
       observation: '',
       service_start: null,
       service_end: null,
-      service_demand: null,
+      service_alta: null,
     };
     const [formData, setFormData] = useState(initialValues);
     const [formDataAux, setFormDataAux] = useState(initialValues);
@@ -171,7 +171,7 @@ const ServicesTable = forwardRef(
 
     const getRows = async () => {
       try {
-        const order = 'id-desc';
+        const order = 'service_alta-desc';
         const queryParameters = new URLSearchParams();
         let services = '';
         if (isActive) {
@@ -205,15 +205,10 @@ const ServicesTable = forwardRef(
       const { id, value, checked, type } = event.target;
 
       setFormData((prevFormData) => {
-        console.log(
-          'prevFormData',
-          prevFormData.service_demand,
-          ' value',
-          value,
-        );
+        console.log('prevFormData', prevFormData.service_alta, ' value', value);
         if (id === 'service_start') {
-          // Validar que service_start no sea mayor que service_demand
-          if (value < prevFormData.service_demand) {
+          // Validar que service_start no sea mayor que service_alta
+          if (value < prevFormData.service_alta) {
             alert(
               'La fecha de activación no puede ser menor que la fecha de alta del servicio.',
             );
@@ -221,8 +216,8 @@ const ServicesTable = forwardRef(
           }
         }
 
-        if (id === 'service_demand') {
-          // Validar que service_demand no sea menor que service_start
+        if (id === 'service_alta') {
+          // Validar que service_alta no sea menor que service_start
           if (value > prevFormData.service_start) {
             alert(
               'La fecha de alta no puede ser mayor que la fecha de activación.',
@@ -310,7 +305,7 @@ const ServicesTable = forwardRef(
         errors.push('Seleccione un empleado');
       }
 
-      if (!data.service_demand) {
+      if (!data.service_alta) {
         errors.push('La fecha de alta del servicio es obligatoria');
       }
       if (update && data.employee_id !== 0) {
@@ -1021,9 +1016,11 @@ const ServicesTable = forwardRef(
 
                         if (!row.employee || !row.service_start) {
                           backgroundColor = '#ffd27f'; // Naranja claro
-                        } else if (!row.service_end) {
+                        }
+                        if (!row.service_end) {
                           backgroundColor = '#bdffbd'; // Verde claro
-                        } else if (row.service_end) {
+                        }
+                        if (row.service_end) {
                           backgroundColor = '#e3e1e1'; // Gris claro
                         }
 
@@ -1053,8 +1050,7 @@ const ServicesTable = forwardRef(
                               {row.employee?.full_name || 'Sin asignar'}
                             </td>
                             <td className='px-2 border-2'>
-                              {row.service_demand &&
-                                formatDate(row.service_demand)}
+                              {row.service_alta && formatDate(row.service_alta)}
                             </td>
                             <td className='px-2 border-2'>
                               {row.service_start &&

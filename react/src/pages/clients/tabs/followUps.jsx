@@ -291,7 +291,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                       <div className='flex justify-between items-center w-full'>
                         <h4 className='text-lg font-semibold flex-grow'>
                           {row.employee_id != 0 && row.employee_id != null
-                            ? 'Empleado ' + row.employee.name + '=> '
+                            ? 'Empleado ' + row.employee.full_name + '=> '
                             : ''}
                           {row.title}
                         </h4>

@@ -215,7 +215,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
           <div className='col-span-2'>
             <label
               htmlFor='email'
-              className='block text-sm font-medium text-gray-700'
+              className='block text-sm font-medium text-blue-500'
             >
               Patologías
             </label>
@@ -231,7 +231,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
           <div className='col-span-2'>
             <label
               htmlFor='email'
-              className='block text-sm font-medium text-gray-700'
+              className='block text-sm font-medium text-blue-500'
             >
               Tareas
             </label>
@@ -247,7 +247,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
           <div className='col-span-2'>
             <label
               htmlFor='recommendations'
-              className='block text-sm font-medium text-gray-700'
+              className='block text-sm font-medium text-blue-500'
             >
               Recomendaciones
             </label>
