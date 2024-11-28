@@ -7,7 +7,7 @@ const ClientTask = require("../../models/clients_tasks/clients_tasks.model");
 const CodPost = require("../../models/cod_posts/cod_posts.model");
 const Country = require("../../models/countries/countries.model");
 const Patology = require("../../models/patologies/patologies.model");
-
+const Gender = require("../../models/genders/genders.model");
 const Task = require("../../models/employees/task.model");
 const State = require("../../models/states/states.model");
 const Methods = require("../methods/methods.controller");
@@ -61,6 +61,9 @@ CTRL.get = async (req, res, next) => {
           },
         ],
       },
+      {
+        model: Gender,
+      },
     ];
     await Methods.get(req, res, next, Client, condition, include);
   } catch (error) {
@@ -100,6 +103,9 @@ CTRL.getAll = async (req, res, next) => {
             model: Task,
           },
         ],
+      },
+      {
+        model: Gender,
       },
     ];
 
