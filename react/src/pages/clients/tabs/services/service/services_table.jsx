@@ -327,7 +327,7 @@ const ServicesTable = forwardRef(
         `client-service/all?client_id=${onFormData?.id}&${queryParameters}`,
       );
 
-      console.log('formData.id =>', formData.id);
+      console.log('formData.id =>', formData);
       console.log('services.id =>', services);
       if (services.length > 0 && formData.id != services[0].id) {
         ToastNotify({

@@ -7,6 +7,7 @@ import {
   FaPhoneSquareAlt,
   FaFileAlt,
   FaClipboardList,
+  FaPlusCircle,
 } from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
 import { getData, postData, putData, getStorage } from '../../api';
 import Spinner from '../../components/Spinner/Spinner';
@@ -18,6 +19,8 @@ import Specific from './tabs/specific';
 import Service from './tabs/services/index';
 import ModalLogs from './modalLogs';
 import FollowUps from './tabs/followUps';
+import Families from '../families';
+import FamiliarCard from '../families/view';
 const Clients = () => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -50,6 +53,7 @@ const Clients = () => {
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [activeTab, setActiveTab] = useState('general');
   const [action, setAction] = useState('Guardar');
+  const [families, setFamilies] = useState([]);
   const [cardData, setCardData] = useState({
     full_name: '',
     dni: '',
@@ -61,11 +65,20 @@ const Clients = () => {
     code_phone: '',
     cod_post: '',
   });
+  const [formDataFamily, setFormDataFamily] = useState({
+    id: '',
+    name: '',
+    email: '',
+    phone: '',
+  });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
+
+  const [isFamiliesModalOpen, setIsFamiliesModalOpen] = useState(false);
 
   const getRecordById = async (id) => {
     try {
       //setIsLoading(true);
+
       const response = await getData('clients/' + id);
       console.log('response', response);
 
@@ -78,6 +91,7 @@ const Clients = () => {
             ['photo']: getStorage(response.photo),
           }));
         }
+        setFamilies(response.families);
         setCardData((prevCardData) => ({
           ...prevCardData,
           ['cod_post']:
@@ -190,7 +204,7 @@ const Clients = () => {
 
     return (
       <>
-        <div className='w-full ml-5 flex items-center'>
+        <div className='w-full ml-2 flex items-center'>
           <FaRegEnvelope className='mr-2' />
           <label className='flex truncate text-wrap'>
             {emailArray.map((email, index) => (
@@ -212,6 +226,23 @@ const Clients = () => {
   const handleLogs = () => {
     setModalLogs(true);
   };
+  const openModalFamilies = (family) => {
+    console.log('family', family);
+    if (family) {
+      setFormDataFamily(family);
+    } else {
+      setFormDataFamily(null);
+    }
+    setIsFamiliesModalOpen(true);
+  };
+
+  const closeModalFamilies = () => {
+    setIsFamiliesModalOpen(false);
+  };
+  const getFamilies = async () => {
+    const response = await getData('family/getByClientId/' + id);
+    setFamilies(response);
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -227,13 +258,13 @@ const Clients = () => {
         ]}
       />
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-110px)]'>
-        <div className='grid grid-cols-1 md:grid-cols-4'>
+        <div className='grid grid-cols-1 md:grid-cols-5'>
           <div className='col-span-1  border-r-2 border-gray-200 h-full'>
             <div className='w-full border-r-2 border-gray-200 md:h-screen'>
               {/* Contenido del lado izquierdo */}
-              <div className='flex relative bg-white border-b-2 border-gray-200 h-40 '>
+              <div className='flex relative bg-white border-b-2 border-gray-200 h-36 '>
                 <div className='w-10 bg-blue-300  h-full'></div>
-                <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
+                <div className='absolute top-12 left-2 bg-white border-2 border-gray-300 rounded-full'>
                   {cardData.photo ? (
                     <img
                       src={cardData.photo}
@@ -247,7 +278,7 @@ const Clients = () => {
                     </>
                   )}
                 </div>
-                <div className='mt-8 ml-8'>
+                <div className='mt-4 ml-8'>
                   <label className='font-semibold text-md block uppercase'>
                     {cardData.full_name}
                   </label>
@@ -274,20 +305,20 @@ const Clients = () => {
                   </button> */}
                 </div>
               </div>
-              <div className='col-span-1 mt-8 pr-4 text-xs'>
-                <div className='w-full ml-5 flex'>
+              <div className='col-span-1 mt-4 pr-4 text-xs'>
+                <div className='w-full ml-2 flex'>
                   <label className='text-primary mt-4 mb-4  text-base'>
                     Datos de contacto
                   </label>
                 </div>
 
-                <div className='w-full ml-5 flex items-center '>
+                <div className='w-full ml-2 flex items-center '>
                   <FaMapMarkerAlt className='mr-2' />
                   <label className='flex truncate text-wrap'>
                     {cardData.address || 'Dirección'}
                   </label>
                 </div>
-                <div className='w-full ml-5 flex items-center'>
+                <div className='w-full ml-2 flex items-center'>
                   <FaMapMarkerAlt className='mr-2' />
                   <label className='flex truncate text-wrap'>
                     {cardData.cod_post}
@@ -295,7 +326,7 @@ const Clients = () => {
                 </div>
                 <EmailList emails={cardData.email} />
 
-                <div className='w-full ml-5 flex items-center'>
+                <div className='w-full ml-2 flex items-center'>
                   <FaPhoneSquareAlt className='mr-2' />
                   <a
                     href={`tel:${cardData.code_phone}${cardData.phone}`}
@@ -306,9 +337,38 @@ const Clients = () => {
                   </a>
                 </div>
               </div>
+              <div className='col-span-1 mt-8 pr-4 text-xs'>
+                <div className='w-full ml-2 flex justify-between'>
+                  <label className='text-primary mt-4 mb-4  text-base'>
+                    Datos Familiar
+                  </label>
+                  <label>
+                    {' '}
+                    <button type='button' onClick={() => openModalFamilies([])}>
+                      <FaPlusCircle className='mt-4 flex-start text-lg' />
+                    </button>
+                  </label>
+                </div>
+              </div>
+              <div className='w-full p-2 mb-2'>
+                {families.map((family, index) => (
+                  <FamiliarCard
+                    key={index} // Asegúrate de usar una clave única, como un ID, si está disponible
+                    family={family}
+                    openModalFamily={openModalFamilies}
+                  />
+                ))}
+              </div>
+              <Families
+                isOpen={isFamiliesModalOpen}
+                onClose={closeModalFamilies}
+                client_id={cardData.id}
+                formDataFamily={formDataFamily}
+                getFamilies={getFamilies}
+              ></Families>
             </div>
           </div>
-          <div className='md:col-span-3'>
+          <div className='md:col-span-4'>
             {/* Contenido del lado derecho */}
             <div className='mb-4 border-b-2 border-gray-400 p-2'>
               <button

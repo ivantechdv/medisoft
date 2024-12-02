@@ -139,11 +139,9 @@ const ServicesModal = ({
                 </label>
                 <input
                   type='date'
-                  id='service_demand'
+                  id='service_alta'
                   value={
-                    formData.service_demand == null
-                      ? ''
-                      : formData.service_demand
+                    formData.service_alta == null ? '' : formData.service_alta
                   }
                   onChange={handleChange}
                   disabled={isEditingService}
