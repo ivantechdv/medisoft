@@ -256,6 +256,7 @@ app.use(
   trafic,
   require("./routes/clients_tasks/clients_tasks.routes")
 );
+app.use("/api/v1/family", trafic, require("./routes/families/families.routes"));
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
   next();

@@ -1,6 +1,8 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../database/sequelize");
 const CodPost = require("../cod_posts/cod_posts.model");
+const Gender = require("../genders/genders.model");
+const Family = require("../families/families.mode");
 
 const Client = sequelize.define("clients", {
   id: {
@@ -120,4 +122,9 @@ const Client = sequelize.define("clients", {
 
 Client.belongsTo(CodPost, { foreignKey: "cod_post_id" });
 CodPost.hasMany(Client, { foreignKey: "cod_post_id" });
+Client.belongsTo(Gender, { foreignKey: "gender_id" });
+
+CodPost.hasMany(Client, { foreignKey: "cod_post_id" });
+Client.hasMany(Family, { foreignKey: "client_id" });
+Family.belongsTo(Client, { foreignKey: "client_id" });
 module.exports = Client;

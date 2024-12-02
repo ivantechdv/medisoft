@@ -49,17 +49,12 @@ function Navigation() {
     },
     {
       to: '/clients',
-      label: 'Empleadores',
+      label: 'Clientes',
       icon: <FaWarehouse className='w-4 h-4' />,
     },
     {
-      to: '/',
-      label: 'Familias',
-      icon: <BriefcaseIcon className='w-4 h-4' />,
-    },
-    {
       to: '/employees',
-      label: 'Empleados',
+      label: 'Cuidadores',
       icon: <FaCogs className='w-4 h-4' />,
     },
   ];
