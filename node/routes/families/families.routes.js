@@ -5,7 +5,7 @@ const Family = require("../../controllers/families/families.controller");
 
 router.get("/", Family.get);
 router.get("/all", Family.getAll);
-router.get("/getByClientId/:id", Family.getByClientId);
+router.get("/getByClientId", Family.getByClientId);
 router.get("/:id", Family.getById);
 router.post("/", Family.create);
 router.put("/:id", Family.update);

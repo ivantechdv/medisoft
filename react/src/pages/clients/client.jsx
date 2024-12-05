@@ -240,7 +240,8 @@ const Clients = () => {
     setIsFamiliesModalOpen(false);
   };
   const getFamilies = async () => {
-    const response = await getData('family/getByClientId/' + id);
+    const response = await getData('family/getByClientId?client_id=' + id);
+    console.log('response families', response);
     setFamilies(response);
   };
   return (

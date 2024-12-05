@@ -51,6 +51,7 @@ CTRL.getById = async (req, res, next) => {
 CTRL.getByClientId = async (req, res, next) => {
   try {
     const condition = { client_id: req.params.id };
+    console.log("condition", condition);
     Methods.getAll(req, res, next, Family, condition);
   } catch (error) {
     res.status(500).json({ error: error.message });
