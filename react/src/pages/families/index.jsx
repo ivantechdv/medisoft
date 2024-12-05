@@ -32,6 +32,7 @@ const Families = ({
         phone: formDataFamily.phone || '',
         email: formDataFamily.email || '',
       }));
+      setErrors({});
     }
   }, [formDataFamily]);
 

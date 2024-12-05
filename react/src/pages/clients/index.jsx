@@ -73,6 +73,11 @@ const Clients = () => {
       [id]: value,
     }));
   };
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
   const handleSubmit = async () => {
     const dataToSend = { ...formData };
     try {
@@ -347,7 +352,7 @@ const Clients = () => {
                 maxHeight: `calc(100vh - ${tableTopPosition + 50}px)`,
               }}
             >
-              <h2 className='text-center'>
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Datos Personales</strong>
               </h2>
               <p className='text-xs p-1'>
@@ -367,7 +372,7 @@ const Clients = () => {
                 <strong>Email:</strong> {selectedRow.email}
               </p>
               <div className='border-2 border-gray-200 w-full mt-6'></div>
-              <h2 className='text-center text-xs'>
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Dirección</strong>
               </h2>
               <p className='text-sm p-1 text-xs'>
@@ -386,7 +391,7 @@ const Clients = () => {
                 {selectedRow.cod_post?.state?.country?.name}
               </p>
               <div className='border-2 border-gray-200 w-full mt-6'></div>
-              <h2 className='text-center text-xs'>
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Patologias</strong>
               </h2>
               {selectedRow.clients_patologies.length > 0 &&
@@ -404,31 +409,38 @@ const Clients = () => {
                     </li>
                   ))}
               <div className='border-2 border-gray-200 w-full mt-6'></div>
-              <h2 className='text-center text-xs'>
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Servicios contratados</strong>
               </h2>
               {servicesActive.map((service) => (
                 <>
-                  <p className='text-xs font-bold'>
-                    {service.employee?.full_name}
-                  </p>
-                  <div className='flex justify-between text-xs mb-6'>
-                    <p>{service.service?.name}</p>
-                    <p>{service.service_alta}</p>
+                  <p className='text-xs font-bold'>{service.service?.name}</p>
+                  <div className=' text-xs mb-2'>
+                    <p>{service.employee?.full_name}</p>
+                    <p>{formatDate(service.service_alta)}</p>
                   </div>
                 </>
               ))}
               <div className='border-2 border-gray-200 w-full mt-6'></div>
-              <h2 className='text-center'>
-                <strong>Recomendaciones </strong>
+              <h2 className='text-center text-xs border bg-topNav w-full py-1'>
+                <strong>Familiares </strong>
               </h2>
-              <p className='text-sm p-1'>
-                <div
-                  dangerouslySetInnerHTML={{
-                    __html: selectedRow.recommendations,
-                  }}
-                />
-              </p>
+              {selectedRow.families.length > 0 &&
+                selectedRow.families
+                  .slice() // Clonamos el array para evitar modificar el original
+                  .filter((family) => family.name) // Filtrar aquellos que tengan patología y nombre
+                  .sort((a, b) => a.name.localeCompare(b.name)) // Ordenar por nombre de patología
+                  .map((family) => (
+                    <div className='flex justify-between text-xs mb-2 '>
+                      <p>{family?.name}</p>
+                      <p>{family.phone}</p>
+                    </div>
+                  ))}
+              <div className='border-2 border-gray-200 w-full mt-6'></div>
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
+                <strong>Observaciones </strong>
+              </h2>
+              {selectedRow.observations}
             </div>
           </div>
         )}

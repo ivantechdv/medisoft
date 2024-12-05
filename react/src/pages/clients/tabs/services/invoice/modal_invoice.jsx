@@ -339,7 +339,7 @@ const ModalInvoices = ({
   return (
     <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
       <div
-        className={`relative bg-white p-2 rounded shadow-lg min-h-80 w-4/5 lg:w-1/4 max-h-screen overflow-y-auto`}
+        className={`relative bg-white p-2 rounded shadow-lg min-h-80 w-4/5 lg:w-1/2 max-h-screen overflow-y-auto`}
       >
         <button
           className='absolute top-0 right-0 text-gray-800 text-lg'
@@ -359,83 +359,91 @@ const ModalInvoices = ({
             />
           </svg>
         </button>
-        <div className={`col-span-1 md:grid md:grid-cols-1 gap-2 p-2`}>
+        <div className={`col-span-1 md:grid md:grid-cols-4 gap-2 p-2`}>
           <div className='col-span-1'>
-            <div className='mb-2'>
-              <label
-                htmlFor='concept_invoice_id'
-                className='block text-sm font-medium text-secondary'
-              >
-                Conceptos
-              </label>
-              <Select
-                id='concept_invoice_id'
-                options={optionsConcepts}
-                placeholder='Servicios facturables'
-                defaultValue={formData.concept_invoice_id}
-                onChange={(event) =>
-                  handleChangeSelect(event, 'concept_invoice_id')
-                }
-                isSearchable
-                isDisabled={isEditingService}
-              />
-            </div>
-            <div className='mb-2'>
-              <label
-                htmlFor='service_id'
-                className='block text-sm font-medium text-secondary'
-              >
-                Seleccionar Servicio
-              </label>
-              <Select
-                id='client_service_id'
-                options={optionsServices}
-                placeholder='Seleccione un servicio'
-                defaultValue={formData.client_service_id}
-                onChange={(event) =>
-                  handleChangeSelect(event, 'client_service_id')
-                }
-                isSearchable
-                isDisabled={isEditingService}
-              />
-            </div>
-            <div className='mb-2'>
-              <label
-                htmlFor='service_start'
-                className='block text-sm font-medium text-secondary'
-              >
-                Alta de servicio
-              </label>
-              <input
-                type='date'
-                id='service_start'
-                value={
-                  formData.service_start == null ? '' : formData.service_start
-                }
-                onChange={handleChange}
-                disabled={isEditingService}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='mb-1'>
-              <label
-                htmlFor='pvp'
-                className='block text-sm font-medium text-secondary'
-              >
-                PVP
-              </label>
-              <input
-                type='text'
-                id='pvp'
-                value={formData.pvp}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                disabled={true}
-              />
-            </div>
-            <div className='mb-1'>
+            <label
+              htmlFor='concept_invoice_id'
+              className='block text-sm font-medium text-secondary'
+            >
+              Conceptos
+            </label>
+          </div>
+          <div className='col-span-3'>
+            <Select
+              id='concept_invoice_id'
+              options={optionsConcepts}
+              placeholder='Servicios facturables'
+              defaultValue={formData.concept_invoice_id}
+              onChange={(event) =>
+                handleChangeSelect(event, 'concept_invoice_id')
+              }
+              isSearchable
+              isDisabled={isEditingService}
+            />
+          </div>
+          <div className='col-span-1'>
+            <label
+              htmlFor='service_id'
+              className='block text-sm font-medium text-secondary'
+            >
+              Seleccionar Servicio
+            </label>
+          </div>
+          <div className='col-span-3'>
+            <Select
+              id='client_service_id'
+              options={optionsServices}
+              placeholder='Seleccione un servicio'
+              defaultValue={formData.client_service_id}
+              onChange={(event) =>
+                handleChangeSelect(event, 'client_service_id')
+              }
+              isSearchable
+              isDisabled={isEditingService}
+            />
+          </div>
+          <div className='col-span-1'>
+            <label
+              htmlFor='service_start'
+              className='block text-sm font-medium text-secondary'
+            >
+              Alta de servicio
+            </label>
+          </div>
+          <div className='col-span-3'>
+            <input
+              type='date'
+              id='service_start'
+              value={
+                formData.service_start == null ? '' : formData.service_start
+              }
+              onChange={handleChange}
+              disabled={isEditingService}
+              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+            />
+          </div>
+          <div className='col-span-1'>
+            <label
+              htmlFor='pvp'
+              className='block text-sm font-medium text-secondary'
+            >
+              PVP
+            </label>
+          </div>
+          <div className='col-span-1'>
+            <input
+              type='text'
+              id='pvp'
+              value={formData.pvp}
+              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              disabled={true}
+            />
+          </div>
+          <div className='col-span-1'>
+            <div className='flex justify-between'>
               <label
                 htmlFor='discount'
-                className='block text-sm font-medium text-secondary'
+                className='block text-xs font-medium text-secondary flex-1'
               >
                 Descuento %
               </label>
@@ -446,15 +454,17 @@ const ModalInvoices = ({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 disabled={isEditingService}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                className='w-1/2 px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
-            <div className='mb-1'>
+          </div>
+          <div className='col-span-1'>
+            <div className='flex justify-between'>
               <label
                 htmlFor='total'
-                className='block text-sm font-medium text-secondary'
+                className='block text-xs font-medium text-secondary'
               >
-                Total PVP
+                Total
               </label>
               <input
                 type='number'
@@ -463,28 +473,32 @@ const ModalInvoices = ({
                 onChange={handleChange}
                 onBlur={handleBlur}
                 disabled={isEditingService}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                className='w-1/2 px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
-            <div className='mb-1'>
-              <label
-                htmlFor='period'
-                className='block text-sm font-medium text-secondary'
-              >
-                Periodo
-              </label>
-              <input
-                type='text'
-                id='period'
-                value={formData.period}
-                disabled={true}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='mb-1'>
+          </div>
+          <div className='col-span-1'>
+            <label
+              htmlFor='period'
+              className='block text-sm font-medium text-secondary'
+            >
+              Periodo
+            </label>
+          </div>
+          <div className='col-span-1'>
+            <input
+              type='text'
+              id='period'
+              value={formData.period}
+              disabled={true}
+              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+            />
+          </div>
+          <div className='col-span-2'>
+            <div className='flex justify-between'>
               <label
                 htmlFor='unit'
-                className='block text-sm font-medium text-secondary'
+                className='block text-xs font-medium text-secondary'
               >
                 Unidad de calculo
               </label>
@@ -493,25 +507,27 @@ const ModalInvoices = ({
                 id='unit'
                 value={formData.unit}
                 disabled={true}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                className='w-1/2 px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
-            <div className='mb-1'>
-              <label
-                htmlFor='next_payment'
-                className='block text-sm font-medium text-secondary'
-              >
-                Proximo pago
-              </label>
-              <input
-                type='date'
-                id='next_payment'
-                onChange={handleChange}
-                disabled={isEditingService}
-                value={formData.next_payment}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
+          </div>
+          <div className='col-span-1'>
+            <label
+              htmlFor='next_payment'
+              className='block text-sm font-medium text-secondary'
+            >
+              Proximo pago
+            </label>
+          </div>
+          <div className='col-span-3'>
+            <input
+              type='date'
+              id='next_payment'
+              onChange={handleChange}
+              disabled={isEditingService}
+              value={formData.next_payment}
+              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+            />
           </div>
         </div>
         <div className='flex justify-between p-4'>

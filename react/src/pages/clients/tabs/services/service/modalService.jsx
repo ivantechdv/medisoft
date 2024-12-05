@@ -28,7 +28,7 @@ const ServicesModal = ({
       <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40'>
         <div
           className={`relative bg-white p-2 rounded shadow-lg min-h-80 ${
-            modalExpanded ? 'w-4/5 lg:w-3/4' : 'w-4/5 lg:w-1/4'
+            modalExpanded ? 'w-4/5 lg:w-3/4' : 'w-4/5 lg:w-2/5'
           } max-h-screen overflow-y-auto`}
         >
           <button
@@ -50,20 +50,22 @@ const ServicesModal = ({
             </svg>
           </button>
           <div
-            className={`col-span-1 ${
+            className={`${
               modalExpanded
-                ? 'md:grid md:grid-cols-3'
-                : 'md:grid md:grid-cols-1'
+                ? 'md:grid md:grid-cols-4'
+                : 'md:grid md:grid-cols-2'
             } gap-2 p-2`}
           >
-            <div className='col-span-1'>
-              <div className='mb-2'>
+            <div className='col-span-2 grid grid-cols-3'>
+              <div className='col-span-1'>
                 <label
                   htmlFor='service_id'
-                  className='block text-sm font-medium text-secondary'
+                  className='block text-sm font-medium text-secondary mt-2'
                 >
                   Seleccionar Servicio
                 </label>
+              </div>
+              <div className='col-span-2'>
                 <Select
                   id='service_id'
                   options={optionsServices}
@@ -74,13 +76,15 @@ const ServicesModal = ({
                   isDisabled={isEditingService}
                 />
               </div>
-              <div className='mb-2'>
+              <div className='col-span-1'>
                 <label
                   htmlFor='employee_id'
-                  className='block text-sm font-medium text-secondary'
+                  className='block text-sm font-medium text-secondary mt-2'
                 >
                   Seleccionar Empleado
                 </label>
+              </div>
+              <div className='col-span-2'>
                 <Select
                   id='employee_id'
                   options={employees}
@@ -91,12 +95,13 @@ const ServicesModal = ({
                   isDisabled={isEditingService}
                 />
               </div>
-              <div className='mb-2 mt-2'>
-                <label
-                  htmlFor='has_offer'
-                  className='block text-sm font-medium text-secondary'
-                >
-                  <div className='flex items-center'>
+              <div className='col-span-1 mt-2'></div>
+              <div className='col-span-2 mt-2'>
+                <div className='flex justify-between'>
+                  <label
+                    htmlFor='has_offer'
+                    className='block text-sm font-medium text-secondary'
+                  >
                     Generar oferta?
                     <input
                       type='checkbox'
@@ -106,37 +111,39 @@ const ServicesModal = ({
                       className='ml-2 p-1 border border-gray-300 rounded focus:outline-none focus:border-indigo-500'
                       disabled={formData.employee_id !== 0}
                     />
-                    {showBtnPreselection && (
-                      <div>
-                        {modalExpanded ? (
-                          <button
-                            type='button'
-                            className='ml-2 border border-gray-800 text-gray-800 text-xs py-1 px-2 rounded mr-2'
-                            onClick={handleModalExpanded}
-                          >
-                            Ocultar preselección
-                          </button>
-                        ) : (
-                          <button
-                            type='button'
-                            className='ml-2 border border-gray-800 text-gray-800 text-xs py-1 px-2 rounded mr-2'
-                            onClick={handleModalExpanded}
-                          >
-                            Mostrar preselección
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </label>
+                  </label>
+                  {showBtnPreselection && (
+                    <>
+                      {modalExpanded ? (
+                        <button
+                          type='button'
+                          className='ml-2 border border-gray-800 text-gray-800 text-xs py-1 px-2 rounded mr-2'
+                          onClick={handleModalExpanded}
+                        >
+                          Ocultar preselección
+                        </button>
+                      ) : (
+                        <button
+                          type='button'
+                          className='ml-2 border border-gray-800 text-gray-800 text-xs py-1 px-2 rounded mr-2'
+                          onClick={handleModalExpanded}
+                        >
+                          Mostrar preselección
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-              <div className='mb-2'>
+              <div className='col-span-1 mt-2'>
                 <label
                   htmlFor='service_demand'
                   className='block text-sm font-medium text-secondary'
                 >
                   Alta de servicio
                 </label>
+              </div>
+              <div className='col-span-2'>
                 <input
                   type='date'
                   id='service_alta'
@@ -148,13 +155,15 @@ const ServicesModal = ({
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>
-              <div className='mb-2'>
+              <div className='col-span-1 mt-2'>
                 <label
                   htmlFor='service_start'
                   className='block text-sm font-medium text-secondary'
                 >
                   Activación de servicio
                 </label>
+              </div>
+              <div className='col-span-2'>
                 <input
                   type='date'
                   id='service_start'
@@ -166,13 +175,15 @@ const ServicesModal = ({
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>
-              <div className='mb-1'>
+              <div className='col-span-1 mt-2'>
                 <label
                   htmlFor='observation'
                   className='block text-sm font-medium text-secondary'
                 >
                   Observaciones
                 </label>
+              </div>
+              <div className='col-span-2'>
                 <textarea
                   type='text'
                   rows={6}
