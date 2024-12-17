@@ -38,7 +38,7 @@ const ServicesTable = forwardRef(
     const initialValues = {
       id: '',
       service_id: '',
-      employee_id: '',
+      employee_id: 0,
       createdAt: new Date(),
       has_offer: false,
       offer: '',
@@ -59,6 +59,8 @@ const ServicesTable = forwardRef(
     const [servicesList, setServicesList] = useState([]);
     const [optionsServices, setOptionsServices] = useState([]);
     const [employees, setEmployees] = useState([]);
+    const [allEmployees, setAllEmployees] = useState([]);
+    const [employeesSearch, setEmployeesSearch] = useState([]);
     const [loadingCount, setLoadingCount] = useState(2);
     const [isLoading, setIsLoading] = useState(false);
     const [isOpenModalService, setIsOpenModalService] = useState(false);
@@ -90,6 +92,7 @@ const ServicesTable = forwardRef(
     const [selectedServices, setSelectedServices] = useState([]);
     const [originServiceEnd, setOriginServiceEnd] = useState([]);
     const [clientReason, setClientReason] = useState([]);
+    const [employeeOriginal, setEmployeeOriginal] = useState([]);
     const sweetAlert = ConfirmSweetAlert({
       title: 'Servicio',
       text: '¿Esta seguro que desea procesar el servicio?',
@@ -143,6 +146,12 @@ const ServicesTable = forwardRef(
               })),
             );
             setEmployees(options);
+            setEmployeeOriginal(options);
+            const optionSearch = optionEmployees.map((item) => ({
+              value: item.id,
+              label: item.full_name,
+            }));
+            setEmployeesSearch(optionSearch);
           }
           const responseReason = await getData(
             `client-statu-reason/all?order=${order}`,
@@ -157,6 +166,8 @@ const ServicesTable = forwardRef(
 
             setClientReason(options);
           }
+          const optionAllEmployees = await getData(`employees/getBySearch`);
+          setAllEmployees(optionAllEmployees);
 
           const allFilter = await getData(`employees/filter/all`);
           setFieldFilters(allFilter);
@@ -249,33 +260,41 @@ const ServicesTable = forwardRef(
       } else if (field === 'service_id') {
         const selectedServiceId = newValue;
 
-        // Filtrar empleados por el servicio seleccionado
-        console.log('employeePreselection', employeePreselection);
-        const filteredEmployees = employeePreselection.filter((employee) => {
-          // Verificar que employee_specific y services no sean undefined
-          const services = employee.employee_specific?.services;
+        if (preselection.length > 0) {
+        } else {
+          // Filtrar empleados por el servicio seleccionado
+          console.log('employeePreselection', employeePreselection);
+          const filteredEmployees = employeePreselection.filter((employee) => {
+            // Verificar que employee_specific y services no sean undefined
+            const services = employee.employee_specific?.services;
 
-          if (services) {
-            const servicesArray = services.split(',').map(Number); // Convertir en array de números
-            return servicesArray.includes(selectedServiceId);
-          }
+            if (services) {
+              const servicesArray = services.split(',').map(Number); // Convertir en array de números
+              return servicesArray.includes(selectedServiceId);
+            }
 
-          return false; // Si no hay servicios, excluir al empleado
-        });
+            return false; // Si no hay servicios, excluir al empleado
+          });
 
-        console.log('Empleados filtrados', filteredEmployees);
+          console.log('Empleados filtrados', filteredEmployees);
 
-        // Generar las opciones del select
-        let options = [{ value: 0, label: 'Sin asignar' }];
-        options = options.concat(
-          filteredEmployees.map((item) => ({
+          // Generar las opciones del select
+          let options = [{ value: 0, label: 'Sin asignar' }];
+          options = options.concat(
+            filteredEmployees.map((item) => ({
+              value: item.id,
+              label: item.full_name,
+            })),
+          );
+
+          // Actualizar el estado con los empleados filtrados
+          setEmployees(options);
+          const optionsSearch = filteredEmployees.map((item) => ({
             value: item.id,
             label: item.full_name,
-          })),
-        );
-
-        // Actualizar el estado con los empleados filtrados
-        setEmployees(options);
+          }));
+          setEmployeesSearch(optionsSearch);
+        }
       }
     };
 
@@ -302,16 +321,11 @@ const ServicesTable = forwardRef(
       }
 
       if (data.employee_id === null || data.employee_id === undefined) {
-        errors.push('Seleccione un empleado');
+        errors.push('Seleccione un cuidador');
       }
 
       if (!data.service_alta) {
         errors.push('La fecha de alta del servicio es obligatoria');
-      }
-      if (update && data.employee_id !== 0) {
-        if (!data.service_start) {
-          errors.push('La fecha de activacion del servicio es obligatoria');
-        }
       }
 
       return errors;
@@ -442,10 +456,14 @@ const ServicesTable = forwardRef(
           const dataToSend = {
             ...formData,
           };
-          const responseClientService = await putData(
-            `client-service/${formData.id}`,
-            dataToSend,
-          );
+          console.log('formdata', formData);
+          let responseClientService = true;
+          if (formData.employee_id != 0) {
+            responseClientService = await putData(
+              `client-service/${formData.id}`,
+              dataToSend,
+            );
+          }
           if (responseClientService) {
             if (dataPreselection.length > 0) {
               dataPreselection.forEach((item) => {
@@ -476,10 +494,11 @@ const ServicesTable = forwardRef(
       }
     };
 
-    const openModalServices = () => {
+    const openModalServices = async () => {
+      setEmployees(employeeOriginal);
       setIsOpenModalService(true);
       setPreselection([]);
-      setShowBtnPreselection(false);
+      setShowBtnPreselection(true);
       setFormData(initialValues);
       setFormDataAux([]);
       setIsEditingService(false);
@@ -517,9 +536,42 @@ const ServicesTable = forwardRef(
         }
       });
     };
-    const handleAddPreselection = () => {
-      console.log('preselection => ', preselection);
-      closeModalEmployee();
+    const handleAddPreselection = (employee) => {
+      const employe = employee[0];
+
+      // Verificar si el empleado ya está en la preselección
+      setPreselection((prevSelected) => {
+        const exists = prevSelected.some(
+          (item) => item.employee_id === employe.id,
+        );
+
+        if (exists) {
+          // Mostrar un mensaje si el empleado ya existe
+          alert('El cuidador ya está preseleccionado.');
+          return prevSelected; // No agregamos nada y devolvemos el estado actual
+        }
+
+        // Si no existe, agregamos el empleado
+        return [
+          ...prevSelected,
+          {
+            employee_id: employe.id,
+            name: employe.full_name,
+            phone: employe.phone,
+            status: 'Pendiente',
+            observation: '',
+          },
+        ];
+      });
+
+      let options = [{ value: 0, label: 'Sin asignar' }];
+      options = options.concat(
+        allEmployees.map((item) => ({
+          value: item.id,
+          label: item.full_name,
+        })),
+      );
+      setEmployees(options);
     };
 
     const formatDate = (dateString) => {
@@ -554,6 +606,7 @@ const ServicesTable = forwardRef(
             client_id: item.client_id,
             service_id: item.service_id,
             name: item.employee.full_name,
+            phone: item.employee.code_phone + ' ' + item.employee.phone,
             status: item.status, // Puedes ajustar esto según tus necesidades
             observation: item.observation,
           }));
@@ -562,10 +615,20 @@ const ServicesTable = forwardRef(
           setPreselection(preselectionEmployees);
           setActiveService(true);
 
-          const optionEmployees = await getData(`employees/filter/all`);
-
+          //<****revisar consulta aqui si no tiene preseleccion filtrar por el servicio y patologia sino mostrar todos*****
+          let optionEmployees = null;
+          if (preselectionEmployees.length > 0) {
+            optionEmployees = await getData(`employees/getBySearch`);
+          } else {
+            const patologyIds = onFormData.clients_patologies
+              .map((cp) => cp.patology_id) // Extrae directamente los patology_id
+              .join(','); // Une los patology_id en una cadena separada por comas
+            optionEmployees = await getData(
+              `employees/getBySearch?patologies=${patologyIds}`,
+            );
+          }
           if (optionEmployees) {
-            setEmployeePreselection(optionEmployees);
+            // setEmployeePreselection(optionEmployees);
             let options = [{ value: 0, label: 'Sin asignar' }];
             options = options.concat(
               optionEmployees.map((item) => ({
@@ -577,7 +640,7 @@ const ServicesTable = forwardRef(
           }
         }
 
-        if (row.employee_id == 0) {
+        if (responsePreselection) {
           setShowBtnPreselection(true);
         }
       }
@@ -612,7 +675,6 @@ const ServicesTable = forwardRef(
         setFormData((prevFormData) => ({
           ...prevFormData,
           employee_id: employeeId,
-          service_start: new Date().toISOString().split('T')[0],
         }));
 
         console.log('fecha', new Date().toISOString());
@@ -905,7 +967,6 @@ const ServicesTable = forwardRef(
           );
 
           if (optionEmployees) {
-            setEmployeePreselection(optionEmployees);
             let options = [{ value: 0, label: 'Sin asignar' }];
             options = options.concat(
               optionEmployees.map((item) => ({
@@ -913,7 +974,7 @@ const ServicesTable = forwardRef(
                 label: item.full_name,
               })),
             );
-            setEmployees(options);
+            setEmployeesSearch(options);
           }
         } catch (error) {
           console.log('error', error);
@@ -929,6 +990,12 @@ const ServicesTable = forwardRef(
       console.log(queryString);
     };
 
+    const handleResetFilters = () => {
+      setApplyFilters(null);
+      setFilters([
+        { field: '', condition: '', value: '', logic: 'AND', logicShow: 'AND' },
+      ]);
+    };
     return (
       <>
         <form>
@@ -1017,7 +1084,7 @@ const ServicesTable = forwardRef(
                         if (!row.employee || !row.service_start) {
                           backgroundColor = '#ffd27f'; // Naranja claro
                         }
-                        if (!row.service_end) {
+                        if (row.service_start && row.service_alta) {
                           backgroundColor = '#bdffbd'; // Verde claro
                         }
                         if (row.service_end) {
@@ -1106,10 +1173,21 @@ const ServicesTable = forwardRef(
               openModalEmployee={openModalEmployee}
               openModalObservations={openModalObservations}
               employees={employees}
+              employeesSearch={employeesSearch}
+              allEmployees={allEmployees}
               preselection={preselection}
               handleChangeStatus={handleChangeStatus}
               formatDate={formatDate}
               formDataAux={formDataAux}
+              handleAddPreselection={handleAddPreselection}
+              filters={filters}
+              handleFilterChange={handleFilterChange}
+              handleLogicToggle={handleLogicToggle}
+              handleAddFilter={handleAddFilter}
+              handleRemoveFilter={handleRemoveFilter}
+              fieldFilters={fieldFilters}
+              handleApplyFilters={handleApplyFilters}
+              handleResetFilters={handleResetFilters}
             />
           )}
           {isOpenModalEmployee && (
@@ -1136,7 +1214,7 @@ const ServicesTable = forwardRef(
                   </svg>
                 </button>
                 <div className='flex items-center'>
-                  <label>Busqueda de empleado</label>
+                  <label>Busqueda de cuidador</label>
                   <button
                     className='ml-2 p-1'
                     onClick={() =>
@@ -1168,7 +1246,7 @@ const ServicesTable = forwardRef(
                 </div>
                 <div
                   id='filter-window'
-                  className='absolute top-12 left-0 bg-white p-4 rounded shadow-lg hidden'
+                  className='absolute top-0 right-0 bg-white p-4 rounded shadow-lg hidden w-full'
                 >
                   {filters.map((filter, index) => {
                     // Encontrar el filtro seleccionado
@@ -1318,7 +1396,7 @@ const ServicesTable = forwardRef(
                       <tr>
                         <th></th>
                         <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                          Empleado
+                          Cuidador
                         </th>
                         <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
                           Telefono

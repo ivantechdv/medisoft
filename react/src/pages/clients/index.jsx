@@ -440,7 +440,12 @@ const Clients = () => {
               <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Observaciones </strong>
               </h2>
-              {selectedRow.observations}
+              <div
+                className='whitespace-pre-line'
+                dangerouslySetInnerHTML={{
+                  __html: selectedRow.observations.replace(/\n/g, '<br>'),
+                }}
+              ></div>
             </div>
           </div>
         )}

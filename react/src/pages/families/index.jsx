@@ -18,6 +18,8 @@ const Families = ({
     name: '',
     phone: '',
     email: '',
+    send_invoice: false,
+    send_communications: false,
   });
 
   const [errors, setErrors] = useState({});
@@ -112,10 +114,10 @@ const Families = ({
   return isOpen ? (
     <div className='fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-10'>
       <div className='bg-white rounded-lg w-96 p-6 shadow-lg'>
-        <h2 className='text-lg font-bold mb-4'>Registrar Cliente</h2>
+        <h2 className='text-lg font-bold mb-4 text-[#f88d4a]'>Alta Familiar</h2>
         <form onSubmit={handleSubmit}>
-          <div className='mb-4'>
-            <label className='block text-sm font-medium text-gray-700'>
+          <div class='mb-4 flex items-center'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-28'>
               Nombre
             </label>
             <input
@@ -123,16 +125,17 @@ const Families = ({
               name='name'
               value={formData.name}
               onChange={handleInputChange}
-              className={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm ${
+              class={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm ${
                 errors.name ? 'border-red-500' : ''
               }`}
             />
             {errors.name && (
-              <p className='text-red-500 text-xs mt-1'>{errors.name}</p>
+              <p class='text-red-500 text-xs mt-1'>{errors.name}</p>
             )}
           </div>
-          <div className='mb-4'>
-            <label className='block text-sm font-medium text-gray-700'>
+
+          <div class='mb-4 flex items-center'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-28'>
               Teléfono
             </label>
             <input
@@ -140,37 +143,95 @@ const Families = ({
               name='phone'
               value={formData.phone}
               onChange={handleInputChange}
-              className={`mt-1 block w-full rounded-md  border border-gray-300 shadow-sm ${
+              class={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm ${
                 errors.phone ? 'border-red-500' : ''
               }`}
             />
             {errors.phone && (
-              <p className='text-red-500 text-xs mt-1'>{errors.phone}</p>
+              <p class='text-red-500 text-xs mt-1'>{errors.phone}</p>
             )}
           </div>
-          <div className='mb-4'>
-            <label className='block text-sm font-medium text-gray-700'>
-              Correo Electrónico
+
+          <div class='mb-4 flex items-center'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-28'>
+              Email
             </label>
             <input
               type='email'
               name='email'
               value={formData.email}
               onChange={handleInputChange}
-              className={`mt-1 block w-full rounded-md  border border-gray-300 shadow-sm ${
+              class={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm ${
                 errors.email ? 'border-red-500' : ''
               }`}
             />
             {errors.email && (
-              <p className='text-red-500 text-xs mt-1'>{errors.email}</p>
+              <p class='text-red-500 text-xs mt-1'>{errors.email}</p>
             )}
           </div>
-          <div className='flex justify-end'>
+          <div class='mb-4 flex items-center justify-start'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-40'>
+              Prioridad de contacto
+            </label>
+            <input
+              type='priority'
+              name='priority'
+              value={formData.priority}
+              onChange={handleInputChange}
+              class={`mt-1 block w-12  rounded-md border border-gray-300 shadow-sm ${
+                errors.priority ? 'border-red-500' : ''
+              }`}
+            />
+            {errors.priority && (
+              <p class='text-red-500 text-xs mt-1'>{errors.priority}</p>
+            )}
+          </div>
+          <div class='mb-4 flex items-center justify-start'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-40'>
+              Notificaciones
+            </label>
+            <div className='flex flex-col space-y-2'>
+              <div className='flex space-x-2'>
+                <button
+                  type='button'
+                  className={`relative inline-flex items-center h-4 rounded-full w-8 mr-2  mt-1 ${
+                    false ? 'bg-primary' : 'bg-gray-300'
+                  }`}
+                  onClick={''}
+                >
+                  <span
+                    className={`inline-block w-4 h-4 transform rounded-full bg-white shadow-md transition-transform ${
+                      false ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <label className='ml-2 text-bold'>Facturacion</label>
+              </div>
+              <div className='flex space-x-2'>
+                <button
+                  type='button'
+                  className={`relative inline-flex items-center h-4 rounded-full w-8 mr-2  mt-1 ${
+                    false ? 'bg-primary' : 'bg-gray-300'
+                  }`}
+                  onClick={''}
+                >
+                  <span
+                    className={`inline-block w-4 h-4 transform rounded-full bg-white shadow-md transition-transform ${
+                      false ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+                <label className='ml-2 text-bold'>Comunicación</label>
+              </div>
+            </div>
+          </div>
+
+          <div class='flex justify-end'>
             {formData.id != '' && (
               <button
                 type='button'
                 onClick={deleteFamily}
-                className='bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mr-2'
+                class='bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded mr-2'
               >
                 Borrar
               </button>
@@ -178,13 +239,13 @@ const Families = ({
             <button
               type='button'
               onClick={onClose}
-              className='bg-gray-300 hover:bg-gray-400 text-black py-2 px-4 rounded mr-2'
+              class='bg-gray-300 hover:bg-gray-400 text-black py-2 px-4 rounded mr-2'
             >
               Cancelar
             </button>
             <button
               type='submit'
-              className='bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded'
+              class='bg-primary hover:bg-blue-600 text-white py-2 px-4 rounded'
             >
               Guardar
             </button>
