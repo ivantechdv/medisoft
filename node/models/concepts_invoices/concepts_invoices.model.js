@@ -15,6 +15,9 @@ const ConceptsInvoices = sequelize.define("concepts_invoices", {
   pvp: {
     type: DataTypes.DOUBLE,
   },
+  pvp2: {
+    type: DataTypes.DOUBLE,
+  },
   payment_period_id: {
     type: DataTypes.INTEGER,
   },

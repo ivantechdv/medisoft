@@ -42,7 +42,8 @@ CTRL.getAll = async (req, res, next) => {
 CTRL.getById = async (req, res, next) => {
   try {
     const condition = {};
-    Methods.getById(req, res, next, ConceptsInvoices, condition);
+    const include = [{ model: PaymentPeriod }];
+    Methods.getById(req, res, next, ConceptsInvoices, condition, include);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

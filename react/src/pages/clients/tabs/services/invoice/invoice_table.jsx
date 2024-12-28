@@ -26,7 +26,10 @@ import {
 import ModalInvoices from './modal_invoice';
 import { Tooltip } from 'react-tooltip';
 const InvoicesTable = forwardRef(
-  ({ id, onFormData, onGetRecordById, updateList }, ref) => {
+  (
+    { id, onFormData, onGetRecordById, updateList, clientServiceId = null },
+    ref,
+  ) => {
     const [services, setServices] = useState([]);
     const [invoicesList, setInvoicesList] = useState([]);
     const [optionsServices, setOptionsServices] = useState([]);
@@ -89,9 +92,13 @@ const InvoicesTable = forwardRef(
         const queryParameters = new URLSearchParams();
         let services = '';
         const order = 'service_start-desc';
+
+        if (clientServiceId != null) {
+          queryParameters.append('client_service_id', clientServiceId);
+        }
         if (isActive) {
           services = await getData(
-            `client-invoice/all?client_id=${onFormData?.id}&order=${order}`,
+            `client-invoice/all?client_id=${onFormData?.id}&${queryParameters}&order=${order}`,
           );
         } else {
           queryParameters.append('statu', 1);
@@ -491,9 +498,13 @@ const InvoicesTable = forwardRef(
           {isLoading && <Spinner />}
           <div className='relative rounded '>
             <div className='flex justify-between'>
-              <div className='border border-gray-800 p-2'>
-                Servicios Facturables
-              </div>
+              {!clientServiceId ? (
+                <div className='border border-gray-800 p-2'>
+                  Servicios Facturables
+                </div>
+              ) : (
+                <div className=''></div>
+              )}
               <div className='flex space-x-2'>
                 <button
                   type='button'
@@ -515,20 +526,24 @@ const InvoicesTable = forwardRef(
                   <FaMinusCircle className='text-lg' />
                 </button>
 
-                <button
-                  type='button'
-                  className={`relative inline-flex items-center h-6 rounded-full w-12 ${
-                    isActive ? 'bg-primary' : 'bg-gray-300'
-                  }`}
-                  onClick={toggleSwitch}
-                >
-                  <span
-                    className={`inline-block w-6 h-6 transform rounded-full bg-white shadow-md transition-transform ${
-                      isActive ? 'translate-x-6' : 'translate-x-0'
-                    }`}
-                  />
-                </button>
-                <label className='ml-2'>Mostrar baja </label>
+                {!clientServiceId && (
+                  <>
+                    <button
+                      type='button'
+                      className={`relative inline-flex items-center h-6 rounded-full w-12 ${
+                        isActive ? 'bg-primary' : 'bg-gray-300'
+                      }`}
+                      onClick={toggleSwitch}
+                    >
+                      <span
+                        className={`inline-block w-6 h-6 transform rounded-full bg-white shadow-md transition-transform ${
+                          isActive ? 'translate-x-6' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                    <label className='ml-2'>Mostrar baja </label>
+                  </>
+                )}
               </div>
             </div>
             <div style={{ position: 'relative' }}>
@@ -596,7 +611,7 @@ const InvoicesTable = forwardRef(
                               />
                             </td>
                             <td className='px-2 whitespace-nowrap border-2'>
-                              {row.concepts_invoice?.name}
+                              {row.concept_description}
                             </td>
                             <td className='px-2 whitespace-nowrap border-2'>
                               {row.clients_service?.service?.name}

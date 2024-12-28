@@ -23,7 +23,7 @@ import {
   ConfirmSweetAlert,
   InfoSweetAlert,
 } from '../../../../../components/SweetAlert/SweetAlert';
-import ModalServices from './modalService';
+import ModalServices from './modalTabService';
 import { Tooltip } from 'react-tooltip';
 const ServicesTable = forwardRef(
   ({ id, onFormData, onGetRecordById, updateList }, ref) => {
@@ -46,6 +46,8 @@ const ServicesTable = forwardRef(
       service_start: null,
       service_end: null,
       service_alta: null,
+      name: '',
+      phone: '',
     };
     const [formData, setFormData] = useState(initialValues);
     const [formDataAux, setFormDataAux] = useState(initialValues);
@@ -65,6 +67,8 @@ const ServicesTable = forwardRef(
     const [isLoading, setIsLoading] = useState(false);
     const [isOpenModalService, setIsOpenModalService] = useState(false);
     const [isOpenModalConfirm, setIsOpenModalConfirm] = useState(false);
+
+    const [clientServiceId, setClientServiceId] = useState(null);
 
     const loading = loadingCount > 0;
     const [modalExpanded, setModalExpanded] = useState(false);
@@ -341,8 +345,6 @@ const ServicesTable = forwardRef(
         `client-service/all?client_id=${onFormData?.id}&${queryParameters}`,
       );
 
-      console.log('formData.id =>', formData);
-      console.log('services.id =>', services);
       if (services.length > 0 && formData.id != services[0].id) {
         ToastNotify({
           message: 'El servicio ya esta activo con el mismo cuidador!',
@@ -422,6 +424,49 @@ const ServicesTable = forwardRef(
           if (formData.has_offer) {
             offerText = generateOfferText();
           }
+
+          const queryParameters = new URLSearchParams();
+          queryParameters.append('statu', 1);
+          queryParameters.append('service_id', formData?.service_id);
+          const services = await getData(`services/${formData?.service_id}`);
+          const conceptsInvoiceIds =
+            services?.concepts_invoices?.split(',') || [];
+
+          const results = await Promise.all(
+            conceptsInvoiceIds.map(async (concept_id) => {
+              // Realiza la consulta para verificar si el ID existe en `clients_invoices`
+              const invoice = await getData(
+                `client-invoice/all?concept_invoice_id=${concept_id}&client_id=${onFormData?.id}&statu=1`,
+              );
+
+              console.log('resultado invoice', invoice);
+
+              const conceptInvoice = await getData(
+                `concepts-invoices/${concept_id}`,
+              );
+
+              const description =
+                conceptInvoice.name + (invoice[0] ? '-C2' : '-C1');
+              const dataInvoice = {
+                client_id: onFormData?.id,
+                concept_invoice_id: concept_id,
+                concept_description: description,
+                period: conceptInvoice.payment_period.name,
+                base: conceptInvoice.payment_period.calculation_base,
+                unit: conceptInvoice.payment_period.calculation_unit,
+                pvp: invoice[0] ? conceptInvoice.pvp2 : conceptInvoice.pvp,
+                discount: 0,
+                total: invoice[0] ? conceptInvoice.pvp2 : conceptInvoice.pvp,
+                statu: 1,
+                //aqui van los otros campos
+              };
+
+              return dataInvoice;
+            }),
+          );
+
+          console.log('Results:', results);
+
           const { id, ...rest } = {
             ...formData,
             client_id: onFormData?.id,
@@ -433,6 +478,16 @@ const ServicesTable = forwardRef(
             dataToSend,
           );
           if (responseClientService) {
+            setClientServiceId(responseClientService.id);
+            for (const data of results) {
+              try {
+                data.client_service_id = responseClientService.id;
+                const response = await postData('client-invoice', data);
+                console.log('Guardado exitoso:', response);
+              } catch (error) {
+                console.error('Error al guardar:', error);
+              }
+            }
             if (dataPreselection.length > 0) {
               dataPreselection.forEach((item) => {
                 item.client_service_id = responseClientService.id;
@@ -480,8 +535,8 @@ const ServicesTable = forwardRef(
           }
           action = 'actualizado';
         }
-        closeModalServices();
-        onGetRecordById(id);
+        // closeModalServices();
+        // onGetRecordById(id);
         ToastNotify({
           message: `Servicio ${action} con éxito`,
           position: 'top-left',
@@ -507,6 +562,7 @@ const ServicesTable = forwardRef(
     const closeModalServices = () => {
       setModalExpanded(false);
       setIsOpenModalService(false);
+      onGetRecordById(id);
     };
     const openModalEmployee = () => {
       setIsOpenModalEmployee(true);
@@ -587,6 +643,7 @@ const ServicesTable = forwardRef(
         setShowBtnPreselection(false);
         console.log('row', row);
         serviceIdRef.current = row.id;
+        setClientServiceId(row.id);
         queryParameters.append('client_id', row.client_id);
         queryParameters.append('service_id', row.service_id);
         queryParameters.append('client_service_id', row.id);
@@ -606,7 +663,7 @@ const ServicesTable = forwardRef(
             client_id: item.client_id,
             service_id: item.service_id,
             name: item.employee.full_name,
-            phone: item.employee.code_phone + ' ' + item.employee.phone,
+            phone: item.employee?.code_phone + ' ' + item.employee?.phone,
             status: item.status, // Puedes ajustar esto según tus necesidades
             observation: item.observation,
           }));
@@ -645,7 +702,13 @@ const ServicesTable = forwardRef(
         }
       }
       setIsEditingService(true);
-      setFormData(row);
+      setFormData({
+        ...row,
+        name: row.employee?.full_name,
+        phone: row.employee
+          ? row.employee?.code_phone + ' ' + row.employee?.phone
+          : '',
+      });
       setFormDataAux(row);
       setIsOpenModalService(true);
     };
@@ -672,9 +735,15 @@ const ServicesTable = forwardRef(
         );
 
         setActiveService(false);
+        const employee = allEmployees.find(
+          (employee) => employee.id === employeeId,
+        );
+        console.log('empleado', employee);
         setFormData((prevFormData) => ({
           ...prevFormData,
           employee_id: employeeId,
+          name: employee.full_name,
+          phone: employee.code_phone + ' ' + employee.phone,
         }));
 
         console.log('fecha', new Date().toISOString());
@@ -1158,6 +1227,7 @@ const ServicesTable = forwardRef(
         <div>
           {isOpenModalService && (
             <ModalServices
+              id={id}
               closeModalServices={closeModalServices}
               modalExpanded={modalExpanded}
               optionsServices={optionsServices}
@@ -1188,6 +1258,9 @@ const ServicesTable = forwardRef(
               fieldFilters={fieldFilters}
               handleApplyFilters={handleApplyFilters}
               handleResetFilters={handleResetFilters}
+              onFormData={onFormData}
+              onGetRecordById={onGetRecordById}
+              clientServiceId={clientServiceId}
             />
           )}
           {isOpenModalEmployee && (

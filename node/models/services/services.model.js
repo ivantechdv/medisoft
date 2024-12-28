@@ -19,6 +19,10 @@ const Service = sequelize.define("services", {
     type: DataTypes.DOUBLE,
     allowNull: true,
   },
+  concepts_invoices: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,

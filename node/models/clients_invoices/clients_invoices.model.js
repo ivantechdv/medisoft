@@ -34,6 +34,10 @@ const ClientsInvoices = sequelize.define("clients_invoices", {
       key: "id",
     },
   },
+  concept_description: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
   period: {
     type: DataTypes.STRING,
     allowNull: true,
@@ -70,6 +74,11 @@ const ClientsInvoices = sequelize.define("clients_invoices", {
     type: DataTypes.BOOLEAN,
     allowNull: true,
     defaultValue: true,
+  },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+    defaultValue: false,
   },
   createdAt: {
     type: DataTypes.DATE,
