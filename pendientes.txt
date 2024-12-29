@@ -1,7 +1,9 @@
 Errores operativos:
 1. Las observaciones de los Servicios Contratados se muestran sin saltos de linea en la vista previa desde el listado
+R) revisado y solucionado
 2. Al editar un Servicio Contratado ya existente, si modifico el campo Observaciones y quiero guardar, el botón Guardar muestra el icono "Prohibido" al pasar el ratón sobre él
 3. En la Preselección de cuidadores, no se muestra el campo Teléfono.  Solo aparece durante la preselección pero después ya no se muestra
+R) revisado y solucionado
 4. En la Preselección de cuidadores, al añadir Observaciones sobre las cuidadoras preseleccionadas, el botón se muestra como "Cerrar" y deberían mostrarse "Cerrar" (sin grabar datos) y "Guardar" (almacenando los datos)
 5. En la Preselección de cuidadores, si se pulsa el botón de la derecha en el campo de "Buscar Empleado", la aplicación se bloquea
 6. El texto "Empleado" ha de substituirse por "Cuidador" o "Cuidadores" (según corresponda) allá donde aparezca

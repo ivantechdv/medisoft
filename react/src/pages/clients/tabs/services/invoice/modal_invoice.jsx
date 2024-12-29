@@ -86,6 +86,7 @@ const ModalInvoices = ({
     };
     fetchSelect();
     if (rowFormData) {
+      console.log('rowformdata', rowFormData);
       setFormData(rowFormData);
     }
   }, []);
@@ -158,27 +159,25 @@ const ModalInvoices = ({
   };
 
   useEffect(() => {
-    if (!isEditingService) {
-      console.log('Effect triggered:', {
-        service_start: formData.service_start,
-        base: formData.base,
-        unit: formData.unit,
-      });
+    console.log('Effect triggered:', {
+      service_start: formData.service_start,
+      base: formData.base,
+      unit: formData.unit,
+    });
 
-      if (formData.service_start && formData.base) {
-        const nextPaymentDate = calculateNextPaymentDate(
-          formData.service_start,
-          formData.base,
-          formData.unit,
-        );
+    if (formData.service_start && formData.base) {
+      const nextPaymentDate = calculateNextPaymentDate(
+        formData.service_start,
+        formData.base,
+        formData.unit,
+      );
 
-        console.log('Next Payment Date Calculated:', nextPaymentDate);
+      console.log('Next Payment Date Calculated:', nextPaymentDate);
 
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          next_payment: nextPaymentDate,
-        }));
-      }
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        next_payment: nextPaymentDate,
+      }));
     }
   }, [formData.service_start, formData.base]);
 
@@ -386,21 +385,32 @@ const ModalInvoices = ({
               htmlFor='service_id'
               className='block text-sm font-medium text-secondary'
             >
-              Seleccionar Servicio
+              {rowFormData.clients_service?.service
+                ? 'Servicio actual'
+                : 'Seleccionar Servicio'}
             </label>
           </div>
           <div className='col-span-3'>
-            <Select
-              id='client_service_id'
-              options={optionsServices}
-              placeholder='Seleccione un servicio'
-              defaultValue={formData.client_service_id}
-              onChange={(event) =>
-                handleChangeSelect(event, 'client_service_id')
-              }
-              isSearchable
-              isDisabled={isEditingService}
-            />
+            {rowFormData.clients_service?.service ? (
+              <input
+                type='text'
+                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                value={rowFormData.clients_service?.service?.name}
+                disabled
+              />
+            ) : (
+              <Select
+                id='client_service_id'
+                options={optionsServices}
+                placeholder='Seleccione un servicio'
+                defaultValue={formData.client_service_id}
+                onChange={(event) =>
+                  handleChangeSelect(event, 'client_service_id')
+                }
+                isSearchable
+                isDisabled={isEditingService}
+              />
+            )}
           </div>
           <div className='col-span-1'>
             <label
@@ -418,7 +428,7 @@ const ModalInvoices = ({
                 formData.service_start == null ? '' : formData.service_start
               }
               onChange={handleChange}
-              disabled={isEditingService}
+              disabled={rowFormData.service_start}
               className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
             />
           </div>
@@ -453,7 +463,7 @@ const ModalInvoices = ({
                 value={formData.discount}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                disabled={isEditingService}
+                disabled={rowFormData.service_start}
                 className='w-1/2 px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>
@@ -524,7 +534,7 @@ const ModalInvoices = ({
               type='date'
               id='next_payment'
               onChange={handleChange}
-              disabled={isEditingService}
+              disabled={rowFormData.service_start}
               value={formData.next_payment}
               className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
             />
@@ -559,7 +569,7 @@ const ModalInvoices = ({
               type='button'
               className={`py-2 px-2 text-sm rounded font-bold bg-primary text-white hover:bg-primary-dark`}
               onClick={handleConfirm}
-              disabled={isEditingService}
+              disabled={rowFormData.service_start}
             >
               Guardar
             </button>
