@@ -11,6 +11,7 @@ const ServiceGeneral = ({
   handleChange,
   handleChangeSelect,
   formatDate,
+  handleChangeExit,
 }) => {
   return (
     <div
@@ -83,6 +84,7 @@ const ServiceGeneral = ({
             value={formData.service_alta == null ? '' : formData.service_alta}
             onChange={handleChange}
             disabled={isEditingService}
+            onBlur={handleChangeExit}
             className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
           />
         </div>
@@ -100,6 +102,7 @@ const ServiceGeneral = ({
             id='service_start'
             value={formData.service_start == null ? '' : formData.service_start}
             onChange={handleChange}
+            onBlur={handleChangeExit}
             disabled={formDataAux.service_start != null}
             className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
           />

@@ -38,13 +38,14 @@ const ModalTabService = ({
   onFormData,
   onGetRecordById,
   clientServiceId,
+  handleChangeExit,
 }) => {
   const [activeTab, setActiveTab] = useState('general');
 
   return (
     <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40 overflow-y-auto'>
       {/* Contenedor del modal */}
-      <div className='bg-white w-full max-w-3xl rounded-lg shadow-lg'>
+      <div className='bg-white w-full max-w-4xl rounded-lg shadow-lg'>
         {/* Encabezado del modal */}
         <div className='flex justify-between items-center p-4 bg-gray-200 border-b'>
           <h2 className='text-lg font-semibold text-gray-800'>
@@ -83,7 +84,7 @@ const ModalTabService = ({
             </button>
             <button
               onClick={() => setActiveTab('servicios')}
-              disabled={formData.id == '' ? true : false}
+              disabled={clientServiceId == '' ? true : false}
               className={`flex-1 p-3 text-center ${
                 activeTab === 'servicios'
                   ? 'border-b-2 border-blue-500 text-blue-500'
@@ -108,6 +109,7 @@ const ModalTabService = ({
               handleChange={handleChange}
               handleChangeSelect={handleChangeSelect}
               formatDate={formatDate}
+              handleChangeExit={handleChangeExit}
             />
           )}
           {activeTab === 'preseleccion' && (
