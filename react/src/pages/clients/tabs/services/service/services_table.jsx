@@ -216,37 +216,58 @@ const ServicesTable = forwardRef(
       }
     }, [onFormData]);
 
-    const handleChange = (event) => {
-      const { id, value, checked, type } = event.target;
+    const handleChangeExit = (event) => {
+      const { id, value } = event.target;
 
       setFormData((prevFormData) => {
-        console.log('prevFormData', prevFormData.service_alta, ' value', value);
         if (id === 'service_start') {
-          // Validar que service_start no sea mayor que service_alta
-          if (value < prevFormData.service_alta) {
+          if (
+            prevFormData.service_alta &&
+            !isNaN(new Date(prevFormData.service_alta)) &&
+            value < prevFormData.service_alta
+          ) {
             alert(
               'La fecha de activación no puede ser menor que la fecha de alta del servicio.',
             );
-            return prevFormData; // No actualizar el estado
+            return {
+              ...prevFormData,
+              [id]: '', // Deja el campo vacío
+            };
           }
         }
 
         if (id === 'service_alta') {
-          // Validar que service_alta no sea menor que service_start
-          if (value > prevFormData.service_start) {
+          if (
+            prevFormData.service_start &&
+            !isNaN(new Date(prevFormData.service_start)) &&
+            value > prevFormData.service_start
+          ) {
             alert(
               'La fecha de alta no puede ser mayor que la fecha de activación.',
             );
-            return prevFormData; // No actualizar el estado
+            return {
+              ...prevFormData,
+              [id]: '', // Deja el campo vacío
+            };
           }
         }
 
-        // Actualizar el estado si la validación pasa
+        // Si no hay errores, actualizamos el estado
         return {
           ...prevFormData,
-          [id]: type === 'checkbox' ? checked : value,
+          [id]: value,
         };
       });
+    };
+
+    const handleChange = (event) => {
+      const { id, value, checked, type } = event.target;
+
+      // Actualizar el estado sin validaciones inmediatas
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [id]: type === 'checkbox' ? checked : value,
+      }));
     };
     const handleChangeSelect = (event, field) => {
       const newValue = event.value;
@@ -398,6 +419,13 @@ const ServicesTable = forwardRef(
       setIsLoading(true);
 
       try {
+        if (!formData.employee_id && formData.service_start) {
+          alert(
+            'No se puede establecer una fecha de activación sin haber asignado un empleado.',
+          );
+          setIsLoading(false); // Detener el estado de carga
+          return; // Finalizar la ejecución
+        }
         console.log('preseleccion guardar ', preselection);
         const dataPreselection = preselection.map((employee) => {
           const preselectionData = {
@@ -479,6 +507,11 @@ const ServicesTable = forwardRef(
           );
           if (responseClientService) {
             setClientServiceId(responseClientService.id);
+            setIsEditingService(true);
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              ['id']: responseClientService.id,
+            }));
             for (const data of results) {
               try {
                 data.client_service_id = responseClientService.id;
@@ -506,6 +539,7 @@ const ServicesTable = forwardRef(
               }
             }
           }
+          employeePreselectionsDB(responseClientService);
           action = 'registrado';
         } else {
           const dataToSend = {
@@ -513,12 +547,12 @@ const ServicesTable = forwardRef(
           };
           console.log('formdata', formData);
           let responseClientService = true;
-          if (formData.employee_id != 0) {
-            responseClientService = await putData(
-              `client-service/${formData.id}`,
-              dataToSend,
-            );
-          }
+
+          responseClientService = await putData(
+            `client-service/${formData.id}`,
+            dataToSend,
+          );
+
           if (responseClientService) {
             if (dataPreselection.length > 0) {
               dataPreselection.forEach((item) => {
@@ -533,6 +567,14 @@ const ServicesTable = forwardRef(
               }
             }
           }
+          setPreselection([]);
+
+          const row = {
+            client_id: onFormData?.id,
+            service_id: formData.service_id,
+            id: formData.id,
+          };
+          employeePreselectionsDB(row);
           action = 'actualizado';
         }
         // closeModalServices();
@@ -591,6 +633,38 @@ const ServicesTable = forwardRef(
           );
         }
       });
+    };
+    const employeePreselectionsDB = async (row) => {
+      console.log('row', row);
+      const queryParameters = new URLSearchParams();
+      serviceIdRef.current = row.id;
+      queryParameters.append('client_id', row.client_id);
+      queryParameters.append('service_id', row.service_id);
+      queryParameters.append('client_service_id', row.id);
+      const responsePreselection = await getData(
+        `client-service-preselection/all?${queryParameters}`,
+      );
+      if (responsePreselection.length > 0) {
+        console.log('response preselection', responsePreselection);
+        // Mapear responsePreselection para construir los objetos necesarios
+        const isAssigned = responsePreselection.some(
+          (item) => item.status === 'Asignado',
+        );
+        setIsAssigned(isAssigned); // Almacenar en el estado
+        const preselectionEmployees = responsePreselection.map((item) => ({
+          id: item.id,
+          employee_id: item.employee_id,
+          client_id: item.client_id,
+          service_id: item.service_id,
+          name: item.employee.full_name,
+          phone: item.employee?.code_phone + ' ' + item.employee?.phone,
+          status: item.status, // Puedes ajustar esto según tus necesidades
+          observation: item.observation,
+        }));
+
+        // Asignar preselectionEmployees a setPreselection
+        setPreselection(preselectionEmployees);
+      }
     };
     const handleAddPreselection = (employee) => {
       const employe = employee[0];
@@ -756,14 +830,61 @@ const ServicesTable = forwardRef(
         }));
       }
     };
+
+    const [dataObservation, setDataObservation] = useState({
+      id: '',
+      observation: '',
+    });
+    const handleSaveObservation = async () => {
+      try {
+        const id = dataObservation.id;
+        const responseClientServicePreselection = await putData(
+          'client-service-preselection/' + id,
+          dataObservation,
+        );
+        ToastNotify({
+          message: `Observacion guardada con exito`,
+          position: 'top-left',
+          type: 'success',
+        });
+
+        console.log('preselection', preselection);
+        setPreselection((prevSelected) =>
+          prevSelected.map((item) =>
+            item.id === id
+              ? { ...item, observation: dataObservation.observation }
+              : item,
+          ),
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    const handleObservation = (value) => {
+      setDataObservation((prevData) => ({
+        ...prevData,
+        observation: value,
+      }));
+    };
     const openModalObservations = (row, serviceEnd) => {
-      console.log('row=>', serviceEnd);
+      console.log('row=>', row);
       employeeRef.current = row.employee_id;
       observationRef.current = row.observation;
       serviceEndRef.current = serviceEnd ? true : false;
+
+      setDataObservation((prevData) => ({
+        ...prevData,
+        id: row.id,
+        observation: row.observation,
+      }));
+
       setIsOpenModalObservation(true);
     };
     const closeModalObservations = () => {
+      setDataObservation({
+        id: '',
+        observation: '',
+      });
       setIsOpenModalObservation(false);
       employeeRef.current = '';
       observationRef.current = '';
@@ -1261,6 +1382,7 @@ const ServicesTable = forwardRef(
               onFormData={onFormData}
               onGetRecordById={onGetRecordById}
               clientServiceId={clientServiceId}
+              handleChangeExit={handleChangeExit}
             />
           )}
           {isOpenModalEmployee && (
@@ -1539,20 +1661,18 @@ const ServicesTable = forwardRef(
                   <div className='col-span-1'>
                     <div className='mb-2'>
                       <label
-                        htmlFor='service_id'
+                        htmlFor='observation'
                         className='block text-sm font-medium text-secondary'
                       >
                         Observaciones
                       </label>
                       <textarea
                         type='textarea'
-                        rows={15}
+                        rows={10}
                         id='observation'
                         disabled={serviceEndRef.current}
-                        value={observationRef.current}
-                        onChange={(e) =>
-                          handleChangePreselection(e.target.value)
-                        }
+                        value={dataObservation.observation}
+                        onChange={(e) => handleObservation(e.target.value)}
                         className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                       />
                     </div>
@@ -1565,6 +1685,14 @@ const ServicesTable = forwardRef(
                     onClick={closeModalObservations}
                   >
                     Cerrar
+                  </button>
+
+                  <button
+                    type='button'
+                    className='bg-primary text-white hover:bg-primary-dark font-bold py-2 px-4 text-sm rounded mr-2'
+                    onClick={handleSaveObservation}
+                  >
+                    Guardar
                   </button>
                 </div>
               </div>

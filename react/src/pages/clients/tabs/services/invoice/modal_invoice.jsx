@@ -19,7 +19,7 @@ const ModalInvoices = ({
 }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Servicio Facturable',
-    text: '¿Esta seguro que desea procesar la factura?',
+    text: '¿Desea aceptar los cambios?',
     icon: 'question',
   });
   const [optionsServices, setOptionsServices] = useState([]);
@@ -482,7 +482,7 @@ const ModalInvoices = ({
                 value={formData.total}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                disabled={isEditingService}
+                disabled={rowFormData.service_start}
                 className='w-1/2 px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
             </div>

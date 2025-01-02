@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
-import { FaCheckCircle, FaEdit } from 'react-icons/fa';
-
+import { FaCheckCircle, FaEdit, FaEye } from 'react-icons/fa';
+import { Tooltip } from 'react-tooltip';
 const Preselection = ({
   allEmployees,
   employeesSearch,
@@ -41,6 +41,12 @@ const Preselection = ({
       setBtnEnabled(true);
     }
   }, [formData.observation]);
+
+  const formattedObservation = (observation) => {
+    return observation
+      ? observation.replace(/\n/g, '<br />')
+      : 'Sin observación';
+  };
   return (
     <>
       <div className='relative col-span-2 border-l-2 border-gray-800 p-2'>
@@ -291,14 +297,23 @@ const Preselection = ({
                     <button
                       className='ml-4 border border-gray-800 text-gray-800 font-bold py-1 px-2 rounded mr-2'
                       onClick={() =>
-                        openModalObservations(row.observations, row.employee_id)
+                        openModalObservations(row, formData.service_end)
                       }
                     >
                       <FaEdit />
                     </button>
+                    <button
+                      type='button'
+                      data-tooltip-id='tooltip'
+                      data-tooltip-html={formattedObservation(row.observation)}
+                      className='tooltip-button'
+                    >
+                      <FaEye />
+                    </button>
                   </td>
                 </tr>
               ))}
+            <Tooltip id='tooltip' />
           </tbody>
         </table>
       </div>

@@ -9,6 +9,6 @@ router.get("/all", ClientService.getAll);
 router.get("/:id", ClientService.getById);
 router.post("/", ClientService.create);
 router.post("/bulk", ClientService.createBulk);
-router.put("/:id", ClientService.create);
+router.put("/:id", ClientService.update);
 module.exports = router;
 //
