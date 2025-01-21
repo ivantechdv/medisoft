@@ -16,6 +16,7 @@ const ModalInvoices = ({
   rowFormData,
   handleLowService,
   getRows,
+  clientServiceId,
 }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Servicio Facturable',
@@ -28,8 +29,9 @@ const ModalInvoices = ({
   const [optionsConcepts, setOptionsConcepts] = useState([]);
   const [services, setServices] = useState([]);
   const initialValues = {
+    concept_description: '',
     client_id: '',
-    client_service_id: '',
+    client_service_id: clientServiceId ? clientServiceId : '',
     concept_invoice_id: '',
     next_payment_date: '',
     pvp: 0,
@@ -59,6 +61,24 @@ const ModalInvoices = ({
         const option_services = await getData(
           `client-service/all?${queryParameters}`,
         );
+        if (clientServiceId) {
+          const client_service = await getData(
+            `client-service/${clientServiceId}`,
+          );
+          // Si se encuentra el servicio, actualizar el estado
+          if (client_service) {
+            const service = await getData(
+              `services/${client_service.service_id}`,
+            );
+            setServices(service);
+            console.log('service', service);
+          }
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            client_service_id: clientServiceId,
+          }));
+        }
+
         console.log('client-service =>', option_services);
         setClientServices(option_services);
         if (option_services) {
@@ -208,6 +228,7 @@ const ModalInvoices = ({
       if (conceptEntry) {
         setFormData((prevFormData) => ({
           ...prevFormData,
+          concept_description: conceptEntry.name,
           period: conceptEntry.payment_period.name,
           base: conceptEntry.payment_period.calculation_base,
           unit: conceptEntry.payment_period.calculation_unit,
@@ -280,6 +301,14 @@ const ModalInvoices = ({
     });
   };
 
+  function adjustDate(date) {
+    // Verifica si la fecha es inválida o está vacía
+    if (!date || isNaN(new Date(date).getTime())) {
+      return null; // Asigna null si la fecha es inválida o está vacía
+    }
+    return date; // Retorna la fecha original si es válida
+  }
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
@@ -288,7 +317,12 @@ const ModalInvoices = ({
       let action = '';
       if (!isEditingService) {
         console.log('formcliet_id', formData.id);
-        const dataToSend = { ...formData, client_id: onFormData?.id };
+        const dataToSend = {
+          ...formData,
+          next_payment: adjustDate(formData.next_payment),
+          service_start: adjustDate(formData.service_start),
+          client_id: onFormData?.id,
+        };
         const responseClientService = await postData(
           'client-invoice',
           dataToSend,
@@ -382,20 +416,45 @@ const ModalInvoices = ({
           </div>
           <div className='col-span-1'>
             <label
+              htmlFor='description'
+              className='block text-sm font-medium text-secondary'
+            >
+              Descripcion
+            </label>
+          </div>
+          <div className='col-span-3'>
+            <input
+              type='text'
+              id='concept_description'
+              name='concept_description'
+              className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              value={formData.concept_description}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className='col-span-1'>
+            <label
               htmlFor='service_id'
               className='block text-sm font-medium text-secondary'
             >
-              {rowFormData.clients_service?.service
+              {rowFormData.clients_service?.service || clientServiceId
                 ? 'Servicio actual'
                 : 'Seleccionar Servicio'}
             </label>
           </div>
           <div className='col-span-3'>
-            {rowFormData.clients_service?.service ? (
+            {rowFormData.clients_service?.service || clientServiceId ? (
               <input
                 type='text'
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                value={rowFormData.clients_service?.service?.name}
+                value={
+                  rowFormData.clients_service?.service?.name
+                    ? rowFormData.clients_service?.service?.name
+                    : services.name
+                    ? services.name
+                    : ''
+                }
                 disabled
               />
             ) : (
@@ -428,8 +487,8 @@ const ModalInvoices = ({
                 formData.service_start == null ? '' : formData.service_start
               }
               onChange={handleChange}
-              disabled={rowFormData.service_start}
               className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              disabled={isEditingService || !rowFormData.service_start}
             />
           </div>
           <div className='col-span-1'>
@@ -534,7 +593,7 @@ const ModalInvoices = ({
               type='date'
               id='next_payment'
               onChange={handleChange}
-              disabled={rowFormData.service_start}
+              disabled={!rowFormData.service_start}
               value={formData.next_payment}
               className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
             />

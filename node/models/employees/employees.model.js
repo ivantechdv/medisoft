@@ -3,6 +3,7 @@ const sequelize = require("../../database/sequelize");
 const CodPost = require("../cod_posts/cod_posts.model");
 const EmployeeSpecific = require("./specific.model");
 const EmployeeComplementary = require("./complementary.model");
+const Gender = require("../genders/genders.model");
 
 const Employee = sequelize.define(
   "employees",
@@ -144,4 +145,6 @@ Employee.belongsTo(CodPost, { foreignKey: "cod_post_id" });
 CodPost.hasMany(Employee, { foreignKey: "cod_post_id" });
 Employee.hasOne(EmployeeSpecific, { foreignKey: "employee_id" });
 Employee.hasOne(EmployeeComplementary, { foreignKey: "employee_id" });
+Employee.belongsTo(Gender, { foreignKey: "gender_id" });
+Gender.hasMany(Employee, { foreignKey: "gender_id" });
 module.exports = Employee;

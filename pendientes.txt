@@ -53,3 +53,17 @@ en el punto 4.1 y 4.2 deberia de mostrar captura paso 1, paso 2 del proceso que 
 Diseño:
 5. Hay que hacer más ancha toda la ventana para que se muestren todos los campos de la lista de "Servicios Facturables"
 Listado "Servicios Contratados"
+listo esta un poco mas ancho
+
+
+
+
+Punto 4.  Es una cuestión de facilitar la introducción de las fechas y hacer que el sistema aplique cierto "criterio" y de forma automática.  Te explico la lógica con los dos puntos siguientes:
+Punto 4.1: Cuando se crea un nuevo "Servicio Contratado", el sistema crea automáticamente los "Servicios Facturables" asociados, concretamente: Alta del Servicio y Quota Mensual.  Hasta ahí todo correcto.  El tema es con las fechas.  En este caso, en el momento de la creación de los "Servicios Contratados" se debería asignar automáticamente lo siguiente:
+4.1.1. Alta de Servicio: "Fecha Alta Servicio"ha de ser igual a la "Fecha Alta Servicio" del "Servicio Contratado".  De hecho, no debería ni mostrarse en esa ventana, pues ya no tiene sentido modificarlo desde ahí.  En todo caso, yo pondría que ese campo no sea modificable para el Alta de Servicio, pues siempre coincidirá con la fecha del Alta del Contrato
+4.1.2. Alta de Servicio:  "Fecha Próximo Pago" ha de coincidir también con la "Fecha del Alta del Contrato", pero sí ha de poderse modificar, pues esta fecha puede ser acordada con el cliente.
+
+
+Punto 4.2: La "Fecha de Alta de Servicio" del Concepto Facturable" ha de coincidir con la "Fecha de Activación" del Servicio Contratado.  Como en el punto 4.1.1, este campo no debería mostrarse, pues en el momento de introducir la Fecha de Activación del Servicio Contratado, esta fecha deberá asignarse automáticamente al campo "Alta de Servicio" del Concepto Facturable.
+Por otro lado estaría el campo "Fecha Próximo Pago", que SÍ debería mostrarse y permitirse modificar, pues también puede ser acordada por el cliente.  El valor por defecto, podrá introducirse la misma fecha que la de la Fecha de Activación del Servicio Contratado
+Esta fecha no podrá modificarse hasta que el Servicio Contratado no se haya Activado (introduciendo la Fecha de Activación del Servicio)

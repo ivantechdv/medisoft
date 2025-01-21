@@ -9,6 +9,7 @@ const EmployeeComplementary = require("../../models/employees/complementary.mode
 const State = require("../../models/states/states.model");
 const Methods = require("../methods/methods.controller");
 const { Sequelize, Op } = require("sequelize");
+const Gender = require("../../models/genders/genders.model");
 
 CTRL.create = async (req, res, next) => {
   try {
@@ -29,7 +30,31 @@ CTRL.update = async (req, res, next) => {
 CTRL.get = async (req, res, next) => {
   try {
     const condition = {};
-    Methods.get(req, res, next, Employee, condition);
+    const include = [
+      {
+        model: CodPost,
+        include: [
+          {
+            model: State,
+            include: [
+              {
+                model: Country,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: Gender,
+      },
+      {
+        model: EmployeeSpecific,
+      },
+      {
+        model: EmployeeComplementary,
+      },
+    ];
+    Methods.get(req, res, next, Employee, condition, include);
   } catch (error) {
     console.error("Error al ejecutar la consulta:", error);
   }
