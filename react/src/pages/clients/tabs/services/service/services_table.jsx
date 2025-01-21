@@ -486,6 +486,7 @@ const ServicesTable = forwardRef(
                 discount: 0,
                 total: invoice[0] ? conceptInvoice.pvp2 : conceptInvoice.pvp,
                 statu: 1,
+                service_start: formData.service_start,
                 //aqui van los otros campos
               };
 
@@ -554,6 +555,25 @@ const ServicesTable = forwardRef(
           );
 
           if (responseClientService) {
+            if (formData.service_start) {
+              const invoice = await getData(
+                `client-invoice/all?client_service_id=${formData.id}`,
+              );
+
+              if (Array.isArray(invoice) && invoice.length > 0) {
+                // Iterar sobre cada invoice y actualizar
+                for (const inv of invoice) {
+                  const updatedInvoice = {
+                    ...inv, // Copiar los datos existentes
+                    service_start: formData.service_start, // Actualizar el campo necesario
+                  };
+
+                  // Hacer la llamada para actualizar el invoice
+                  await putData(`client-invoice/${inv.id}`, updatedInvoice);
+                }
+              }
+            }
+
             if (dataPreselection.length > 0) {
               dataPreselection.forEach((item) => {
                 item.client_service_id = formData.id;
@@ -592,6 +612,7 @@ const ServicesTable = forwardRef(
     };
 
     const openModalServices = async () => {
+      setClientServiceId(null);
       setEmployees(employeeOriginal);
       setIsOpenModalService(true);
       setPreselection([]);

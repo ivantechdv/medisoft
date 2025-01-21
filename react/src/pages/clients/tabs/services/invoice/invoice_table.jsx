@@ -668,6 +668,7 @@ const InvoicesTable = forwardRef(
             rowFormData={formData}
             handleLowService={handleLowService}
             getRows={getRows}
+            clientServiceId={clientServiceId}
           />
         )}
         {isOpenModalServiceEnd && (

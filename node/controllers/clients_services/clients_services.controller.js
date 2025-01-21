@@ -46,6 +46,9 @@ CTRL.getAll = async (req, res, next) => {
       {
         model: ClientStatuReason,
       },
+      {
+        model: Client,
+      },
     ];
     Methods.getAll(req, res, next, ClientsServices, condition, include);
   } catch (error) {

@@ -37,11 +37,11 @@ const ModalTabService = ({
   id,
   onFormData,
   onGetRecordById,
-  clientServiceId,
+  clientServiceId = null,
   handleChangeExit,
 }) => {
   const [activeTab, setActiveTab] = useState('general');
-
+  console.log('clientServiceId', clientServiceId);
   return (
     <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-40 overflow-y-auto'>
       {/* Contenedor del modal */}
@@ -84,7 +84,7 @@ const ModalTabService = ({
             </button>
             <button
               onClick={() => setActiveTab('servicios')}
-              disabled={clientServiceId == '' ? true : false}
+              disabled={clientServiceId == null ? true : false}
               className={`flex-1 p-3 text-center ${
                 activeTab === 'servicios'
                   ? 'border-b-2 border-blue-500 text-blue-500'
