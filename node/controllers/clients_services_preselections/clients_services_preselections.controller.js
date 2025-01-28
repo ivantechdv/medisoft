@@ -1,6 +1,7 @@
 const CTRL = {};
 const sequelize = require("../../database/sequelize");
 const Client = require("../../models/clients/clients.model");
+const ClientsServices = require("../../models/clients_services/clients_services.model");
 const ClientsServicesPreselections = require("../../models/clients_services_preselections/clients_services_preselections.model");
 const Employee = require("../../models/employees/employees.model");
 const Service = require("../../models/services/services.model");
@@ -51,6 +52,12 @@ CTRL.getAll = async (req, res, next) => {
       },
       {
         model: Employee,
+      },
+      {
+        model: Client,
+      },
+      {
+        model: ClientsServices,
       },
     ];
     Methods.getAll(

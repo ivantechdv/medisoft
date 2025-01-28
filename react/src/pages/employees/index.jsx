@@ -39,6 +39,7 @@ const Clients = () => {
   });
 
   const [servicesActive, setServicesActive] = useState([]);
+  const [preselections, setPreselections] = useState([]);
   const navigateTo = useNavigate();
 
   useEffect(() => {
@@ -60,8 +61,7 @@ const Clients = () => {
           `employees/gain-experience/all?order=${order}`,
         );
         const services = await getData(`services/all?order=${order}`);
-        console.log('patologies', patologies);
-        console.log('map', mapToDictionary(services));
+
         // Crear diccionarios
         setDictionaries({
           patologies: mapToDictionary(patologies),
@@ -90,8 +90,9 @@ const Clients = () => {
     console.log('idstring', idsString);
     console.log('dictionary', dictionary);
     if (!idsString) return [];
-    const ids = idsString.split(',');
-    return ids.map((id) => dictionary[id] || 'Desconocido');
+    const ids = idsString.replace(/^\s+|\s+$/gm, '').split(',');
+    console.log('ids', ids);
+    return ids.map((id) => dictionary[id] || '');
   };
 
   const getRows = async () => {
@@ -195,6 +196,19 @@ const Clients = () => {
   const handleRowClick = async (row, event) => {
     console.log('row', row);
     setSelectedRow(row);
+    const preselection = await getData(
+      `client-service-preselection/all?employee_id=${row.id}&status=Pendiente`,
+    );
+    const filteredPreselection = preselection.filter((item) => {
+      const isStatusValid = item.clients_service?.statu == 1;
+      const isEmployeeValid =
+        !item.clients_service.employee || item.clients_service.employee === 0;
+
+      // Devuelve el resultado de las condiciones
+      return isStatusValid && isEmployeeValid;
+    });
+
+    setPreselections(filteredPreselection);
 
     const queryParameters = new URLSearchParams();
     queryParameters.append('statu', 1);
@@ -300,6 +314,12 @@ const Clients = () => {
       age--;
     }
     return age;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
   };
   return (
     <div className='max-w-full mx-auto'>
@@ -512,7 +532,7 @@ const Clients = () => {
                   </li>
                 ))}
               </ul>
-              <p className='text-sm p-1 text-xs'>
+              {/* <p className='text-sm p-1 text-xs'>
                 <strong>Experiencia:</strong> <br />
               </p>
               <ul>
@@ -541,17 +561,35 @@ const Clients = () => {
                     {row}
                   </li>
                 ))}
-              </ul>
+              </ul> */}
 
               <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Servicios Activos</strong>
               </h2>
-              {servicesActive.map((service) => (
+              <div className='p-0'>
+                {servicesActive.map((service) => (
+                  <>
+                    <a href={`client/${service.client?.id}?tabs=servicios`}>
+                      <p className='text-xs font-bold'>
+                        {service.service?.name}
+                      </p>
+                      <div className=' text-xs mb-2'>
+                        <p className='p-1'>{service.client?.full_name}</p>
+                        <p>{formatDate(service.service_alta)}</p>
+                      </div>
+                    </a>
+                  </>
+                ))}
+              </div>
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
+                <strong>En proceso de seleccion</strong>
+              </h2>
+              {preselections.map((pre) => (
                 <>
-                  <p className='text-xs font-bold'>{service.service?.name}</p>
+                  <p className='text-xs font-bold'>{pre.service?.name}</p>
                   <div className=' text-xs mb-2'>
-                    <p className='p-1'>{service.client?.full_name}</p>
-                    {/* <p>{formatDate(service.service_alta)}</p> */}
+                    <p className='p-1'>{pre.client?.full_name}</p>
+                    <p>{formatDate(pre.clients_service.service_alta)}</p>
                   </div>
                 </>
               ))}
