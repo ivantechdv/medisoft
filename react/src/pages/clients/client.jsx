@@ -46,13 +46,18 @@ const Clients = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [title, setTitle] = useState('');
   const { id } = useParams();
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalLogs, setModalLogs] = useState(false);
   const [isNewRecord, setIsNewRecord] = useState(true);
   const [selectedRow, setSelectedRow] = useState(null);
   const [tableTopPosition, setTableTopPosition] = useState(0);
-  const [activeTab, setActiveTab] = useState('general');
+  const initialTab = params.get('tabs') || 'general';
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [action, setAction] = useState('Guardar');
+
   const [families, setFamilies] = useState([]);
   const [cardData, setCardData] = useState({
     full_name: '',
