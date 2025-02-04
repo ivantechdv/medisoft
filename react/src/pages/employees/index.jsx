@@ -97,9 +97,11 @@ const Clients = () => {
 
   const getRows = async () => {
     try {
-      setIsLoading(true);
+      if (!searchTerm) {
+        setIsLoading(true);
+      }
       const response = await getData(
-        `employees?page=${currentPage}&pageSize=${pageSize}&searchTerm=${searchTerm}`,
+        `employees?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
       );
       console.log(response);
       const { data, meta } = response;
@@ -202,7 +204,7 @@ const Clients = () => {
     const filteredPreselection = preselection.filter((item) => {
       const isStatusValid = item.clients_service?.statu == 1;
       const isEmployeeValid =
-        !item.clients_service.employee || item.clients_service.employee === 0;
+        !item.clients_service?.employee || item.clients_service?.employee === 0;
 
       // Devuelve el resultado de las condiciones
       return isStatusValid && isEmployeeValid;
@@ -321,6 +323,46 @@ const Clients = () => {
     const [year, month, day] = dateString.split('-');
     return `${day}/${month}/${year}`;
   };
+
+  const handleDelete = async () => {
+    try {
+      const result = await sweetAlert.showSweetAlert();
+      const isConfirmed = result !== null && result;
+
+      if (!isConfirmed) {
+        ToastNotify({
+          message: 'Acción cancelada por el usuario',
+          position: 'top-right',
+        });
+        return;
+      }
+
+      for (const row of selectedRows) {
+        const id = row; // Asumiendo que cada fila tiene una propiedad 'id'
+        const dataToSend = {
+          is_deleted: 1,
+        };
+
+        try {
+          await putData(`clients/${id}`, dataToSend);
+          // Manejar la respuesta según sea necesario
+        } catch (error) {
+          console.error(`Error al actualizar el cliente con ID ${id}:`, error);
+          // Manejar el error según sea necesario
+        }
+      }
+
+      getRows();
+      ToastNotify({
+        message: 'clientes eliminados correctamente.',
+        position: 'top-left',
+        type: 'success',
+      });
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      // Maneja el error según sea necesario
+    }
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -341,8 +383,15 @@ const Clients = () => {
               </p>
             </div>
             <div className='flex space-x-2'>
+              <input
+                type='text'
+                className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs'
+                placeholder='Campo de busqueda'
+                value={searchTerm}
+                onChange={handleSearchTermChange}
+              ></input>
               <select
-                className='border rounded h-10 px-2'
+                className='border border-gray-600 rounded h-8 px-2'
                 value={pageSize}
                 onChange={handlePageSizeChange}
               >
@@ -352,13 +401,13 @@ const Clients = () => {
                 <option value={100}>100</option>
               </select>
               <button
-                className='bg-primary text-lg text-textWhite font-bold py-2 px-3 rounded h-10'
+                className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
                 onClick={handleFormEmployee}
               >
                 <FaPlusCircle className='text-lg' />
               </button>
               <button
-                className={`bg-red-500 hover:bg-red-700 text-sm text-white font-bold py-2 px-3 rounded h-10 ${
+                className={`bg-red-500 hover:bg-red-700 text-sm text-white font-bold py-2 px-2 rounded h-8 ${
                   selectedRows.length === 0
                     ? 'opacity-50 cursor-not-allowed'
                     : ''
@@ -368,7 +417,7 @@ const Clients = () => {
                 <FaMinusCircle className='text-lg' />
               </button>
               <button
-                className='bg-secondary text-lg text-textWhite font-bold py-1 px-3 rounded h-10'
+                className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
                 onClick={handleFilter}
               >
                 <FaFilter className='text-lg' />
@@ -414,7 +463,10 @@ const Clients = () => {
                         borderBottom: '1px solid #ccc', // Define el borde inferior aquí
                       }}
                     >
-                      <td className='text-center'>
+                      <td
+                        className='text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <input
                           type='checkbox'
                           id='selectrow'
@@ -532,36 +584,6 @@ const Clients = () => {
                   </li>
                 ))}
               </ul>
-              {/* <p className='text-sm p-1 text-xs'>
-                <strong>Experiencia:</strong> <br />
-              </p>
-              <ul>
-                {selectedData.experiences.map((row, index) => (
-                  <li key={index} className='text-sm p-1'>
-                    {row}
-                  </li>
-                ))}
-              </ul>
-              <p className='text-sm p-1 text-xs'>
-                <strong>Patologias:</strong> <br />
-              </p>
-              <ul>
-                {selectedData.patologies.map((patology, index) => (
-                  <li key={index} className='text-sm p-1'>
-                    {patology}
-                  </li>
-                ))}
-              </ul>
-              <p className='text-sm p-1 text-xs'>
-                <strong>Tareas:</strong> <br />
-              </p>
-              <ul>
-                {selectedData.tasks.map((row, index) => (
-                  <li key={index} className='text-sm p-1'>
-                    {row}
-                  </li>
-                ))}
-              </ul> */}
 
               <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Servicios Activos</strong>

@@ -8,7 +8,18 @@ import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
+import {
+  ConfirmSweetAlert,
+  InfoSweetAlert,
+} from '../../components/SweetAlert/SweetAlert';
+import ToastNotify from '../../components/toast/toast';
+
 const Clients = () => {
+  const sweetAlert = ConfirmSweetAlert({
+    title: 'Clientes',
+    text: '¿Desea eliminar los clientes seleccionado?',
+    icon: 'question',
+  });
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,9 +47,11 @@ const Clients = () => {
 
   const getRows = async () => {
     try {
-      setIsLoading(true);
+      if (!searchTerm) {
+        setIsLoading(true);
+      }
       const response = await getData(
-        `clients?page=${currentPage}&pageSize=${pageSize}&searchTerm=${searchTerm}`,
+        `clients?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
       );
       console.log(response);
       const { data, meta } = response;
@@ -194,6 +207,45 @@ const Clients = () => {
     return age;
   };
 
+  const handleDelete = async () => {
+    try {
+      const result = await sweetAlert.showSweetAlert();
+      const isConfirmed = result !== null && result;
+
+      if (!isConfirmed) {
+        ToastNotify({
+          message: 'Acción cancelada por el usuario',
+          position: 'top-right',
+        });
+        return;
+      }
+
+      for (const row of selectedRows) {
+        const id = row; // Asumiendo que cada fila tiene una propiedad 'id'
+        const dataToSend = {
+          is_deleted: 1,
+        };
+
+        try {
+          await putData(`clients/${id}`, dataToSend);
+          // Manejar la respuesta según sea necesario
+        } catch (error) {
+          console.error(`Error al actualizar el cliente con ID ${id}:`, error);
+          // Manejar el error según sea necesario
+        }
+      }
+
+      getRows();
+      ToastNotify({
+        message: 'clientes eliminados correctamente.',
+        position: 'top-left',
+        type: 'success',
+      });
+    } catch (error) {
+      console.error('Error al eliminar:', error);
+      // Maneja el error según sea necesario
+    }
+  };
   return (
     <div className='max-w-full mx-auto'>
       <Breadcrumbs
@@ -218,6 +270,8 @@ const Clients = () => {
                 type='text'
                 className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs'
                 placeholder='Campo de busqueda'
+                value={searchTerm}
+                onChange={handleSearchTermChange}
               ></input>
               <select
                 className='border border-gray-600 rounded h-8 px-2'
@@ -243,7 +297,7 @@ const Clients = () => {
                 }`}
                 disabled={selectedRows.length === 0}
               >
-                <FaMinusCircle className='text-lg' />
+                <FaMinusCircle className='text-lg' onClick={handleDelete} />
               </button>
               <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-2 rounded h-8'>
                 <FaFilter className='text-lg' />
@@ -289,7 +343,10 @@ const Clients = () => {
                         borderBottom: '1px solid #ccc',
                       }}
                     >
-                      <td className='text-center'>
+                      <td
+                        className='text-center'
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <input
                           type='checkbox'
                           id='selectrow'
