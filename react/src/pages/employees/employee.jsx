@@ -17,6 +17,7 @@ import General from './tabs/general';
 import Complementary from './tabs/complementary';
 import Laboral from './tabs/laboral';
 import Specific from './tabs/specific';
+import FollowUps from './tabs/followUps';
 const Employees = () => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -379,6 +380,17 @@ const Employees = () => {
               >
                 Especifico
               </button>
+              <button
+                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                  activeTab === 'followUps'
+                    ? 'text-black font-semibold border-b-2 border-b-orange-600'
+                    : ''
+                } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
+                onClick={() => handleTabChange('followUps')}
+                disabled={isNewRecord}
+              >
+                Seguimientos
+              </button>
             </div>
             <div className='p-2 w-full'>
               {activeTab === 'general' && (
@@ -409,6 +421,15 @@ const Employees = () => {
                   employee_id={id}
                   onFormData={formData}
                   onHandleHasChange={handleHasChange}
+                />
+              )}
+              {activeTab === 'followUps' && (
+                <FollowUps
+                  employee_id={id}
+                  onFormData={formData}
+                  onHandleHasChange={handleHasChange}
+                  onGetRecordById={getRecordById}
+                  setUnsavedChanges={setUnsavedChanges}
                 />
               )}
             </div>

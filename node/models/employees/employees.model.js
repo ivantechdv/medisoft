@@ -122,6 +122,10 @@ const Employee = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    is_deleted: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
     createdAt: {
       type: DataTypes.DATE,
       allowNull: false,

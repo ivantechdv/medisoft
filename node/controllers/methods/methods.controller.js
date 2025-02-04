@@ -73,9 +73,14 @@ CTRL.update = async (req, res, next, Model) => {
   }
 };
 
-CTRL.get = async (req, res, next, Model, where, include) => {
+CTRL.get = async (req, res, next, Model, where = {}, include) => {
   try {
-    const { page = 1, pageSize = ITEMS_PER_PAGE, searchTerm } = req.query;
+    const {
+      page = 1,
+      pageSize = ITEMS_PER_PAGE,
+      searchTerm,
+      is_deleted,
+    } = req.query;
     // Validación de parámetros de consulta
     const parsedPage = parseInt(page);
     const parsedPageSize = parseInt(pageSize);
@@ -92,8 +97,27 @@ CTRL.get = async (req, res, next, Model, where, include) => {
     }
 
     const offset = (parsedPage - 1) * parsedPageSize;
+    const searchWhere = {
+      ...(searchTerm && {
+        [Op.or]: [
+          { full_name: { [Op.like]: `%${searchTerm}%` } },
+          { email: { [Op.like]: `%${searchTerm}%` } },
+          { dni: { [Op.like]: `%${searchTerm}%` } },
+          { phone: { [Op.like]: `%${searchTerm}%` } },
+        ],
+      }),
+      ...(typeof is_deleted !== "undefined" && {
+        is_deleted: is_deleted,
+      }),
+    };
+
+    // Combinar la cláusula where existente con la cláusula de búsqueda
+    const combinedWhere = {
+      [Op.and]: [where, searchWhere],
+    };
+
     const { count, rows: rows } = await Model.findAndCountAll({
-      where: where,
+      where: combinedWhere,
       limit: parsedPageSize,
       offset,
       include: include,
