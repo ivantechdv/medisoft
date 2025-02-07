@@ -33,6 +33,24 @@ const Family = sequelize.define("families", {
     allowNull: false,
     defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
   },
+  is_active: {
+    type: DataTypes.BOOLEAN,
+    allowNull: true,
+  },
+  send_invoice: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: true,
+  },
+  send_comunication: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+    allowNull: true,
+  },
+  priority: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
 });
 
 module.exports = Family;

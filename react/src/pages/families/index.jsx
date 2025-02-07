@@ -18,14 +18,16 @@ const Families = ({
     name: '',
     phone: '',
     email: '',
+    priority: '',
     send_invoice: false,
-    send_communications: false,
+    send_comunication: false,
   });
 
   const [errors, setErrors] = useState({});
 
   // Actualizar el estado si formDataFamily cambia
   useEffect(() => {
+    console.log('formDataFamily', formDataFamily);
     if (formDataFamily) {
       setFormData((prev) => ({
         ...prev,
@@ -33,6 +35,9 @@ const Families = ({
         name: formDataFamily.name || '',
         phone: formDataFamily.phone || '',
         email: formDataFamily.email || '',
+        priority: formDataFamily.priority || '',
+        send_invoice: formDataFamily.send_invoice || false,
+        send_comunication: formDataFamily.send_comunication || false,
       }));
       setErrors({});
     }
@@ -71,6 +76,9 @@ const Families = ({
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
+        priority: formData.priority,
+        send_invoice: formData.send_invoice,
+        send_comunication: formData.send_comunication,
         client_id: client_id,
       };
       if (formData.id == '') {
@@ -85,7 +93,14 @@ const Families = ({
         icon: 'success',
       });
 
-      setFormData({ name: '', phone: '', email: '' });
+      setFormData({
+        name: '',
+        phone: '',
+        email: '',
+        priority: '',
+        send_invoice: false,
+        send_comunication: false,
+      });
       getFamilies();
       onClose();
     } catch (error) {
@@ -111,6 +126,18 @@ const Families = ({
     }
   };
 
+  const toggleNotification = () => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      send_comunication: !prevFormData.send_comunication,
+    }));
+  };
+  const toggleInvoice = async () => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      send_invoice: !prevFormData.send_invoice,
+    }));
+  };
   return isOpen ? (
     <div className='fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-10'>
       <div className='bg-white rounded-lg w-96 p-6 shadow-lg'>
@@ -174,7 +201,9 @@ const Families = ({
               Prioridad de contacto
             </label>
             <input
-              type='priority'
+              type='number'
+              min={1}
+              max={10}
               name='priority'
               value={formData.priority}
               onChange={handleInputChange}
@@ -195,33 +224,35 @@ const Families = ({
                 <button
                   type='button'
                   className={`relative inline-flex items-center h-4 rounded-full w-8 mr-2  mt-1 ${
-                    false ? 'bg-primary' : 'bg-gray-300'
+                    formData.send_comunication ? 'bg-primary' : 'bg-gray-300'
                   }`}
-                  onClick={''}
+                  onClick={toggleNotification}
                 >
                   <span
                     className={`inline-block w-4 h-4 transform rounded-full bg-white shadow-md transition-transform ${
-                      false ? 'translate-x-6' : 'translate-x-0'
+                      formData.send_comunication
+                        ? 'translate-x-4'
+                        : 'translate-x-0'
                     }`}
                   />
                 </button>
-                <label className='ml-2 text-bold'>Facturacion</label>
+                <label className='ml-2 text-bold'>Comunicacion</label>
               </div>
               <div className='flex space-x-2'>
                 <button
                   type='button'
                   className={`relative inline-flex items-center h-4 rounded-full w-8 mr-2  mt-1 ${
-                    false ? 'bg-primary' : 'bg-gray-300'
+                    formData.send_invoice ? 'bg-primary' : 'bg-gray-300'
                   }`}
-                  onClick={''}
+                  onClick={toggleInvoice}
                 >
                   <span
                     className={`inline-block w-4 h-4 transform rounded-full bg-white shadow-md transition-transform ${
-                      false ? 'translate-x-6' : 'translate-x-0'
+                      formData.send_invoice ? 'translate-x-4' : 'translate-x-0'
                     }`}
                   />
                 </button>
-                <label className='ml-2 text-bold'>Comunicación</label>
+                <label className='ml-2 text-bold'>Facturacion</label>
               </div>
             </div>
           </div>
