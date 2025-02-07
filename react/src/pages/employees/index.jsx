@@ -425,7 +425,7 @@ const Clients = () => {
             </div>
           </div>
           <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
-            <table className='w-full divide-y divide-tableHeader mb-4 table-container2'>
+            <table className='w-full divide-y divide-tableHeader mb-4 table-container2 text-xs'>
               <thead className='bg-tableHeader'>
                 <tr>
                   <th></th>

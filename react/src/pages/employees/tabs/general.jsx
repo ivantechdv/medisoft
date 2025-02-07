@@ -17,6 +17,7 @@ import {
   ConfirmSweetAlert,
   InfoSweetAlert,
 } from '../../../components/SweetAlert/SweetAlert';
+import FileInput from '../../../components/fileInput';
 
 const Form = ({
   onHandleChangeCard,
@@ -60,6 +61,7 @@ const Form = ({
     statu_id: '',
     level_id: '',
     state_id: '',
+    observations: '',
   });
   const [oldData, setOldData] = useState({
     dni: '',
@@ -90,6 +92,7 @@ const Form = ({
     statu_id: '',
     level_id: '',
     state_id: '',
+    observations: '',
   });
   const [images, setImages] = useState({
     photo: '',
@@ -824,7 +827,7 @@ const Form = ({
                 : handleSubmit
             }
           >
-            {onAction}
+            Guardar
           </button>
         </div>
         <div className='md:grid md:grid-cols-4 gap-2'>
@@ -854,6 +857,12 @@ const Form = ({
                         onChange={(event) => handleImagenChange(event, 'photo')}
                       />
                     </label>
+                    <div
+                      className='absolute -top-1 -right-3 cursor-pointer'
+                      onClick={() => openImageModal(images.photo)}
+                    >
+                      <FaExpand size={24} />
+                    </div>
                     <div
                       className='absolute -top-1 -left-3 cursor-pointer text-red-500'
                       title='Eliminar imagen'
@@ -994,58 +1003,6 @@ const Form = ({
                       />
                     </label>
                   </>
-                )}
-              </div>
-              <div className='flex'>
-                <label className='block text-sm font-medium text-gray-700'>
-                  Curriculum
-                </label>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <input
-                  type='file'
-                  accept='.pdf'
-                  name='attach_curriculum'
-                  id='attach_curriculum'
-                  onChange={handleFileChange}
-                  style={{ width: '100%' }}
-                />
-
-                {/* Botón "Ver" solo si hay un archivo cargado */}
-                {formData.attach_curriculum && (
-                  <a
-                    href={getStorage(formData.attach_curriculum)}
-                    target='_blank'
-                    className='p-2 bg-green-500 rounded-lg'
-                  >
-                    <FaEye />
-                  </a>
-                )}
-              </div>
-              <div className='flex'>
-                <label className='block text-sm font-medium text-gray-700'>
-                  Referencia
-                </label>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <input
-                  type='file'
-                  accept='.pdf'
-                  name='attach_reference'
-                  id='attach_reference'
-                  onChange={handleFileChange}
-                  style={{ width: '100%' }}
-                />
-
-                {/* Botón "Ver" solo si hay un archivo cargado */}
-                {formData.attach_reference && (
-                  <a
-                    href={getStorage(formData.attach_reference)}
-                    target='_blank'
-                    className='p-2 bg-green-500 rounded-lg'
-                  >
-                    <FaEye />
-                  </a>
                 )}
               </div>
             </div>
@@ -1604,6 +1561,54 @@ const Form = ({
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>
+              <div className='col-span-3'>
+                <div className='mb-2'>
+                  <label
+                    htmlFor='observations'
+                    className='block text-sm font-medium text-secondary'
+                  >
+                    Observaciones
+                  </label>
+                  <textarea
+                    type='textarea'
+                    rows={6}
+                    id='observations'
+                    value={formData.observations}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+              </div>
+            </div>
+            <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
+              <div>
+                <FileInput
+                  label='Curriculum'
+                  name='attach_curriculum'
+                  accept='.pdf'
+                  onFileChange={(file) =>
+                    handleFileChange(file, 'attach_curriculum')
+                  }
+                  fileUrl={
+                    formData.attach_curriculum &&
+                    getStorage(formData.attach_curriculum)
+                  }
+                />
+              </div>
+              <div className=''>
+                <FileInput
+                  label='Referencia'
+                  name='attach_reference'
+                  accept='.pdf'
+                  onFileChange={(file) =>
+                    handleFileChange(file, 'attach_reference')
+                  }
+                  fileUrl={
+                    formData.attach_reference &&
+                    getStorage(formData.attach_reference)
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1611,9 +1616,9 @@ const Form = ({
 
       {expandImage && (
         <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
-          <div className='bg-white p-2 rounded shadow-lg w-3/4'>
+          <div className='bg-white p-2 rounded shadow-lg w-3/4 h-[90%]'>
             <button
-              className='absolute top-0 right-2 text-white hover:text-gray-700 text-lg bg-gray-800'
+              className='absolute top-2 right-2 text-white hover:text-gray-700 text-lg bg-gray-800'
               onClick={closeExpandImage}
             >
               <svg
@@ -1631,7 +1636,11 @@ const Form = ({
               </svg>
             </button>
 
-            <img alt='imagen' src={dni.current} className='w-full' />
+            <img
+              alt='imagen'
+              src={dni.current}
+              className='w-auto h-full mx-auto'
+            />
           </div>
         </div>
       )}

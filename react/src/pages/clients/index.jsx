@@ -56,7 +56,15 @@ const Clients = () => {
       console.log(response);
       const { data, meta } = response;
 
-      setRows(data);
+      const sortedRows = data.map((row) => {
+        const sortedFamilies = [...row.families].sort((a, b) => {
+          if (a.priority == null) return 1;
+          if (b.priority == null) return -1;
+          return a.priority - b.priority;
+        });
+        return { ...row, families: sortedFamilies };
+      });
+      setRows(sortedRows);
       setTotalPages(meta.totalPages);
     } catch (error) {
       console.error('Error ', error);
@@ -305,7 +313,7 @@ const Clients = () => {
             </div>
           </div>
           <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
-            <table className='w-full divide-y divide-tableHeader mb-4 table-container2'>
+            <table className='w-full divide-y divide-tableHeader mb-4 table-container2 text-xs'>
               <thead className='bg-tableHeader'>
                 <tr>
                   <th></th>
@@ -320,6 +328,18 @@ const Clients = () => {
                   </th>
                   <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
                     Correo electrónico
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                    Teléfono
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
+                    Familiar-1
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                    Teléfono
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
+                    Familiar-2
                   </th>
                   <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
                     Teléfono
@@ -366,6 +386,18 @@ const Clients = () => {
                       </td>
                       <td className='max-w-xs truncate px-2'>{row.email}</td>
                       <td className='max-w-xs truncate px-2'>{row.phone}</td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[0]?.name}
+                      </td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[0]?.phone}
+                      </td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[1]?.name}
+                      </td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[1]?.phone}
+                      </td>
                     </tr>
                   ))}
               </tbody>
@@ -473,7 +505,12 @@ const Clients = () => {
                 <>
                   <p className='text-xs font-bold'>{service.service?.name}</p>
                   <div className=' text-xs mb-2'>
-                    <p>{service.employee?.full_name}</p>
+                    <p>
+                      {service.employee?.full_name}{' '}
+                      {service.employee?.code_phone +
+                        ' ' +
+                        service.employee?.phone}
+                    </p>
                     <p>{formatDate(service.service_alta)}</p>
                   </div>
                 </>

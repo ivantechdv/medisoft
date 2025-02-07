@@ -753,7 +753,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 : handleSubmit
             }
           >
-            {onAction}
+            Guardar
           </button>
         </div>
         <div className='md:grid md:grid-cols-4 gap-2'>
@@ -778,6 +778,12 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                         onChange={(event) => handleImagenChange(event, 'photo')}
                       />
                     </label>
+                    <div
+                      className='absolute -top-1 -right-3 cursor-pointer'
+                      onClick={() => openImageModal(images.photo)}
+                    >
+                      <FaExpand size={24} />
+                    </div>
                     <div
                       className='absolute -top-1 -left-3 cursor-pointer text-red-500'
                       title='Eliminar imagen'
@@ -1339,6 +1345,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               <textarea
                 id='observations'
                 name='observations'
+                rows={6}
                 value={formData.observations}
                 onChange={handleChange}
                 className='w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
