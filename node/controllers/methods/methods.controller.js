@@ -1,6 +1,6 @@
 const CTRL = {};
 const sequelize = require("../../database/sequelize");
-const { Sequelize, Op } = require("sequelize");
+const { Sequelize, Op, col } = require("sequelize");
 
 const ITEMS_PER_PAGE = 20; // Puedes ajustar esto según tus necesidades
 CTRL.create = async (req, res, next, Model) => {
@@ -73,7 +73,15 @@ CTRL.update = async (req, res, next, Model) => {
   }
 };
 
-CTRL.get = async (req, res, next, Model, where = {}, include) => {
+CTRL.get = async (
+  req,
+  res,
+  next,
+  Model,
+  where = {},
+  include,
+  additionalSearchConditions = {}
+) => {
   try {
     const {
       page = 1,
@@ -104,6 +112,7 @@ CTRL.get = async (req, res, next, Model, where = {}, include) => {
           { email: { [Op.like]: `%${searchTerm}%` } },
           { dni: { [Op.like]: `%${searchTerm}%` } },
           { phone: { [Op.like]: `%${searchTerm}%` } },
+          ...additionalSearchConditions,
         ],
       }),
       ...(typeof is_deleted !== "undefined" && {
@@ -116,13 +125,32 @@ CTRL.get = async (req, res, next, Model, where = {}, include) => {
       [Op.and]: [where, searchWhere],
     };
 
-    const { count, rows: rows } = await Model.findAndCountAll({
+    const ids = await Model.findAll({
+      attributes: ["id"],
       where: combinedWhere,
-      limit: parsedPageSize,
-      offset,
       include: include,
+      subQuery: false,
+    });
+
+    console.log("ids", ids);
+
+    const { count, rows } = await Model.findAndCountAll({
+      where: {
+        id: ids.map((idRecord) => idRecord.id),
+      },
+      include: include,
+      limit: parsedPageSize,
+      offset: offset,
       order: [["id", "ASC"]],
     });
+
+    // const { count, rows: rows } = await Model.findAndCountAll({
+    //   include: include,
+    //   where: combinedWhere,
+    //   limit: parsedPageSize,
+    //   offset,
+    //   order: [["id", "ASC"]],
+    // });
 
     const totalPages = Math.ceil(count / parsedPageSize);
 

@@ -269,12 +269,32 @@ const Clients = () => {
   };
 
   const closeModalFamilies = () => {
+    getFamilies();
     setIsFamiliesModalOpen(false);
   };
   const getFamilies = async () => {
     const response = await getData('family/getByClientId?client_id=' + id);
-    console.log('response families', response);
-    setFamilies(response);
+    const sortedFamilies = response.sort((a, b) => {
+      // Verifica si 'priority' de 'a' es nulo o indefinido
+      const aPriorityEmpty = a.priority === null || a.priority === undefined;
+      // Verifica si 'priority' de 'b' es nulo o indefinido
+      const bPriorityEmpty = b.priority === null || b.priority === undefined;
+
+      if (aPriorityEmpty && bPriorityEmpty) {
+        // Si ambos 'priority' son nulos o indefinidos, se consideran iguales
+        return 0;
+      } else if (aPriorityEmpty) {
+        // Si 'a.priority' es nulo o indefinido, 'a' debe ir después de 'b'
+        return 1;
+      } else if (bPriorityEmpty) {
+        // Si 'b.priority' es nulo o indefinido, 'b' debe ir después de 'a'
+        return -1;
+      } else {
+        // Si ambos 'priority' tienen valores válidos, se comparan numéricamente
+        return a.priority - b.priority;
+      }
+    });
+    setFamilies(sortedFamilies);
   };
   return (
     <div className='max-w-full mx-auto'>
