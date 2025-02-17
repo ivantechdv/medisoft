@@ -31,7 +31,6 @@ const Form = ({
     date_consent: '',
     accept_conditions: false,
     date_condition: '',
-    observations: '',
   });
   const [oldData, setOldData] = useState({
     id: '',
@@ -44,7 +43,6 @@ const Form = ({
     date_consent: '',
     accept_conditions: false,
     date_condition: '',
-    observations: '',
   });
 
   const [loading, setLoading] = useState(true);
@@ -527,24 +525,6 @@ const Form = ({
                   onChange={handleChange}
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
-              </div>
-              <div className='col-span-2'>
-                <div className='mb-2'>
-                  <label
-                    htmlFor='observations'
-                    className='block text-sm font-medium text-secondary'
-                  >
-                    Observaciones
-                  </label>
-                  <textarea
-                    type='textarea'
-                    rows={4}
-                    id='observations'
-                    value={formData.observations}
-                    onChange={handleChange}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  />
-                </div>
               </div>
             </div>
           </div>

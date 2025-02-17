@@ -136,6 +136,10 @@ const Employee = sequelize.define(
       allowNull: false,
       defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
     },
+    observations: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
   },
   {
     tableName: "employees",

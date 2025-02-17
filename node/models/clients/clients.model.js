@@ -125,6 +125,6 @@ CodPost.hasMany(Client, { foreignKey: "cod_post_id" });
 Client.belongsTo(Gender, { foreignKey: "gender_id" });
 
 CodPost.hasMany(Client, { foreignKey: "cod_post_id" });
-Client.hasMany(Family, { foreignKey: "client_id" });
-Family.belongsTo(Client, { foreignKey: "client_id" });
+Client.hasMany(Family, { foreignKey: "client_id" }),
+  Family.belongsTo(Client, { foreignKey: "client_id" });
 module.exports = Client;

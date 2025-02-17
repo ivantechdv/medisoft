@@ -56,7 +56,15 @@ const Clients = () => {
       console.log(response);
       const { data, meta } = response;
 
-      setRows(data);
+      const sortedRows = data.map((row) => {
+        const sortedFamilies = [...row.families].sort((a, b) => {
+          if (a.priority == null) return 1;
+          if (b.priority == null) return -1;
+          return a.priority - b.priority;
+        });
+        return { ...row, families: sortedFamilies };
+      });
+      setRows(sortedRows);
       setTotalPages(meta.totalPages);
     } catch (error) {
       console.error('Error ', error);
@@ -266,13 +274,38 @@ const Clients = () => {
               </p>
             </div>
             <div className='flex space-x-2'>
-              <input
-                type='text'
-                className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs'
-                placeholder='Campo de busqueda'
-                value={searchTerm}
-                onChange={handleSearchTermChange}
-              ></input>
+              <div className='relative'>
+                <input
+                  type='text'
+                  className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
+                  placeholder='Campo de busqueda'
+                  value={searchTerm}
+                  onChange={handleSearchTermChange}
+                />
+                {searchTerm && (
+                  <button
+                    type='button'
+                    className='absolute right-2  translate-y-1/2 text-gray-500 hover:text-gray-700'
+                    onClick={() => setSearchTerm('')}
+                    aria-label='Limpiar busqueda'
+                  >
+                    <svg
+                      xmlns='http://www.w3.org/2000/svg'
+                      className='h-4 w-4'
+                      fill='none'
+                      viewBox='0 0 24 24'
+                      stroke='currentColor'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M6 18L18 6M6 6l12 12'
+                      />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <select
                 className='border border-gray-600 rounded h-8 px-2'
                 value={pageSize}
@@ -305,7 +338,7 @@ const Clients = () => {
             </div>
           </div>
           <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
-            <table className='w-full divide-y divide-tableHeader mb-4 table-container2'>
+            <table className='w-full divide-y divide-tableHeader mb-4 table-container2 text-xs'>
               <thead className='bg-tableHeader'>
                 <tr>
                   <th></th>
@@ -320,6 +353,18 @@ const Clients = () => {
                   </th>
                   <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
                     Correo electrónico
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                    Teléfono
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
+                    Familiar-1
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                    Teléfono
+                  </th>
+                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
+                    Familiar-2
                   </th>
                   <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
                     Teléfono
@@ -366,6 +411,18 @@ const Clients = () => {
                       </td>
                       <td className='max-w-xs truncate px-2'>{row.email}</td>
                       <td className='max-w-xs truncate px-2'>{row.phone}</td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[0]?.name}
+                      </td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[0]?.phone}
+                      </td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[1]?.name}
+                      </td>
+                      <td className='max-w-xs truncate px-2'>
+                        {row.families[1]?.phone}
+                      </td>
                     </tr>
                   ))}
               </tbody>
@@ -473,7 +530,12 @@ const Clients = () => {
                 <>
                   <p className='text-xs font-bold'>{service.service?.name}</p>
                   <div className=' text-xs mb-2'>
-                    <p>{service.employee?.full_name}</p>
+                    <p>
+                      {service.employee?.full_name}{' '}
+                      {service.employee?.code_phone +
+                        ' ' +
+                        service.employee?.phone}
+                    </p>
                     <p>{formatDate(service.service_alta)}</p>
                   </div>
                 </>

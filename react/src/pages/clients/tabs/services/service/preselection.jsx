@@ -64,8 +64,11 @@ const Preselection = ({
             />
           </div>
           <button
-            className='w-10 bg-primary text-white px-2 h-8 mt-1 rounded-md ml-2'
+            className={`w-10 text-white px-2 h-8 mt-1 rounded-md ml-2 ${
+              selectedEmployee ? 'bg-primary' : 'bg-gray-400 cursor-not-allowed'
+            }`}
             onClick={handleAddEmployee}
+            disabled={!selectedEmployee}
           >
             <FaCheckCircle />
           </button>

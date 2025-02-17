@@ -12,6 +12,7 @@ const Task = require("../../models/employees/task.model");
 const State = require("../../models/states/states.model");
 const Methods = require("../methods/methods.controller");
 const Family = require("../../models/families/families.mode");
+const { Sequelize, Op } = require("sequelize");
 
 CTRL.create = async (req, res, next) => {
   try {
@@ -31,6 +32,14 @@ CTRL.update = async (req, res, next) => {
 };
 CTRL.get = async (req, res, next) => {
   try {
+    let additionalSearchConditions = [];
+
+    if (req.query.searchTerm) {
+      additionalSearchConditions = [
+        { "$families.name$": { [Op.like]: `%${req.query.searchTerm}%` } },
+        { "$families.phone$": { [Op.like]: `%${req.query.searchTerm}%` } },
+      ];
+    }
     const condition = {};
     const include = [
       {
@@ -67,9 +76,20 @@ CTRL.get = async (req, res, next) => {
       },
       {
         model: Family,
+        order: [["priority", "Asc"]],
+        separate: false, // <--- Run separate query
+        limit: 2,
       },
     ];
-    await Methods.get(req, res, next, Client, condition, include);
+    await Methods.get(
+      req,
+      res,
+      next,
+      Client,
+      condition,
+      include,
+      additionalSearchConditions
+    );
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
