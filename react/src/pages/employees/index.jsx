@@ -25,6 +25,8 @@ const Clients = () => {
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [isFilter, setIsFilter] = useState(false);
+  const [selectedRowId, setSelectedRowId] = useState(null);
+
   const [dictionaries, setDictionaries] = useState({
     patologies: {},
     tasks: {},
@@ -100,9 +102,16 @@ const Clients = () => {
       if (!searchTerm) {
         setIsLoading(true);
       }
-      const response = await getData(
-        `employees?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
-      );
+      let response;
+      if (pageSize == 0) {
+        response = await getData(
+          `employees?is_deleted=0&searchTerm=${searchTerm}`,
+        );
+      } else {
+        response = await getData(
+          `employees?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
+        );
+      }
       console.log(response);
       const { data, meta } = response;
 
@@ -198,6 +207,7 @@ const Clients = () => {
   const handleRowClick = async (row, event) => {
     console.log('row', row);
     setSelectedRow(row);
+    setSelectedRowId(rowData.id);
     const preselection = await getData(
       `client-service-preselection/all?employee_id=${row.id}&status=Pendiente`,
     );
@@ -275,7 +285,11 @@ const Clients = () => {
     });
   };
   const handlePageSizeChange = (event) => {
-    setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+    if (event.target.value == 'todos') {
+      setPageSize(0);
+    } else {
+      setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+    }
     setCurrentPage(1); // Reinicia a la primera página
   };
   const handleFilter = () => {
@@ -424,6 +438,7 @@ const Clients = () => {
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
+                <option value={0}>Todos</option>
               </select>
               <button
                 className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
@@ -475,17 +490,23 @@ const Clients = () => {
                 {rows.length > 0 &&
                   rows.map((row) => (
                     <tr
-                      onMouseEnter={(e) =>
-                        (e.target.parentNode.style.backgroundColor = '#F3F4F6')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.target.parentNode.style.backgroundColor = 'inherit')
-                      }
+                      onMouseEnter={(e) => {
+                        if (row.id !== selectedRowId) {
+                          e.currentTarget.style.backgroundColor = '#F3F4F6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (row.id !== selectedRowId) {
+                          e.currentTarget.style.backgroundColor = 'inherit';
+                        }
+                      }}
                       onClick={(e) => handleRowClick(row, e)}
                       onDoubleClick={() => handleViewClient(row.id)}
                       style={{
                         cursor: 'pointer',
                         borderBottom: '1px solid #ccc', // Define el borde inferior aquí
+                        backgroundColor:
+                          row.id === selectedRowId ? '#dee0e2' : 'inherit',
                       }}
                     >
                       <td

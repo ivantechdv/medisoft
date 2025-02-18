@@ -35,6 +35,7 @@ const Clients = () => {
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [servicesActive, setServicesActive] = useState([]);
+  const [selectedRowId, setSelectedRowId] = useState(null);
   const navigateTo = useNavigate();
 
   useEffect(() => {
@@ -50,9 +51,18 @@ const Clients = () => {
       if (!searchTerm) {
         setIsLoading(true);
       }
-      const response = await getData(
-        `clients?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
-      );
+
+      let response;
+      if (pageSize == 0) {
+        response = await getData(
+          `clients?is_deleted=0&searchTerm=${searchTerm}`,
+        );
+      } else {
+        response = await getData(
+          `clients?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
+        );
+      }
+
       console.log(response);
       const { data, meta } = response;
 
@@ -160,6 +170,7 @@ const Clients = () => {
 
   const handleRowClick = async (rowData, event) => {
     setSelectedRow(rowData);
+    setSelectedRowId(rowData.id);
     const queryParameters = new URLSearchParams();
     queryParameters.append('statu', 1);
     const order = 'service_alta-desc';
@@ -195,7 +206,11 @@ const Clients = () => {
     });
   };
   const handlePageSizeChange = (event) => {
-    setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+    if (event.target.value == 'todos') {
+      setPageSize(0);
+    } else {
+      setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+    }
     setCurrentPage(1); // Reinicia a la primera página
   };
 
@@ -315,6 +330,7 @@ const Clients = () => {
                 <option value={20}>20</option>
                 <option value={50}>50</option>
                 <option value={100}>100</option>
+                <option value={0}>Todos</option>
               </select>
               <button
                 className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
@@ -375,17 +391,23 @@ const Clients = () => {
                 {rows.length > 0 &&
                   rows.map((row) => (
                     <tr
-                      onMouseEnter={(e) =>
-                        (e.target.parentNode.style.backgroundColor = '#F3F4F6')
-                      }
-                      onMouseLeave={(e) =>
-                        (e.target.parentNode.style.backgroundColor = 'inherit')
-                      }
+                      onMouseEnter={(e) => {
+                        if (row.id !== selectedRowId) {
+                          e.currentTarget.style.backgroundColor = '#F3F4F6';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (row.id !== selectedRowId) {
+                          e.currentTarget.style.backgroundColor = 'inherit';
+                        }
+                      }}
                       onClick={(e) => handleRowClick(row, e)}
                       onDoubleClick={() => handleViewClient(row.id)}
                       style={{
                         cursor: 'pointer',
                         borderBottom: '1px solid #ccc',
+                        backgroundColor:
+                          row.id === selectedRowId ? '#dee0e2' : 'inherit',
                       }}
                     >
                       <td
