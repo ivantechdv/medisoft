@@ -83,28 +83,17 @@ CTRL.get = async (
   additionalSearchConditions = {}
 ) => {
   try {
-    const {
-      page = 1,
-      pageSize = ITEMS_PER_PAGE,
-      searchTerm,
-      is_deleted,
-    } = req.query;
+    const { page = 1, pageSize, searchTerm, is_deleted } = req.query;
     // Validación de parámetros de consulta
-    const parsedPage = parseInt(page);
-    const parsedPageSize = parseInt(pageSize);
+    let parsedPage;
+    let parsedPageSize;
+    let offset;
+    if (pageSize) {
+      parsedPage = parseInt(page);
+      parsedPageSize = parseInt(pageSize);
 
-    if (
-      isNaN(parsedPage) ||
-      isNaN(parsedPageSize) ||
-      parsedPage <= 0 ||
-      parsedPageSize <= 0
-    ) {
-      return res
-        .status(400)
-        .json({ error: "Los parámetros de página son inválidos" });
+      offset = (parsedPage - 1) * parsedPageSize;
     }
-
-    const offset = (parsedPage - 1) * parsedPageSize;
     const searchWhere = {
       ...(searchTerm && {
         [Op.or]: [
@@ -139,8 +128,10 @@ CTRL.get = async (
         id: ids.map((idRecord) => idRecord.id),
       },
       include: include,
-      limit: parsedPageSize,
-      offset: offset,
+      ...(pageSize && {
+        limit: parsedPageSize,
+        offset: offset,
+      }),
       order: [["id", "ASC"]],
     });
 
