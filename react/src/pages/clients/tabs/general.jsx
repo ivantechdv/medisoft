@@ -575,6 +575,11 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   };
 
   const deleteImage = async (image, key) => {
+    const confirmDelete = window.confirm(
+      '¿Está seguro de que desea eliminar esta imagen?',
+    );
+
+    if (!confirmDelete) return;
     try {
       const filename = image.split('/').pop();
       await deleteStorage(filename, 'client');

@@ -8,7 +8,7 @@ const FileInput = ({ label, name, accept, onFileChange, fileUrl }) => {
     const file = event.target.files[0];
     if (file) {
       setFileName(file.name);
-      onFileChange(file);
+      onFileChange(event);
     }
   };
 

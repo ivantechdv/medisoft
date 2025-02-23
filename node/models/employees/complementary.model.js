@@ -36,6 +36,10 @@ const EmployeeComplementary = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
     },
+    official_qualification_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     observations: {
       type: DataTypes.TEXT,
       allowNull: true,

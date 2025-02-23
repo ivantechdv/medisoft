@@ -277,8 +277,13 @@ const Clients = () => {
           { label: 'Clientes', route: '/Clients' },
         ]}
       />
-      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2'>
-        <div className={`${selectedRow ? 'col-span-8' : 'col-span-10'}`}>
+      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2 '>
+        <div
+          className={`${
+            selectedRow ? 'col-span-8' : 'col-span-10'
+          } h-[calc(100vh-85px)]
+overflow-auto`}
+        >
           <div className='flex justify-between px-4 py-5 sm:px-6'>
             <div>
               <h3 className='text-lg font-semibold leading-6 text-gray-900'>
@@ -411,7 +416,7 @@ const Clients = () => {
                       }}
                     >
                       <td
-                        className='text-center'
+                        className='text-center py-1'
                         onClick={(e) => e.stopPropagation()}
                       >
                         <input
@@ -454,7 +459,10 @@ const Clients = () => {
         </div>
         {/* Modal */}
         {selectedRow && (
-          <div className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg '>
+          <div
+            className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg  h-[calc(100vh-85px)]
+overflow-auto'
+          >
             <div className='bg-primary  p-2 flex justify-between'>
               <label className='text-white pt-2 '>
                 {selectedRow.full_name}
@@ -481,7 +489,7 @@ const Clients = () => {
 
             <div className='border-2 border-white w-full'></div>
             <div
-              className='overflow-y-auto text-sm'
+              className=' text-sm'
               style={{
                 top: `${tableTopPosition}px`,
                 right: 0,
