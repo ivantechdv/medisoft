@@ -31,6 +31,7 @@ const Form = ({
     date_consent: '',
     accept_conditions: false,
     date_condition: '',
+    official_qualification_id: '',
   });
   const [oldData, setOldData] = useState({
     id: '',
@@ -43,6 +44,7 @@ const Form = ({
     date_consent: '',
     accept_conditions: false,
     date_condition: '',
+    official_qualification_id: '',
   });
 
   const [loading, setLoading] = useState(true);
@@ -51,6 +53,8 @@ const Form = ({
   const [cooks, setCooks] = useState([]);
   const [educationalLevels, setEducationalLevels] = useState([]);
   const [timeExperiences, setTimeExperiences] = useState([]);
+  const [officialQualifications, setOfficialQualifications] = useState([]);
+
   const [languages, setLanguages] = useState([]);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
   const [selectedLanguagesAux, setSelectedLanguagesAux] = useState('');
@@ -87,6 +91,9 @@ const Form = ({
 
         const te = await getData('time-experiences/all');
         setTimeExperiences(te);
+        const oq = await getData('official-qualifications/all');
+        console.log('oq', oq);
+        setOfficialQualifications(oq);
 
         const responseLanguages = await getData('languages/all');
 
@@ -432,6 +439,30 @@ const Form = ({
                     ))}
                 </select>
               </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='official_qualification_id'
+                  className='block text-sm font-medium text-gray-700'
+                >
+                  Título Oficial
+                </label>
+                <select
+                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  name='official_qualification_id'
+                  id='official_qualification_id'
+                  onChange={handleChange}
+                  value={formData.official_qualification_id}
+                >
+                  <option value=''>Seleccione</option>
+                  {officialQualifications.length > 0 &&
+                    officialQualifications.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='col-span-1'></div>
               <div className='col-span-1'>
                 <label className='block text-sm font-medium text-gray-700'>
                   Consentimiento de contacto

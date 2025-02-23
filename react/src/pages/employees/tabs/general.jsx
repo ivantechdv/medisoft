@@ -602,6 +602,11 @@ const Form = ({
   };
 
   const deleteImage = async (image, key) => {
+    const confirmDelete = window.confirm(
+      '¿Está seguro de que desea eliminar esta imagen?',
+    );
+
+    if (!confirmDelete) return;
     try {
       const filename = image.split('/').pop();
       await deleteStorage(filename, 'employee');
@@ -887,8 +892,6 @@ const Form = ({
                   </>
                 )}
               </div>
-            </div>
-            <div className='col-span-1'>
               <div className='flex'>
                 <label className='block text-sm font-medium text-gray-700'>
                   DNI Frontal
@@ -952,7 +955,7 @@ const Form = ({
                   DNI Posterior
                 </label>
               </div>
-              <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
+              <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-start items-start relative'>
                 {images.dniBack != '' ? (
                   <>
                     <label htmlFor='dniBack' className='cursor-pointer'>
@@ -1005,6 +1008,54 @@ const Form = ({
                   </>
                 )}
               </div>
+              <FileInput
+                label='Curriculum'
+                name='attach_curriculum'
+                accept='.pdf'
+                onFileChange={(file) =>
+                  handleFileChange(file, 'attach_curriculum')
+                }
+                fileUrl={
+                  formData.attach_curriculum &&
+                  getStorage(formData.attach_curriculum)
+                }
+              />
+              <div className='flex mt-2'></div>
+              <FileInput
+                label='Referencia'
+                name='attach_reference'
+                accept='.pdf'
+                onFileChange={(file) =>
+                  handleFileChange(file, 'attach_reference')
+                }
+                fileUrl={
+                  formData.attach_reference &&
+                  getStorage(formData.attach_reference)
+                }
+              />
+
+              <div className='flex'>
+                {/* <label className='block text-sm font-medium text-gray-700'>
+                  Curriculum
+                </label> */}
+              </div>
+              {/* <input
+                  type='file'
+                  accept='.pdf'
+                  name='attach_curriculum'
+                  id='attach_curriculum'
+                  onChange={handleFileChange}
+                  style={{ width: '100%' }}
+                />
+                {formData.attach_curriculum && (
+                  <a
+                    href={getStorage(formData.attach_curriculum)}
+                    target='_blank'
+                    className='p-2 bg-green-500 rounded-lg'
+                  >
+                    <FaEye />
+                  </a>
+                )} */}
             </div>
           </div>
           <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
@@ -1580,7 +1631,7 @@ const Form = ({
                 </div>
               </div>
             </div>
-            <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
+            {/* <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
               <div>
                 <FileInput
                   label='Curriculum'
@@ -1609,7 +1660,7 @@ const Form = ({
                   }
                 />
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

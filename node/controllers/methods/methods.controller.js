@@ -80,7 +80,7 @@ CTRL.get = async (
   Model,
   where = {},
   include,
-  additionalSearchConditions = {}
+  additionalSearchConditions = []
 ) => {
   try {
     const { page = 1, pageSize, searchTerm, is_deleted } = req.query;
