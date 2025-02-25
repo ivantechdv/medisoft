@@ -635,6 +635,9 @@ const Form = ({
           position: 'top-left',
           type: 'success',
         });
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
     } catch (error) {
       console.log('error =>', error);
@@ -1016,8 +1019,11 @@ const Form = ({
                   handleFileChange(file, 'attach_curriculum')
                 }
                 fileUrl={
-                  formData.attach_curriculum &&
-                  getStorage(formData.attach_curriculum)
+                  oldData.attach_curriculum &&
+                  getStorage(oldData.attach_curriculum)
+                }
+                onDeleteImage={() =>
+                  deleteImage(oldData.attach_curriculum, 'attach_curriculum')
                 }
               />
               <div className='flex mt-2'></div>
@@ -1029,8 +1035,11 @@ const Form = ({
                   handleFileChange(file, 'attach_reference')
                 }
                 fileUrl={
-                  formData.attach_reference &&
-                  getStorage(formData.attach_reference)
+                  oldData.attach_reference &&
+                  getStorage(oldData.attach_reference)
+                }
+                onDeleteImage={() =>
+                  deleteImage(oldData.attach_reference, 'attach_reference')
                 }
               />
 
