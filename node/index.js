@@ -184,6 +184,7 @@ function routes() {
     trafic,
     require("./routes/storage/storage.routes")
   );
+  app.use("/api/form", trafic, require("./routes/form/form.routes"));
   app.use(
     "/api/v1/patologies",
     trafic,
