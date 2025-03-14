@@ -13,6 +13,197 @@ import {
   InfoSweetAlert,
 } from '../../components/SweetAlert/SweetAlert';
 import ToastNotify from '../../components/toast/toast';
+import DataTable from 'react-data-table-component';
+import { Resizable } from 'react-resizable';
+import 'react-resizable/css/styles.css'; // Importa los estilos de la librería
+const MyDataTable = ({ rows }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [isResizing, setIsResizing] = useState(false);
+  const [selectedRows, setSelectedRows] = useState([]);
+  const [selectedRowId, setSelectedRowId] = useState(null);
+  useEffect(() => {
+    const savedSelectedRows =
+      JSON.parse(localStorage.getItem('selectedRows')) || [];
+    setSelectedRows(savedSelectedRows);
+  }, []);
+
+  const dataTableKey = `${currentPage}-${selectedRowId}`;
+
+  // Añadir efecto para sincronizar selección con paginación
+  useEffect(() => {
+    if (selectedRowId && !rows.some((row) => row.id === selectedRowId)) {
+      setSelectedRowId(null);
+    }
+  }, [currentPage, rows, selectedRowId]);
+
+  // Modificar los estilos condicionales
+  const conditionalRowStyles = [
+    {
+      when: (row) => row.id === selectedRowId,
+      style: {
+        backgroundColor: '#dee0e2 !important',
+        '&:hover': {
+          backgroundColor: '#dee0e2 !important',
+        },
+      },
+    },
+    {
+      when: (row) => row.id !== selectedRowId,
+      style: {
+        '&:hover': {
+          backgroundColor: '#f3f4f6 !important',
+        },
+      },
+    },
+  ];
+
+  useEffect(() => {
+    localStorage.setItem('selectedRows', JSON.stringify(selectedRows));
+  }, [selectedRows]);
+
+  const handleRowSelected = ({ selectedRows }) => {
+    setSelectedRows(selectedRows);
+  };
+
+  const getColumnWidths = () => {
+    const savedWidths = JSON.parse(localStorage.getItem('columnWidths')) || {};
+    return {
+      id: savedWidths.id || 80,
+      dni: savedWidths.dni || 120,
+      full_name: savedWidths.full_name || 200,
+      email: savedWidths.email || 250,
+      phone: savedWidths.phone || 150,
+      family1: savedWidths.family1 || 180,
+      family1_phone: savedWidths.family1_phone || 150,
+      family2: savedWidths.family2 || 180,
+      family2_phone: savedWidths.family2_phone || 150,
+    };
+  };
+
+  const [columnWidths, setColumnWidths] = useState(getColumnWidths);
+
+  useEffect(() => {
+    localStorage.setItem('columnWidths', JSON.stringify(columnWidths));
+  }, [columnWidths]);
+
+  const handleResizeStart = () => setIsResizing(true);
+  const handleResizeStop = () => setIsResizing(false);
+
+  const handleResize =
+    (columnKey) =>
+    (e, { size }) => {
+      setColumnWidths((prev) => {
+        const newWidths = { ...prev, [columnKey]: size.width };
+        localStorage.setItem('columnWidths', JSON.stringify(newWidths));
+        return newWidths;
+      });
+    };
+
+  const resizableColumn = (name, key, selector) => ({
+    name: (
+      <Resizable
+        width={columnWidths[key]}
+        height={0}
+        onResize={handleResize(key)}
+        onResizeStart={handleResizeStart}
+        onResizeStop={handleResizeStop}
+        draggableOpts={{ enableUserSelectHack: false }}
+      >
+        <div>{name}</div>
+      </Resizable>
+    ),
+    selector,
+    sortable: !isResizing,
+    width: `${columnWidths[key]}px`,
+  });
+
+  const columns = [
+    resizableColumn('ID', 'id', (row) => row.id),
+    resizableColumn('DNI', 'dni', (row) => row.dni),
+    resizableColumn('Nombre completo', 'full_name', (row) => row.full_name),
+    resizableColumn('Correo electrónico', 'email', (row) => row.email),
+    resizableColumn('Teléfono', 'phone', (row) => row.phone),
+    resizableColumn(
+      'Familiar-1',
+      'family1',
+      (row) => row.families[0]?.name || '-',
+    ),
+    resizableColumn(
+      'Teléfono',
+      'family1_phone',
+      (row) => row.families[0]?.phone || '-',
+    ),
+    resizableColumn(
+      'Familiar-2',
+      'family2',
+      (row) => row.families[1]?.name || '-',
+    ),
+    resizableColumn(
+      'Teléfono',
+      'family2_phone',
+      (row) => row.families[1]?.phone || '-',
+    ),
+  ];
+
+  const data = rows.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage,
+  );
+  const handleRowClick = (row) => {
+    console.log('row.', row.id);
+    setSelectedRowId((prev) => (prev === row.id ? null : row.id));
+  };
+
+  // Función para ver detalles del cliente
+  const handleViewClient = (id) => {
+    console.log(`Ver detalles del cliente con ID: ${id}`);
+    // Aquí puedes agregar la navegación o modal para ver detalles
+  };
+  return (
+    <div>
+      <DataTable
+        key={dataTableKey}
+        columns={columns}
+        data={data}
+        fixedHeader
+        keyField='id'
+        fixedHeaderScrollHeight='600px'
+        selectableRows={false}
+        onSelectedRowsChange={handleRowSelected}
+        pagination={false}
+        conditionalRowStyles={conditionalRowStyles}
+        customStyles={{
+          rows: {
+            style: {
+              transition: 'background-color 0.3s ease',
+            },
+          },
+        }}
+        onRowClicked={(row) => handleRowClick(row)}
+        onRowDoubleClicked={(row) => handleViewClient(row.id)}
+      />
+
+      <div className='flex justify-center mt-4'>
+        <button
+          className='bg-gray-800 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded'
+          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          disabled={currentPage === 1}
+        >
+          <HiChevronDoubleLeft />
+        </button>
+        <span className='mx-4'>{currentPage}</span>
+        <button
+          className='bg-gray-800 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded'
+          onClick={() => setCurrentPage((prev) => prev + 1)}
+          disabled={currentPage * itemsPerPage >= rows.length}
+        >
+          <HiChevronDoubleRight />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const Clients = () => {
   const sweetAlert = ConfirmSweetAlert({
@@ -20,6 +211,7 @@ const Clients = () => {
     text: '¿Desea eliminar los clientes seleccionado?',
     icon: 'question',
   });
+
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -270,193 +462,191 @@ const Clients = () => {
     }
   };
   return (
-    <div className='max-w-full mx-auto'>
-      <Breadcrumbs
-        items={[
-          { label: 'Inicio', route: '/' },
-          { label: 'Clientes', route: '/Clients' },
-        ]}
-      />
-      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2 '>
-        <div
-          className={`${
-            selectedRow ? 'col-span-8' : 'col-span-10'
-          } h-[calc(100vh-85px)]
-overflow-auto`}
-        >
-          <div className='flex justify-between px-4 py-5 sm:px-6'>
-            <div>
-              <h3 className='text-lg font-semibold leading-6 text-gray-900'>
-                Lista de Clientes
-              </h3>
-              <p className='mt-1 max-w-2xl text-sm text-gray-500'>
-                Gestion de clientes.
-              </p>
-            </div>
-            <div className='flex space-x-2'>
-              <div className='relative'>
-                <input
-                  type='text'
-                  className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
-                  placeholder='Campo de busqueda'
-                  value={searchTerm}
-                  onChange={handleSearchTermChange}
-                />
-                {searchTerm && (
-                  <button
-                    type='button'
-                    className='absolute right-2  translate-y-1/2 text-gray-500 hover:text-gray-700'
-                    onClick={() => setSearchTerm('')}
-                    aria-label='Limpiar busqueda'
-                  >
-                    <svg
-                      xmlns='http://www.w3.org/2000/svg'
-                      className='h-4 w-4'
-                      fill='none'
-                      viewBox='0 0 24 24'
-                      stroke='currentColor'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                )}
-              </div>
-              <select
-                className='border border-gray-600 rounded h-8 px-2'
-                value={pageSize}
-                onChange={handlePageSizeChange}
-              >
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={0}>Todos</option>
-              </select>
+    <div className='max-w-full mx-auto bg-white'>
+      <div className='flex justify-between px-4 sm:px-6'>
+        <Breadcrumbs
+          items={[
+            { label: 'Inicio', route: '/' },
+            { label: 'Clientes', route: '/Clients' },
+          ]}
+        />
+
+        <div className='flex space-x-2'>
+          <div className='relative'>
+            <input
+              type='text'
+              className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
+              placeholder='Campo de busqueda'
+              value={searchTerm}
+              onChange={handleSearchTermChange}
+            />
+            {searchTerm && (
               <button
-                className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
-                onClick={handleFormClient}
+                type='button'
+                className='absolute right-2  translate-y-1/2 text-gray-500 hover:text-gray-700'
+                onClick={() => setSearchTerm('')}
+                aria-label='Limpiar busqueda'
               >
-                <FaPlusCircle className='text-lg' />
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  className='h-4 w-4'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
               </button>
-              <button
-                className={`bg-red-500 hover:bg-red-700 text-sm text-white font-bold py-2 px-2 rounded h-8 ${
-                  selectedRows.length === 0
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
-                }`}
-                disabled={selectedRows.length === 0}
-              >
-                <FaMinusCircle className='text-lg' onClick={handleDelete} />
-              </button>
-              <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-2 rounded h-8'>
-                <FaFilter className='text-lg' />
-              </button>
-            </div>
+            )}
           </div>
+          <select
+            className='border border-gray-600 rounded h-8 px-2'
+            value={pageSize}
+            onChange={handlePageSizeChange}
+          >
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+            <option value={0}>Todos</option>
+          </select>
+          <button
+            className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
+            onClick={handleFormClient}
+          >
+            <FaPlusCircle className='text-lg' />
+          </button>
+          <button
+            className={`bg-red-500 hover:bg-red-700 text-sm text-white font-bold py-2 px-2 rounded h-8 ${
+              selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            disabled={selectedRows.length === 0}
+          >
+            <FaMinusCircle className='text-lg' onClick={handleDelete} />
+          </button>
+          <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-2 rounded h-8'>
+            <FaFilter className='text-lg' />
+          </button>
+        </div>
+      </div>
+      <div className='max-w-full mx-auto bg-white shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2 '>
+        <div className={`${selectedRow ? 'col-span-8' : 'col-span-10'}`}>
           <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
-            <table className='w-full divide-y divide-tableHeader mb-4 table-container2 text-xs'>
-              <thead className='bg-tableHeader'>
-                <tr>
-                  <th></th>
-                  <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                    ID
-                  </th>
-                  <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                    DNI
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                    Nombre completo
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                    Correo electrónico
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                    Teléfono
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
-                    Familiar-1
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                    Teléfono
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
-                    Familiar-2
-                  </th>
-                  <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                    Teléfono
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.length > 0 &&
-                  rows.map((row) => (
-                    <tr
-                      onMouseEnter={(e) => {
-                        if (row.id !== selectedRowId) {
-                          e.currentTarget.style.backgroundColor = '#F3F4F6';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (row.id !== selectedRowId) {
-                          e.currentTarget.style.backgroundColor = 'inherit';
-                        }
-                      }}
-                      onClick={(e) => handleRowClick(row, e)}
-                      onDoubleClick={() => handleViewClient(row.id)}
-                      style={{
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #ccc',
-                        backgroundColor:
-                          row.id === selectedRowId ? '#dee0e2' : 'inherit',
-                      }}
-                    >
-                      <td
-                        className='text-center py-1'
-                        onClick={(e) => e.stopPropagation()}
+            <div className='overflow-x-auto max-h-[800px]'>
+              {/* Contenedor de la tabla con table-layout: fixed */}
+              {/* <MyDataTable rows={rows} /> */}
+              <table
+                className='min-w-full divide-y divide-tableHeader mb-4 table-container2 text-xs'
+                style={{ tableLayout: 'fixed' }}
+              >
+                {/* Thead con posición sticky */}
+                <thead className='bg-tableHeader '>
+                  <tr>
+                    <th className='sticky left-0 bg-tableHeader z-10'></th>
+                    <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                      ID
+                    </th>
+                    <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                      DNI
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                      Nombre completo
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                      Correo electrónico
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                      Teléfono
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
+                      Familiar-1
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                      Teléfono
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
+                      Familiar-2
+                    </th>
+                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
+                      Teléfono
+                    </th>
+                  </tr>
+                </thead>
+
+                {/* Cuerpo de la tabla (tbody) */}
+                <tbody className='overflow-y-auto max-h-[400px]'>
+                  {rows.length > 0 &&
+                    rows.map((row) => (
+                      <tr
+                        key={row.id}
+                        onMouseEnter={(e) => {
+                          if (row.id !== selectedRowId) {
+                            e.currentTarget.style.backgroundColor = '#F3F4F6';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (row.id !== selectedRowId) {
+                            e.currentTarget.style.backgroundColor = 'inherit';
+                          }
+                        }}
+                        onClick={(e) => handleRowClick(row, e)}
+                        onDoubleClick={() => handleViewClient(row.id)}
+                        style={{
+                          cursor: 'pointer',
+                          borderBottom: '1px solid #ccc',
+                          backgroundColor:
+                            row.id === selectedRowId ? '#dee0e2' : 'inherit',
+                        }}
                       >
-                        <input
-                          type='checkbox'
-                          id='selectrow'
-                          name='selectrow'
-                          checked={selectedRows.includes(row.id)}
-                          onChange={() => handleSelectRow(row.id)}
-                        />
-                      </td>
-                      <td className='px-3'>
-                        <label className='text-primary'>{row.id}</label>
-                      </td>
-                      <td className='px-3'>
-                        <label className='text-primary'>{row.dni}</label>
-                      </td>
-                      <td className='max-w-xs truncate px-2'>
-                        {row.full_name}
-                      </td>
-                      <td className='max-w-xs truncate px-2'>{row.email}</td>
-                      <td className='max-w-xs truncate px-2'>{row.phone}</td>
-                      <td className='max-w-xs truncate px-2'>
-                        {row.families[0]?.name}
-                      </td>
-                      <td className='max-w-xs truncate px-2'>
-                        {row.families[0]?.phone}
-                      </td>
-                      <td className='max-w-xs truncate px-2'>
-                        {row.families[1]?.name}
-                      </td>
-                      <td className='max-w-xs truncate px-2'>
-                        {row.families[1]?.phone}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+                        <td
+                          className='text-center py-1'
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type='checkbox'
+                            id='selectrow'
+                            name='selectrow'
+                            checked={selectedRows.includes(row.id)}
+                            onChange={() => handleSelectRow(row.id)}
+                          />
+                        </td>
+                        <td className='px-3'>
+                          <label className='text-primary'>{row.id}</label>
+                        </td>
+                        <td className='px-3'>
+                          <label className='text-primary'>{row.dni}</label>
+                        </td>
+                        <td className='max-w-xs truncate px-2'>
+                          {row.full_name}
+                        </td>
+                        <td className='max-w-xs truncate px-2'>{row.email}</td>
+                        <td className='max-w-xs truncate px-2'>{row.phone}</td>
+                        <td className='max-w-xs truncate px-2'>
+                          {row.families[0]?.name}
+                        </td>
+                        <td className='max-w-xs truncate px-2'>
+                          {row.families[0]?.phone}
+                        </td>
+                        <td className='max-w-xs truncate px-2'>
+                          {row.families[1]?.name}
+                        </td>
+                        <td className='max-w-xs truncate px-2'>
+                          {row.families[1]?.phone}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
             {renderPagination()}
           </div>
         </div>
+
         {/* Modal */}
         {selectedRow && (
           <div

@@ -21,6 +21,7 @@ import ModalLogs from './modalLogs';
 import FollowUps from './tabs/followUps';
 import Families from '../families';
 import FamiliarCard from '../families/view';
+import { formatPhoneNumber } from '../../utils/customFormat';
 const Clients = () => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -386,7 +387,9 @@ const Clients = () => {
                     className='truncate max-w-xs hover:text-blue-600 transition-colors'
                     title={`${cardData.code_phone} ${cardData.phone}`} // Mostrar el teléfono completo en un tooltip
                   >
-                    {`${cardData.code_phone} ${cardData.phone || 'Teléfono'}`}
+                    {`${cardData.code_phone} ${formatPhoneNumber(
+                      cardData.phone,
+                    )}`}
                   </a>
                 </div>
               </div>

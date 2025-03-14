@@ -13,6 +13,7 @@ import ToastNotify from '../../../components/toast/toast';
 import { FaExpand, FaMinusCircle } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
 import ChangeLogger from '../../../components/changeLogger';
+import { formatPhoneNumber } from '../../../utils/customFormat';
 const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -119,7 +120,9 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       if (onFormData) {
         setFormData(onFormData);
         //calcula la edad
-        const age = calculateAge(onFormData.born_date);
+        const age = onFormData.born_date
+          ? calculateAge(onFormData.born_date)
+          : '0';
         setFormData((prevFormData) => ({
           ...prevFormData,
           ['age']: age,
@@ -337,7 +340,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const handleChange = (event) => {
     const { id, value } = event.target;
     if (id === 'born_date') {
-      const age = calculateAge(value);
+      const age = value != '' ? calculateAge(value) : '0';
       setFormData((prevFormData) => ({
         ...prevFormData,
         ['age']: age,
@@ -406,7 +409,6 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     { field: 'start_date', label: 'Fecha de alta' },
     { field: 'first_name', label: 'Nombres' },
     { field: 'last_name', label: 'Apellidos' },
-    { field: 'born_date', label: 'Fecha de nacimiento' },
     { field: 'gender_id', label: 'Género' },
     { field: 'email', label: 'Correo electrónico' },
     { field: 'phone', label: 'Teléfono' },
@@ -506,7 +508,10 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           }
         }
       }
-      const dataToSend = { ...formData };
+      const dataToSend = {
+        ...formData,
+        born_date: formData.born_date ? new Date(formData.born_date) : null,
+      };
 
       const languageIds = selectedLanguages.map((language) => language.value);
       dataToSend.language_id = languageIds.join(',');
@@ -1136,7 +1141,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   id='phone'
                   name='phone'
                   onChange={handleChange}
-                  value={formData.phone}
+                  value={formatPhoneNumber(formData.phone)}
                   className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
                   placeholder='Número de teléfono'
                 />

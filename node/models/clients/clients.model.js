@@ -89,7 +89,6 @@ const Client = sequelize.define("clients", {
   born_date: {
     type: DataTypes.DATEONLY,
     allowNull: true,
-    defaultValue: sequelize.literal("CURRENT_DATE"),
   },
   is_active: {
     type: DataTypes.BOOLEAN,
