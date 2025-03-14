@@ -49,17 +49,33 @@ const Families = ({
     if (!formData.phone) {
       newErrors.phone = 'El teléfono es obligatorio.';
     }
-    if (!formData.email) {
-      newErrors.email = 'El correo electrónico es obligatorio.';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'El correo electrónico no es válido.';
+    }
+    if (!formData.priority) {
+      newErrors.priority = 'La prioridad es obligatoria.';
+    } else if (
+      isNaN(formData.priority) ||
+      formData.priority <= 0 ||
+      !Number.isInteger(Number(formData.priority))
+    ) {
+      newErrors.priority = 'La prioridad debe ser un número entero positivo.';
     }
     return newErrors;
   };
 
+  const isValidEmail = (email) => {
+    return /\S+@\S+\.\S+/.test(email); // Valida formato de email
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let rawValue = value;
+    if (name == 'phone') {
+      rawValue = value.replace(/\D/g, '');
+    }
+
+    setFormData({ ...formData, [name]: rawValue });
   };
 
   const handleSubmit = async (e) => {
@@ -127,16 +143,24 @@ const Families = ({
   };
 
   const toggleNotification = () => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      send_comunication: !prevFormData.send_comunication,
-    }));
+    if (isValidEmail(formData.email)) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        send_comunication: !prevFormData.send_comunication,
+      }));
+    }
   };
-  const toggleInvoice = async () => {
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      send_invoice: !prevFormData.send_invoice,
-    }));
+
+  const toggleInvoice = () => {
+    if (isValidEmail(formData.email)) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        send_invoice: !prevFormData.send_invoice,
+      }));
+    }
+  };
+  const formatPhoneNumber = (phone) => {
+    return phone.replace(/(\d{3})(?=\d)/g, '$1 ');
   };
   return isOpen ? (
     <div className='fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-10'>
@@ -168,7 +192,7 @@ const Families = ({
             <input
               type='text'
               name='phone'
-              value={formData.phone}
+              value={formatPhoneNumber(formData.phone)}
               onChange={handleInputChange}
               class={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm ${
                 errors.phone ? 'border-red-500' : ''
@@ -225,8 +249,13 @@ const Families = ({
                   type='button'
                   className={`relative inline-flex items-center h-4 rounded-full w-8 mr-2  mt-1 ${
                     formData.send_comunication ? 'bg-primary' : 'bg-gray-300'
+                  }${
+                    !isValidEmail(formData.email)
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
                   }`}
                   onClick={toggleNotification}
+                  disabled={!isValidEmail(formData.email)}
                 >
                   <span
                     className={`inline-block w-4 h-4 transform rounded-full bg-white shadow-md transition-transform ${
@@ -243,8 +272,13 @@ const Families = ({
                   type='button'
                   className={`relative inline-flex items-center h-4 rounded-full w-8 mr-2  mt-1 ${
                     formData.send_invoice ? 'bg-primary' : 'bg-gray-300'
+                  }${
+                    !isValidEmail(formData.email)
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
                   }`}
                   onClick={toggleInvoice}
+                  disabled={!isValidEmail(formData.email)}
                 >
                   <span
                     className={`inline-block w-4 h-4 transform rounded-full bg-white shadow-md transition-transform ${

@@ -74,3 +74,30 @@ input:disabled,
 textarea:disabled {
   background-color: #efefef; /* Aplica el color de fondo cuando el input está deshabilitado */
 }
+.resizable-header {
+  display: flex;
+  align-items: right;
+  justify-content: space-between;
+  position: relative;
+  padding-right: 20px;
+  width: 10px;
+  border-right: 4px solid #a6ff00; /* Borde derecho para indicar que se puede redimensionar */
+  cursor: col-resize;
+}
+
+.react-resizable-handle {
+  position: relative;
+  margin-right: 10px;
+  margin-left: 10px;
+  top: 0;
+  width: 10px;
+  height: 50% !important;
+  cursor: col-resize;
+  border: 1px solid #000000 !important;
+  background: rgba(
+    255,
+    225,
+    225,
+    0.1
+  ); /* Sutil indicador del área de redimensión */
+}
