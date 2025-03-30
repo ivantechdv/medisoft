@@ -101,6 +101,7 @@ CTRL.get = async (
           { email: { [Op.like]: `%${searchTerm}%` } },
           { dni: { [Op.like]: `%${searchTerm}%` } },
           { phone: { [Op.like]: `%${searchTerm}%` } },
+          { id: { [Op.like]: `%${searchTerm}%` } },
           ...additionalSearchConditions,
         ],
       }),
@@ -227,7 +228,7 @@ CTRL.getAll = async (
 
     console.log("condition =>", condition);
     const result = await Model.findAll({
-      where: condition,
+      where: { ...condition, ...where },
       include: optionInclude,
       order: order, // Añadir el parámetro 'order' a la consulta
     });

@@ -13,8 +13,12 @@ import ToastNotify from '../../../components/toast/toast';
 import { FaExpand, FaMinusCircle } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
 import ChangeLogger from '../../../components/changeLogger';
-import { formatPhoneNumber } from '../../../utils/customFormat';
+import {
+  formatPhoneNumber,
+  formatISOToDate,
+} from '../../../utils/customFormat';
 const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
+  const inputRef = useRef(null);
   const [formData, setFormData] = useState({
     dni: '',
     start_date: '',
@@ -37,6 +41,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     recommendations: '',
     age: '',
     observations: '',
+    createdAt: '',
   });
   const [oldData, setOldData] = useState({
     dni: '',
@@ -60,6 +65,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
     recommendations: '',
     age: '',
     observations: '',
+    createdAt: '',
   });
   const [images, setImages] = useState({
     photo: '',
@@ -347,12 +353,19 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       }));
     }
     if (id === 'phone') {
+      const cursorPosition = event.target.selectionStart;
       const newValue = value.replace(/\D/g, '');
       if (newValue?.length <= 9) {
         setFormData((prevFormData) => ({
           ...prevFormData,
           [id]: newValue,
         }));
+
+        setTimeout(() => {
+          if (inputRef.current) {
+            inputRef.current.setSelectionRange(cursorPosition, cursorPosition);
+          }
+        }, 0);
       }
     } else {
       setFormData((prevFormData) => {
@@ -418,39 +431,49 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
 
   const validateRequiredFields = () => {
     let isValid = true;
-    requiredFields.forEach((required) => {
-      const value = formData[required.field];
 
-      // Validar campos vacíos
-      if (value === undefined || value === '') {
+    if (formData.type == 'Posible Cliente') {
+      if (formData.is_active === undefined || formData.is_active === '') {
         ToastNotify({
-          message: `El campo ${required.label} es requerido.`,
+          message: `El campo estado es requerido.`,
           position: 'top-left',
           type: 'error',
         });
-        isValid = false;
+        return false;
       }
-      if (required.field === 'born_date') {
-        const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // Formato: YYYY-MM-DD
-        if (!dateRegex.test(value) || isNaN(new Date(value).getTime())) {
+    } else {
+      requiredFields.forEach((required) => {
+        const value = formData[required.field];
+
+        // Validar campos vacíos
+        if (value === undefined || value === '') {
           ToastNotify({
-            message: `El campo ${required.label} debe ser una fecha válida`,
+            message: `El campo ${required.label} es requerido.`,
             position: 'top-left',
             type: 'error',
           });
           isValid = false;
         }
+        if (required.field === 'born_date') {
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/; // Formato: YYYY-MM-DD
+          if (!dateRegex.test(value) || isNaN(new Date(value).getTime())) {
+            ToastNotify({
+              message: `El campo ${required.label} debe ser una fecha válida`,
+              position: 'top-left',
+              type: 'error',
+            });
+            isValid = false;
+          }
+        }
+      });
+
+      if (!isValid) {
+        // Detener el envío del formulario si algún campo requerido está vacío
+        return false;
       }
-    });
-
-    if (!isValid) {
-      // Detener el envío del formulario si algún campo requerido está vacío
-      return false;
     }
-
     return true;
   };
-
   function changeValueSelect(data) {
     const newData = { ...data };
     for (const key in data) {
@@ -931,7 +954,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
             </div>
           </div>
           <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
-            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
+            <div className='col-span-2 md:grid md:grid-cols-4 gap-2'>
               <div className='col-span-1'>
                 <label
                   htmlFor='is_active'
@@ -991,6 +1014,22 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   htmlFor='date_start'
                   className='block text-sm font-medium text-blue-500'
                 >
+                  Fecha de creacion
+                </label>
+                <input
+                  type='date'
+                  id='createdAt'
+                  name='createdAt'
+                  value={formatISOToDate(formData.createdAt)}
+                  disabled={true}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='date_start'
+                  className='block text-sm font-medium text-blue-500'
+                >
                   Fecha de alta
                 </label>
                 <input
@@ -1002,6 +1041,8 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>
+            </div>
+            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
               <div className='col-span-1'>
                 <label
                   htmlFor='dni'
@@ -1127,7 +1168,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
                 >
                   <option value='' disabled>
-                    Seleccione...
+                    Cód País
                   </option>
                   {countries?.length > 0 &&
                     countries.map((option) => (
@@ -1137,6 +1178,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                     ))}
                 </select>
                 <input
+                  ref={inputRef}
                   type='text'
                   id='phone'
                   name='phone'
@@ -1212,7 +1254,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                 htmlFor='state_id'
                 className='block text-sm font-medium text-blue-500'
               >
-                Estado
+                Provincia{' '}
               </label>
               <select
                 id='state_id'

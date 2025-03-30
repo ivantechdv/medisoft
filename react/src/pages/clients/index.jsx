@@ -16,9 +16,14 @@ import ToastNotify from '../../components/toast/toast';
 import DataTable from 'react-data-table-component';
 import { Resizable } from 'react-resizable';
 import 'react-resizable/css/styles.css'; // Importa los estilos de la librería
-const MyDataTable = ({ rows }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+const MyDataTable = ({
+  rows,
+  onHandleRowClick,
+  onRenderPagination,
+  currentPage,
+  pageSize,
+  onHandleViewClient,
+}) => {
   const [isResizing, setIsResizing] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedRowId, setSelectedRowId] = useState(null);
@@ -146,37 +151,50 @@ const MyDataTable = ({ rows }) => {
     ),
   ];
 
-  const data = rows.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage,
-  );
   const handleRowClick = (row) => {
     console.log('row.', row.id);
+    onHandleRowClick(row);
     setSelectedRowId((prev) => (prev === row.id ? null : row.id));
   };
 
   // Función para ver detalles del cliente
   const handleViewClient = (id) => {
+    onHandleViewClient(id);
     console.log(`Ver detalles del cliente con ID: ${id}`);
     // Aquí puedes agregar la navegación o modal para ver detalles
   };
   return (
     <div>
       <DataTable
-        key={dataTableKey}
+        key={currentPage}
         columns={columns}
-        data={data}
+        data={rows}
         fixedHeader
         keyField='id'
-        fixedHeaderScrollHeight='600px'
-        selectableRows={false}
+        fixedHeaderScrollHeight='calc(100vh - 130px)'
+        selectableRows={true}
         onSelectedRowsChange={handleRowSelected}
         pagination={false}
         conditionalRowStyles={conditionalRowStyles}
         customStyles={{
           rows: {
             style: {
-              transition: 'background-color 0.3s ease',
+              minHeight: '32px',
+              height: '32px',
+              fontSize: '14px',
+              padding: '4px 8px',
+              cursor: 'pointer', // 🔥 Cambia el cursor a pointer
+            },
+          },
+          headCells: {
+            style: {
+              position: 'sticky', // 🔥 Hace que los títulos queden fijos
+              top: 0,
+              backgroundColor: '#f8f9fa', // Color de fondo para diferenciarlos
+              zIndex: 2, // Asegura que estén por encima del contenido
+              fontSize: '14px',
+              fontWeight: 'bold',
+              padding: '6px 8px',
             },
           },
         }}
@@ -184,23 +202,7 @@ const MyDataTable = ({ rows }) => {
         onRowDoubleClicked={(row) => handleViewClient(row.id)}
       />
 
-      <div className='flex justify-center mt-4'>
-        <button
-          className='bg-gray-800 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded'
-          onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-          disabled={currentPage === 1}
-        >
-          <HiChevronDoubleLeft />
-        </button>
-        <span className='mx-4'>{currentPage}</span>
-        <button
-          className='bg-gray-800 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded'
-          onClick={() => setCurrentPage((prev) => prev + 1)}
-          disabled={currentPage * itemsPerPage >= rows.length}
-        >
-          <HiChevronDoubleRight />
-        </button>
-      </div>
+      {onRenderPagination()}
     </div>
   );
 };
@@ -267,7 +269,7 @@ const Clients = () => {
         return { ...row, families: sortedFamilies };
       });
       setRows(sortedRows);
-      setTotalPages(meta.totalPages);
+      setTotalPages(meta.totalPages || 1);
     } catch (error) {
       console.error('Error ', error);
     } finally {
@@ -537,113 +539,17 @@ const Clients = () => {
       <div className='max-w-full mx-auto bg-white shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2 '>
         <div className={`${selectedRow ? 'col-span-8' : 'col-span-10'}`}>
           <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
-            <div className='overflow-x-auto max-h-[800px]'>
+            <div className='overflow-x-auto max-h-screen'>
               {/* Contenedor de la tabla con table-layout: fixed */}
-              {/* <MyDataTable rows={rows} /> */}
-              <table
-                className='min-w-full divide-y divide-tableHeader mb-4 table-container2 text-xs'
-                style={{ tableLayout: 'fixed' }}
-              >
-                {/* Thead con posición sticky */}
-                <thead className='bg-tableHeader '>
-                  <tr>
-                    <th className='sticky left-0 bg-tableHeader z-10'></th>
-                    <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                      ID
-                    </th>
-                    <th className='px-3 py-1 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                      DNI
-                    </th>
-                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                      Nombre completo
-                    </th>
-                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                      Correo electrónico
-                    </th>
-                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                      Teléfono
-                    </th>
-                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
-                      Familiar-1
-                    </th>
-                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                      Teléfono
-                    </th>
-                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider whitespace-nowrap'>
-                      Familiar-2
-                    </th>
-                    <th className='px-2 py-2 text-left text-xs font-medium text-secondary uppercase tracking-wider'>
-                      Teléfono
-                    </th>
-                  </tr>
-                </thead>
-
-                {/* Cuerpo de la tabla (tbody) */}
-                <tbody className='overflow-y-auto max-h-[400px]'>
-                  {rows.length > 0 &&
-                    rows.map((row) => (
-                      <tr
-                        key={row.id}
-                        onMouseEnter={(e) => {
-                          if (row.id !== selectedRowId) {
-                            e.currentTarget.style.backgroundColor = '#F3F4F6';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (row.id !== selectedRowId) {
-                            e.currentTarget.style.backgroundColor = 'inherit';
-                          }
-                        }}
-                        onClick={(e) => handleRowClick(row, e)}
-                        onDoubleClick={() => handleViewClient(row.id)}
-                        style={{
-                          cursor: 'pointer',
-                          borderBottom: '1px solid #ccc',
-                          backgroundColor:
-                            row.id === selectedRowId ? '#dee0e2' : 'inherit',
-                        }}
-                      >
-                        <td
-                          className='text-center py-1'
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <input
-                            type='checkbox'
-                            id='selectrow'
-                            name='selectrow'
-                            checked={selectedRows.includes(row.id)}
-                            onChange={() => handleSelectRow(row.id)}
-                          />
-                        </td>
-                        <td className='px-3'>
-                          <label className='text-primary'>{row.id}</label>
-                        </td>
-                        <td className='px-3'>
-                          <label className='text-primary'>{row.dni}</label>
-                        </td>
-                        <td className='max-w-xs truncate px-2'>
-                          {row.full_name}
-                        </td>
-                        <td className='max-w-xs truncate px-2'>{row.email}</td>
-                        <td className='max-w-xs truncate px-2'>{row.phone}</td>
-                        <td className='max-w-xs truncate px-2'>
-                          {row.families[0]?.name}
-                        </td>
-                        <td className='max-w-xs truncate px-2'>
-                          {row.families[0]?.phone}
-                        </td>
-                        <td className='max-w-xs truncate px-2'>
-                          {row.families[1]?.name}
-                        </td>
-                        <td className='max-w-xs truncate px-2'>
-                          {row.families[1]?.phone}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+              <MyDataTable
+                rows={rows}
+                onHandleRowClick={handleRowClick}
+                onHandleViewClient={handleViewClient}
+                onRenderPagination={renderPagination}
+                currentPage={currentPage}
+                pageSize={pageSize}
+              />
             </div>
-            {renderPagination()}
           </div>
         </div>
 
@@ -782,7 +688,7 @@ overflow-auto'
               <div
                 className='whitespace-pre-line'
                 dangerouslySetInnerHTML={{
-                  __html: selectedRow.observations.replace(/\n/g, '<br>'),
+                  __html: selectedRow.observations?.replace(/\n/g, '<br>'),
                 }}
               ></div>
             </div>

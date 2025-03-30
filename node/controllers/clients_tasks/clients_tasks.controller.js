@@ -53,10 +53,12 @@ CTRL.create = async (req, res, next) => {
 
     // Agregar nuevas patologías
     if (patologiesToAdd.length > 0) {
-      const dataToInsert = patologiesToAdd.map((task_id) => ({
-        client_id: clientId,
-        task_id,
-      }));
+      const dataToInsert = patologiesToAdd
+        .filter((task_id) => task_id !== 0)
+        .map((task_id) => ({
+          client_id: clientId,
+          task_id,
+        }));
       await Methods.createOrUpdateBulk(dataToInsert, ClientTask);
     }
 

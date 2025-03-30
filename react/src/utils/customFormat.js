@@ -6,6 +6,11 @@ export const formatPhoneNumber = (phone) => {
   return phone.replace(/(\d{3})(?=\d)/g, '$1 ');
 };
 
+export const formatISOToDate = (isoString) => {
+  if (!isoString) return ''; // Manejo de valores nulos o indefinidos
+  return isoString.split('T')[0]; // Extrae solo la parte de la fecha
+};
+
 // Formatea un correo electrónico a minúsculas
 export const formatEmail = (email) => {
   if (!email) return '';

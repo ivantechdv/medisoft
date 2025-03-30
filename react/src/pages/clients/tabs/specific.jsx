@@ -151,40 +151,65 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (selectedPatologies.length === 0) {
-      ToastNotify({
-        message: 'Debe seleccionar al menos una patología.',
-        position: 'top-left',
-        type: 'error',
-      });
-      return; // Detener el envío del formulario
-    }
+    // if (selectedPatologies.length === 0) {
+    //   ToastNotify({
+    //     message: 'Debe seleccionar al menos una patología.',
+    //     position: 'top-left',
+    //     type: 'error',
+    //   });
+    //   return; // Detener el envío del formulario
+    // }
 
     // Validar si el campo de recomendaciones está vacío
-    if (isQuillContentEmpty(recommendations)) {
-      ToastNotify({
-        message: 'El campo de recomendaciones no puede estar vacío.',
-        position: 'top-left',
-        type: 'error',
-      });
-      return; // Detener el envío del formulario
-    }
+    // if (isQuillContentEmpty(recommendations)) {
+    //   ToastNotify({
+    //     message: 'El campo de recomendaciones no puede estar vacío.',
+    //     position: 'top-left',
+    //     type: 'error',
+    //   });
+    //   return; // Detener el envío del formulario
+    // }
     setIsLoading(true);
     try {
       let message = '';
-      const clientsPatologiesData = selectedPatologies.map((patology) => ({
-        patology_id: patology.value, // Suponiendo que el valor es el id de la patología
-        client_id: id,
-      }));
-      let response = false;
-      response = await postData('clients-patologies', clientsPatologiesData);
-      console.log('response', response);
-
-      const clientsTasksData = selectedTasks.map((task) => ({
-        task_id: task.value, // Suponiendo que el valor es el id de la patología
-        client_id: id,
-      }));
       let responseTask = false;
+      let responsePatologies = false;
+      let response = false;
+      let clientsPatologiesData;
+      if (selectedPatologies.length != 0) {
+        clientsPatologiesData = selectedPatologies.map((patology) => ({
+          patology_id: patology.value, // Suponiendo que el valor es el id de la patología
+          client_id: id,
+        }));
+      } else {
+        clientsPatologiesData = [
+          {
+            patology_id: 0, // Suponiendo que el valor es el id de la patología
+            client_id: id,
+          },
+        ];
+      }
+
+      responsePatologies = await postData(
+        'clients-patologies',
+        clientsPatologiesData,
+      );
+      console.log('response', responsePatologies);
+      let clientsTasksData;
+      if (selectedTasks.length != 0) {
+        clientsTasksData = selectedTasks.map((task) => ({
+          task_id: task.value, // Suponiendo que el valor es el id de la patología
+          client_id: id,
+        }));
+      } else {
+        clientsTasksData = [
+          {
+            task_id: 0, // Suponiendo que el valor es el id de la patología
+            client_id: id,
+          },
+        ];
+      }
+
       responseTask = await postData('clients-tasks', clientsTasksData);
       console.log('responseTask', responseTask);
 
@@ -193,8 +218,17 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       };
       response = await putData('clients/' + id, dataToSend);
       if (response) {
-        onGetRecordById(id);
-        message = 'Datos especificos registrado con exito';
+        if (
+          recommendations == '' &&
+          responseTask == false &&
+          responsePatologies == false
+        ) {
+          message = 'No hay datos para actualizar';
+        } else {
+          message = 'Datos especificos registrado con exito';
+          onGetRecordById(id);
+        }
+
         ToastNotify({
           message: message,
           position: 'top-left',

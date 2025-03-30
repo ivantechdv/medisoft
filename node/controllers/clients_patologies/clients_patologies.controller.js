@@ -33,11 +33,13 @@ CTRL.create = async (req, res, next) => {
 
     const existingPatologyIds = existingPatologies.map((cp) => cp.patology_id);
     const newPatologyIds = clientsPatologiesData.map((cp) => cp.patology_id);
-
+    console.log("newPatologyIds", newPatologyIds);
     // Filtrar cuáles agregar y cuáles eliminar
     const patologiesToAdd = newPatologyIds.filter(
       (p) => !existingPatologyIds.includes(p)
     );
+
+    console.log("patologiesToAdd", patologiesToAdd);
     const patologiesToRemove = existingPatologyIds.filter(
       (p) => !newPatologyIds.includes(p)
     );
@@ -53,10 +55,12 @@ CTRL.create = async (req, res, next) => {
 
     // Agregar nuevas patologías
     if (patologiesToAdd.length > 0) {
-      const dataToInsert = patologiesToAdd.map((patology_id) => ({
-        client_id: clientId,
-        patology_id,
-      }));
+      const dataToInsert = patologiesToAdd
+        .filter((patology_id) => patology_id !== 0) // Filtra los que no sean 0
+        .map((patology_id) => ({
+          client_id: clientId,
+          patology_id,
+        }));
       await Methods.createOrUpdateBulk(dataToInsert, ClientPatology);
     }
 
