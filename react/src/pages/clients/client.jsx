@@ -275,6 +275,8 @@ const Clients = () => {
   };
   const getFamilies = async () => {
     const response = await getData('family/getByClientId?client_id=' + id);
+
+    console.log('response', response);
     const sortedFamilies = response.sort((a, b) => {
       // Verifica si 'priority' de 'a' es nulo o indefinido
       const aPriorityEmpty = a.priority === null || a.priority === undefined;

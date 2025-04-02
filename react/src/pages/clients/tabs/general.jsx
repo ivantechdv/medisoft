@@ -353,19 +353,38 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
       }));
     }
     if (id === 'phone') {
-      const cursorPosition = event.target.selectionStart;
-      const newValue = value.replace(/\D/g, '');
-      if (newValue?.length <= 9) {
+      const input = event.target;
+      const rawValue = value.replace(/\D/g, ''); // Remueve caracteres no numéricos
+      const prevFormatted = formatPhoneNumber(formData[id] || ''); // Formato anterior
+      const newFormatted = formatPhoneNumber(rawValue); // Nuevo formato
+
+      // Obtener la posición previa del cursor antes de actualizar el estado
+      let cursorPosition = input.selectionStart;
+
+      // Ajustar la posición del cursor según la cantidad de espacios añadidos
+      const addedSpaces =
+        (newFormatted.match(/ /g) || []).length -
+        (prevFormatted.match(/ /g) || []).length;
+      cursorPosition += addedSpaces;
+
+      if (rawValue.length <= 9) {
         setFormData((prevFormData) => ({
           ...prevFormData,
-          [id]: newValue,
+          [id]: rawValue,
         }));
 
-        setTimeout(() => {
+        requestAnimationFrame(() => {
           if (inputRef.current) {
-            inputRef.current.setSelectionRange(cursorPosition, cursorPosition);
+            const newCursorPosition = Math.min(
+              cursorPosition,
+              newFormatted.length,
+            );
+            inputRef.current.setSelectionRange(
+              newCursorPosition,
+              newCursorPosition,
+            );
           }
-        }, 0);
+        });
       }
     } else {
       setFormData((prevFormData) => {
@@ -1021,7 +1040,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
                   id='createdAt'
                   name='createdAt'
                   value={formatISOToDate(formData.createdAt)}
-                  disabled={true}
+                  onChange={handleChange}
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>

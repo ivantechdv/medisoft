@@ -39,6 +39,7 @@
     "react-select": "^5.8.0",
     "react-tooltip": "^5.27.0",
     "react-transition-group": "^4.4.5",
+    "styled-components": "^6.1.16",
     "sweetalert2": "^11.10.4"
   },
   "devDependencies": {
