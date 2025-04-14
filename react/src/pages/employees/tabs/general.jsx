@@ -1451,7 +1451,7 @@ const Form = ({
                   htmlFor='state_id'
                   className='block text-sm font-medium text-gray-700'
                 >
-                  Estado
+                  Provincia
                 </label>
                 <select
                   id='state_id'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ConfirmSweetAlert,
   InfoSweetAlert,
@@ -24,7 +24,7 @@ const Families = ({
   });
 
   const [errors, setErrors] = useState({});
-
+  const inputRef = useRef(null);
   // Actualizar el estado si formDataFamily cambia
   useEffect(() => {
     console.log('formDataFamily', formDataFamily);
@@ -72,10 +72,42 @@ const Families = ({
     const { name, value } = e.target;
     let rawValue = value;
     if (name == 'phone') {
-      rawValue = value.replace(/\D/g, '');
-    }
+      const input = e.target;
+      const rawValue = value.replace(/\D/g, ''); // Remueve caracteres no numéricos
+      const prevFormatted = formatPhoneNumber(formData[name] || ''); // Formato anterior
+      const newFormatted = formatPhoneNumber(rawValue); // Nuevo formato
 
-    setFormData({ ...formData, [name]: rawValue });
+      // Obtener la posición previa del cursor antes de actualizar el estado
+      let cursorPosition = input.selectionStart;
+
+      // Ajustar la posición del cursor según la cantidad de espacios añadidos
+      const addedSpaces =
+        (newFormatted.match(/ /g) || []).length -
+        (prevFormatted.match(/ /g) || []).length;
+      cursorPosition += addedSpaces;
+
+      if (rawValue.length <= 9) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          [name]: rawValue,
+        }));
+
+        requestAnimationFrame(() => {
+          if (inputRef.current) {
+            const newCursorPosition = Math.min(
+              cursorPosition,
+              newFormatted.length,
+            );
+            inputRef.current.setSelectionRange(
+              newCursorPosition,
+              newCursorPosition,
+            );
+          }
+        });
+      }
+    } else {
+      setFormData({ ...formData, [name]: rawValue });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -191,6 +223,7 @@ const Families = ({
             </label>
             <input
               type='text'
+              ref={inputRef} // Asigna la referencia
               name='phone'
               value={formatPhoneNumber(formData.phone)}
               onChange={handleInputChange}
