@@ -8,7 +8,8 @@ const Methods = require("../methods/methods.controller");
 
 CTRL.create = async (req, res, next) => {
   try {
-    Methods.create(req, res, next, Cook);
+    const model = req.params.model;
+    Methods.create(req, res, next, model);
   } catch (error) {
     console.log("error", error);
     res.status(500).json({ error: error.message });

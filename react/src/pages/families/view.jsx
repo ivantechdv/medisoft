@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { formatPhoneNumber } from '../../utils/customFormat';
 const FamiliarCard = ({ family, openModalFamily }) => {
   const editFamily = (family) => {
     openModalFamily(family);
@@ -12,7 +12,7 @@ const FamiliarCard = ({ family, openModalFamily }) => {
       <div>
         <h2 className='text-xl font-semibold text-gray-800'>{family.name}</h2>
         <p className='text-gray-600 mt-2'>{family.email}</p>
-        <p className='text-gray-600 mt-1'>{family.phone}</p>
+        <p className='text-gray-600 mt-1'>{formatPhoneNumber(family.phone)}</p>
       </div>
     </div>
   );

@@ -12,6 +12,11 @@ const Tasks = require("../../models/employees/task.model");
 const OfficialQualification = require("../../models/official_qualification/official_qualification");
 const controller = require("../../controllers/form/form.controller");
 const storageController = require("../../controllers/storage/storage.controller");
+const Employee = require("../../models/employees/employees.model");
+const EmployeeReference = require("../../models/employees/reference.model");
+const EmployeeComplementary = require("../../models/employees/complementary.model");
+const EmployeeSpecific = require("../../models/employees/specific.model");
+const Country = require("../../models/countries/countries.model");
 /* const  authRequired = require('../../middleware/validateToken');*/
 const addModelParam = (model) => {
   return (req, res, next) => {
@@ -43,6 +48,12 @@ router.get(
   controller.get
 );
 router.get(
+  "/countries",
+  cors(corsOptions),
+  addModelParam(Country),
+  controller.get
+);
+router.get(
   "/educational-levels",
   cors(corsOptions),
   addModelParam(EducationalLevel),
@@ -70,6 +81,26 @@ router.get(
 router.get("/tasks", cors(corsOptions), addModelParam(Tasks), controller.get);
 
 router.get("/cooks", cors(corsOptions), addModelParam(Cook), controller.get);
+
+router.post(
+  "/complementary",
+  cors(corsOptions),
+  addModelParam(EmployeeComplementary),
+  controller.create
+);
+router.post(
+  "/specific",
+  cors(corsOptions),
+  addModelParam(EmployeeSpecific),
+  controller.create
+);
+
+router.post(
+  "/employee",
+  cors(corsOptions),
+  addModelParam(Employee),
+  controller.create
+);
 
 router.post("/storage", (req, res, next) => {
   const container = req.query.container || "uploads";

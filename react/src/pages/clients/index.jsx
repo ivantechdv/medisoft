@@ -215,7 +215,9 @@ const Clients = () => {
   });
 
   const [rows, setRows] = useState([]);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(() => {
+    return Number(localStorage.getItem('pageSize')) || 10; // Carga desde localStorage o usa 10 por defecto
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -402,8 +404,10 @@ const Clients = () => {
   const handlePageSizeChange = (event) => {
     if (event.target.value == 'todos') {
       setPageSize(0);
+      localStorage.setItem('pageSize', 0); // Guardar en cache
     } else {
       setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
+      localStorage.setItem('pageSize', Number(event.target.value)); // Guardar en cache
     }
     setCurrentPage(1); // Reinicia a la primera página
   };
