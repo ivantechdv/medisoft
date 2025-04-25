@@ -3,58 +3,71 @@ const sequelize = require("../../database/sequelize");
 const { Sequelize, Op, col } = require("sequelize");
 
 const ITEMS_PER_PAGE = 20; // Puedes ajustar esto según tus necesidades
-CTRL.create = async (req, res, next, Model) => {
+(CTRL.create = async (req, res, next, Model) => {
   try {
     const data = await Model.create(req.body);
     res.status(201).json(data);
   } catch (error) {
+    const isSequelizeError =
+      error.name?.startsWith("Sequelize") || Boolean(error.parent?.sqlMessage);
+
+    if (isSequelizeError) {
+      // Manejo de errores de base de datos
+      const sqlMessage = error.parent?.sqlMessage || error.message;
+      const fieldMatch = sqlMessage.match(/column '(.+?)'/);
+
+      return res.status(400).json({
+        error: sqlMessage,
+        field: fieldMatch?.[1] || "unknown",
+        type: "DATABASE_ERROR",
+      });
+    }
     console.log("error", error);
     next(error);
   }
-};
+}),
+  (CTRL.createOrUpdateBulk = async (data, Model) => {
+    try {
+      const createData = [];
+      const updateData = [];
 
-CTRL.createOrUpdateBulk = async (data, Model) => {
-  try {
-    const createData = [];
-    const updateData = [];
+      console.log("Data recibida:", data);
 
-    console.log("Data recibida:", data);
-
-    // Separar los datos para creación y actualización
-    data.forEach((item) => {
-      if (item.id) {
-        updateData.push(item); // Para actualización
-      } else {
-        createData.push(item); // Para creación
-      }
-    });
-
-    // Crear nuevos registros
-    if (createData.length > 0) {
-      console.log("Registros a crear:", createData);
-      const created = await Model.bulkCreate(createData, { validate: true });
-      console.log("Registros creados con éxito:", created);
-    }
-
-    // Actualizar registros existentes
-    if (updateData.length > 0) {
-      console.log("Registros a actualizar:", updateData);
-      const updatePromises = updateData.map(async (item) => {
-        const { id, ...updateFields } = item;
-        const [updatedCount] = await Model.update(updateFields, {
-          where: { id },
-        });
-        console.log(`Registros actualizados para ID ${id}:`, updatedCount);
+      // Separar los datos para creación y actualización
+      data.forEach((item) => {
+        if (item.id) {
+          updateData.push(item); // Para actualización
+        } else {
+          createData.push(item); // Para creación
+        }
       });
-      await Promise.all(updatePromises);
-    }
 
-    return true; // Devolver éxito
-  } catch (error) {
-    console.error("Error al guardar o actualizar los datos:", error);
-    throw error;
-  }
-};
+      // Crear nuevos registros
+      if (createData.length > 0) {
+        console.log("Registros a crear:", createData);
+        const created = await Model.bulkCreate(createData, { validate: true });
+        console.log("Registros creados con éxito:", created);
+      }
+
+      // Actualizar registros existentes
+      if (updateData.length > 0) {
+        console.log("Registros a actualizar:", updateData);
+        const updatePromises = updateData.map(async (item) => {
+          const { id, ...updateFields } = item;
+          const [updatedCount] = await Model.update(updateFields, {
+            where: { id },
+          });
+          console.log(`Registros actualizados para ID ${id}:`, updatedCount);
+        });
+        await Promise.all(updatePromises);
+      }
+
+      return true; // Devolver éxito
+    } catch (error) {
+      console.error("Error al guardar o actualizar los datos:", error);
+      throw error;
+    }
+  });
 
 CTRL.update = async (req, res, next, Model) => {
   try {

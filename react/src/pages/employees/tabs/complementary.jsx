@@ -57,6 +57,7 @@ const Form = ({
 
   const [languages, setLanguages] = useState([]);
   const [selectedLanguages, setSelectedLanguages] = useState([]);
+  const [selectedOQ, setSelectedOQ] = useState([]);
   const [selectedLanguagesAux, setSelectedLanguagesAux] = useState('');
   const [currentLanguages, setCurrentLanguages] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -93,7 +94,15 @@ const Form = ({
         setTimeExperiences(te);
         const oq = await getData('official-qualifications/all');
         console.log('oq', oq);
-        setOfficialQualifications(oq);
+        if (oq) {
+          const options = oq.map((item, index) => ({
+            value: item.id,
+            label: item.name,
+            key: item.id ?? `default-key-${index}`,
+          }));
+
+          setOfficialQualifications(options);
+        }
 
         const responseLanguages = await getData('languages/all');
 
@@ -132,6 +141,14 @@ const Form = ({
       );
       console.log('selectedLanguages', selectedLanguages);
       setSelectedLanguages(selectedLanguages);
+
+      const oqIds = formData.official_qualification_id
+        .split(',')
+        .map((id) => parseInt(id));
+      const selectedOQ = officialQualifications.filter(
+        (officialQualification) => oqIds.includes(officialQualification.value),
+      );
+      setSelectedOQ(selectedOQ);
     } catch (error) {
       console.log('error=>', error);
     } finally {
@@ -221,8 +238,10 @@ const Form = ({
       let response = false;
       const dataToSend = { ...formData };
       const languageIds = selectedLanguages.map((language) => language.value);
+      const oqIds = selectedOQ.map((OQ) => OQ.value);
       console.log('languageIDS', languageIds);
       dataToSend.language_id = languageIds.join(',');
+      dataToSend.official_qualification_id = oqIds.join(',');
       dataToSend.employee_id = employee_id;
       delete dataToSend.id;
       let message = '';
@@ -262,6 +281,9 @@ const Form = ({
 
   const handleSelectChange = (selected) => {
     setSelectedLanguages(selected);
+  };
+  const handleSelectOQChange = (selected) => {
+    setSelectedOQ(selected);
   };
 
   const hasChanges = () => {
@@ -439,28 +461,22 @@ const Form = ({
                     ))}
                 </select>
               </div>
-              <div className='col-span-1'>
+              <div className='col-span-2'>
                 <label
                   htmlFor='official_qualification_id'
                   className='block text-sm font-medium text-gray-700'
                 >
                   Título Oficial
                 </label>
-                <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  name='official_qualification_id'
+
+                <Select
                   id='official_qualification_id'
-                  onChange={handleChange}
-                  value={formData.official_qualification_id}
-                >
-                  <option value=''>Seleccione</option>
-                  {officialQualifications.length > 0 &&
-                    officialQualifications.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
-                      </option>
-                    ))}
-                </select>
+                  name='official_qualification_id'
+                  options={officialQualifications}
+                  onChange={handleSelectOQChange}
+                  defaultValue={selectedOQ}
+                  isMulti={true} // Enable multi-selection
+                />
               </div>
               <div className='col-span-1'></div>
               <div className='col-span-1'>

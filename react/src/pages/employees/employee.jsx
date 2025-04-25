@@ -400,6 +400,7 @@ const Employees = () => {
                   onAction={action}
                   onFormData={formData}
                   onHandleHasChange={handleHasChange}
+                  onGetRecordById={getRecordById}
                 />
               )}
               {activeTab === 'complementary' && (

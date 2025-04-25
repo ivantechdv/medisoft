@@ -17,7 +17,13 @@ import {
   formatPhoneNumber,
   formatISOToDate,
 } from '../../../utils/customFormat';
-const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
+const Form = ({
+  onHandleChangeCard,
+  id,
+  onAction,
+  onFormData,
+  onGetRecordById,
+}) => {
   const inputRef = useRef(null);
   const [formData, setFormData] = useState({
     dni: '',
@@ -120,78 +126,88 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
   const [postalCodes, setPostalCodes] = useState([]);
 
   const navigateTo = useNavigate();
-  useEffect(() => {
-    try {
-      setLoadingForm(true);
-      if (onFormData) {
-        setFormData(onFormData);
-        //calcula la edad
-        const age = onFormData.born_date
-          ? calculateAge(onFormData.born_date)
-          : '0';
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          ['age']: age,
-        }));
-        //guarda data original
-        setOldData(onFormData);
-        //setea el codigo postal
-        setCodPost(
-          onFormData.cod_post.code +
-            '/' +
-            onFormData.cod_post.name +
-            '/' +
-            onFormData.cod_post.state?.name,
-        );
-        if (onFormData.photo) {
-          setImages((prevImages) => ({
-            ...prevImages,
-            photo: getStorage(onFormData.photo),
-          }));
-        }
-        if (onFormData.dniFront) {
-          setImages((prevImages) => ({
-            ...prevImages,
-            dniFront: getStorage(onFormData.dniFront),
-          }));
-        }
-        if (onFormData.dniBack) {
-          setImages((prevImages) => ({
-            ...prevImages,
-            dniBack: getStorage(onFormData.dniBack),
-          }));
-        }
-        setSelectedCodPost({
-          cod_post: onFormData.cod_post?.code,
-          name: onFormData.cod_post?.name,
-          state: onFormData.cod_post?.state?.name,
-        });
-        if (onFormData && onFormData.language_id) {
-          const languageIds = onFormData.language_id
-            .split(',')
-            .map((id) => parseInt(id));
-          const selectedLanguages = languages.filter((language) =>
-            languageIds.includes(language.value),
-          );
-          setSelectedLanguages(selectedLanguages);
-        }
 
-        if (
-          !onFormData.final_date || // Verifica si está vacía o indefinida
-          onFormData.final_date === '0000-00-00' || // Fecha específica no válida
-          isNaN(new Date(onFormData.final_date).getTime()) // Verifica si no es una fecha válida
-        ) {
+  const updateImages = async (onFormData) => {
+    console.log('onformdata', onFormData);
+    if (onFormData.photo) {
+      setImages((prevImages) => ({
+        ...prevImages,
+        photo: getStorage(onFormData.photo),
+      }));
+    }
+    if (onFormData.dniFront) {
+      setImages((prevImages) => ({
+        ...prevImages,
+        dniFront: getStorage(onFormData.dniFront),
+      }));
+    }
+    if (onFormData.dniBack) {
+      setImages((prevImages) => ({
+        ...prevImages,
+        dniBack: getStorage(onFormData.dniBack),
+      }));
+    }
+  };
+  useEffect(() => {
+    const initForm = async () => {
+      try {
+        setLoadingForm(true);
+        if (onFormData) {
+          setFormData(onFormData);
+          //calcula la edad
+          const age = onFormData.born_date
+            ? calculateAge(onFormData.born_date)
+            : '0';
           setFormData((prevFormData) => ({
             ...prevFormData,
-            final_date: null, // Establece la fecha como null
+            ['age']: age,
           }));
+          //guarda data original
+          setOldData(onFormData);
+          //setea el codigo postal
+          setCodPost(
+            onFormData.cod_post.code +
+              '/' +
+              onFormData.cod_post.name +
+              '/' +
+              onFormData.cod_post.state?.name,
+          );
+
+          await updateImages(onFormData);
+
+          setSelectedCodPost({
+            cod_post: onFormData.cod_post?.code,
+            name: onFormData.cod_post?.name,
+            state: onFormData.cod_post?.state?.name,
+          });
+          if (onFormData && onFormData.language_id) {
+            const languageIds = onFormData.language_id
+              .split(',')
+              .map((id) => parseInt(id));
+            const selectedLanguages = languages.filter((language) =>
+              languageIds.includes(language.value),
+            );
+            setSelectedLanguages(selectedLanguages);
+          }
+
+          if (
+            !onFormData.final_date || // Verifica si está vacía o indefinida
+            onFormData.final_date === '0000-00-00' || // Fecha específica no válida
+            isNaN(new Date(onFormData.final_date).getTime()) // Verifica si no es una fecha válida
+          ) {
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              final_date: null, // Establece la fecha como null
+            }));
+          }
         }
+      } catch (error) {
+        console.log('error=>', error);
+      } finally {
+        setLoadingForm(false);
       }
-    } catch (error) {
-      console.log('error=>', error);
-    } finally {
-      setLoadingForm(false);
-    }
+    };
+    initForm();
   }, [onFormData]);
   useEffect(() => {
     try {
@@ -296,7 +312,12 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         );
 
         if (state) {
-          setPostalCodes(state.cod_posts);
+          const options = state?.cod_posts.map((item, index) => ({
+            value: item.id,
+            label: item.code + '|' + item.name,
+            key: item.id ?? `default-key-${index}`,
+          }));
+          setPostalCodes(options);
         } else {
           setPostalCodes([]);
         }
@@ -416,7 +437,12 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
 
           // Establecer los códigos postales según el estado seleccionado
           if (state) {
-            setPostalCodes(state.cod_posts); // Asumiendo que state.cod_posts es un array de códigos postales
+            const options = state?.cod_posts.map((item, index) => ({
+              value: item.id,
+              label: item.code + '|' + item.name,
+              key: item.id ?? `default-key-${index}`,
+            }));
+            setPostalCodes(options);
           } else {
             setPostalCodes([]); // Resetear si no se encuentra el estado
           }
@@ -538,7 +564,7 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         const isFile = value instanceof File;
         console.log('value ' + key, value);
         if (isFile) {
-          const fileUploadResponse = await await postStorage(value, 'client');
+          const fileUploadResponse = await postStorage(value, 'client');
           formData[key] = fileUploadResponse.path;
           if (
             oldData[key] !== null &&
@@ -585,8 +611,15 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
           type: 'success',
         });
         navigateTo('/client/' + response.id);
-        //window.location.href = '/client/' + response.id;
+        window.location.href = '/client/' + response.id;
       }
+      await updateImages(formData);
+      setLoadingForm(false);
+      onHandleChangeCard('address', formData.address);
+      onHandleChangeCard('email', formData.email);
+      onHandleChangeCard('phone', formData.phone);
+      setOldData(formData);
+      onGetRecordById(id);
     } catch (error) {
       console.log('error', error);
       ToastNotify({
@@ -595,11 +628,6 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
         type: 'error',
       });
     } finally {
-      setLoadingForm(false);
-      onHandleChangeCard('address', formData.address);
-      onHandleChangeCard('email', formData.email);
-      onHandleChangeCard('phone', formData.phone);
-      setOldData(formData);
     }
   };
   const handleImagenChange = (event, key) => {
@@ -663,6 +691,12 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
 
   const handleSelectChange = (selected) => {
     setSelectedLanguages(selected);
+  };
+  const handleSelect = (selected) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      ['cod_post_id']: selected.value,
+    }));
   };
   const validateEmails = (emails) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -1298,25 +1332,14 @@ const Form = ({ onHandleChangeCard, id, onAction, onFormData }) => {
               >
                 Codigo Postal
               </label>
-              <select
+              <Select
                 id='cod_post_id'
                 name='cod_post_id'
-                onChange={handleChange}
-                value={formData.cod_post_id}
-                className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-              >
-                <option>Seleccione...</option>
-                {selectedState &&
-                  postalCodes.map(
-                    (
-                      code, // Cambiado de codPosts a postalCodes
-                    ) => (
-                      <option key={code.id} value={code.id}>
-                        {code.code + ' | ' + code.name}
-                      </option>
-                    ),
-                  )}
-              </select>
+                options={postalCodes}
+                onChange={handleSelect}
+                defaultValue={formData.cod_post_id}
+                isMulti={false} // Enable multi-selection
+              />
             </div>
             {/* <div className='col-span-1'>
               <label

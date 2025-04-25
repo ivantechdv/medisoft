@@ -26,6 +26,23 @@ CTRL.get = async (req, res, next) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+CTRL.getByProvincia = async (req, res, next) => {
+  try {
+    const provinciaId = req.params.provincia_id;
+    const model = req.params.model;
+    if (!provinciaId || isNaN(provinciaId)) {
+      return res.status(400).json({ error: "ID de provincia inválido" });
+    }
+    const condition = {
+      state_id: provinciaId,
+    };
+    Methods.getAll(req, res, next, model, condition);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 CTRL.getAll = async (req, res, next) => {
   try {
     const condition = {};

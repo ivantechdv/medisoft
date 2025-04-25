@@ -25,6 +25,7 @@ const Form = ({
   onAction,
   onFormData,
   onHandleHasChange,
+  onGetRecordById,
 }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Información',
@@ -134,6 +135,7 @@ const Form = ({
     name: '',
     state: '',
   });
+  const [selectCodePost, setSelectCodePost] = useState(null);
   const [modalActions, setModalActions] = useState({
     handleContinue: () => {},
     handleCancel: () => {},
@@ -147,76 +149,83 @@ const Form = ({
   const [selectedState, setSelectedState] = useState(null);
   const [postalCodes, setPostalCodes] = useState([]);
 
+  const updateImages = async (onFormData) => {
+    console.log('onformdata', onFormData);
+    if (onFormData.photo) {
+      setImages((prevImages) => ({
+        ...prevImages,
+        photo: getStorage(onFormData.photo),
+      }));
+    }
+    if (onFormData.dniFront) {
+      setImages((prevImages) => ({
+        ...prevImages,
+        dniFront: getStorage(onFormData.dniFront),
+      }));
+    }
+    if (onFormData.dniBack) {
+      setImages((prevImages) => ({
+        ...prevImages,
+        dniBack: getStorage(onFormData.dniBack),
+      }));
+    }
+  };
+
   const navigateTo = useNavigate();
   useEffect(() => {
-    try {
-      setLoadingForm(true);
-      if (onFormData) {
-        setFormData(onFormData);
-        setOldData(onFormData);
+    const initForm = async () => {
+      try {
+        setLoadingForm(true);
+        if (onFormData) {
+          setFormData(onFormData);
+          setOldData(onFormData);
 
-        //calcula la edad
-        if (onFormData.born_date != '') {
-          const age = calculateAge(onFormData.born_date);
-          setFormData((prevFormData) => ({
-            ...prevFormData,
-            ['age']: age,
-          }));
-          setOldData((prevFormData) => ({
-            ...prevFormData,
-            ['age']: age,
-          }));
-        }
+          //calcula la edad
+          if (onFormData.born_date != '') {
+            const age = calculateAge(onFormData.born_date);
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              ['age']: age,
+            }));
+            setOldData((prevFormData) => ({
+              ...prevFormData,
+              ['age']: age,
+            }));
+          }
 
-        console.log('formdata', onFormData);
-        if (onFormData.photo) {
-          setImages((prevImages) => ({
-            ...prevImages,
-            photo: getStorage(onFormData.photo),
-          }));
-        }
-        if (onFormData.dniFront) {
-          setImages((prevImages) => ({
-            ...prevImages,
-            dniFront: getStorage(onFormData.dniFront),
-          }));
-        }
-        if (onFormData.dniBack) {
-          setImages((prevImages) => ({
-            ...prevImages,
-            dniBack: getStorage(onFormData.dniBack),
-          }));
-        }
-        setCodPost(
-          onFormData.cod_post.code +
-            '/' +
-            onFormData.cod_post.name +
-            '/' +
-            onFormData.cod_post.state?.name,
-        );
-        setSelectedCodPost({
-          cod_post: onFormData.cod_post?.code,
-          name: onFormData.cod_post?.name,
-          state: onFormData.cod_post?.state?.name,
-        });
+          await updateImages(onFormData);
+          setCodPost(
+            onFormData.cod_post.code +
+              '/' +
+              onFormData.cod_post.name +
+              '/' +
+              onFormData.cod_post.state?.name,
+          );
+          setSelectedCodPost({
+            cod_post: onFormData.cod_post?.code,
+            name: onFormData.cod_post?.name,
+            state: onFormData.cod_post?.state?.name,
+          });
 
-        if (onFormData.cod_post?.state?.country_id != '') {
-          setFormData((prevFormData) => ({
-            ...prevFormData,
-            ['country_current_id']: onFormData.cod_post?.state?.country_id,
-          }));
-          setOldData((prevFormData) => ({
-            ...prevFormData,
-            ['country_current_id']: onFormData.cod_post?.state?.country_id,
-          }));
+          if (onFormData.cod_post?.state?.country_id != '') {
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              ['country_current_id']: onFormData.cod_post?.state?.country_id,
+            }));
+            setOldData((prevFormData) => ({
+              ...prevFormData,
+              ['country_current_id']: onFormData.cod_post?.state?.country_id,
+            }));
+          }
         }
+      } catch (error) {
+        console.log('error=>', error);
+      } finally {
+        //setLoadingForm(false);
+        setTimeout(() => setLoadingForm(false), 1600);
       }
-    } catch (error) {
-      console.log('error=>', error);
-    } finally {
-      //setLoadingForm(false);
-      setTimeout(() => setLoadingForm(false), 1600);
-    }
+    };
+    initForm();
   }, [onFormData]);
 
   useEffect(() => {
@@ -234,7 +243,12 @@ const Form = ({
         );
 
         if (state) {
-          setPostalCodes(state.cod_posts);
+          const options = state?.cod_posts.map((item, index) => ({
+            value: item.id,
+            label: item.code + '|' + item.name,
+            key: item.id ?? `default-key-${index}`,
+          }));
+          setPostalCodes(options);
         } else {
           setPostalCodes([]);
         }
@@ -266,6 +280,7 @@ const Form = ({
         setStatus(responseStatus);
 
         const responseCodPosts = await getData('cod_posts/all');
+
         setCodPosts(responseCodPosts);
 
         const responseGenders = await getData('genders/all');
@@ -396,12 +411,23 @@ const Form = ({
 
         // Establecer los códigos postales según el estado seleccionado
         if (state) {
-          setPostalCodes(state.cod_posts); // Asumiendo que state.cod_posts es un array de códigos postales
+          const options = state?.cod_posts.map((item, index) => ({
+            value: item.id,
+            label: item.code + '|' + item.name,
+            key: item.id ?? `default-key-${index}`,
+          }));
+          setPostalCodes(options);
         } else {
           setPostalCodes([]); // Resetear si no se encuentra el estado
         }
       }
     }
+  };
+  const handleSelect = (selected) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      ['cod_post_id']: selected.value,
+    }));
   };
 
   const requiredFields = [
@@ -512,6 +538,11 @@ const Form = ({
           handleSend();
         }
       });
+      await updateImages(formData);
+      setOldData(formData);
+      onHandleChangeCard('address', formData.address);
+      onHandleChangeCard('email', formData.email);
+      onHandleChangeCard('phone', formData.phone);
     } catch (error) {
       console.log('error', error);
       ToastNotify({
@@ -521,10 +552,6 @@ const Form = ({
       });
     } finally {
       setTimeout(() => setLoadingForm(false), 800);
-      onHandleChangeCard('address', formData.address);
-      onHandleChangeCard('email', formData.email);
-      onHandleChangeCard('phone', formData.phone);
-      setOldData(formData);
     }
   };
   const handleSend = async () => {
@@ -539,6 +566,7 @@ const Form = ({
       if (isFile) {
         const fileUploadResponse = await postStorage(value, 'employee');
         formData[key] = fileUploadResponse.path;
+        console.log('oldatakey', oldData[key]);
         if (
           oldData[key] !== null &&
           oldData[key] !== undefined &&
@@ -550,6 +578,7 @@ const Form = ({
       }
     }
     const dataToSend = { ...formData };
+    console.log('data enviada', dataToSend);
 
     let message = '';
     if (!id) {
@@ -578,8 +607,10 @@ const Form = ({
         position: 'top-left',
         type: 'success',
       });
-      navigateTo('/employee/' + response.id);
-      //window.location.href = '/client/' + response.id;
+
+      await updateImages(formData);
+      //onGetRecordById(response.id);
+      window.location.href = '/employee/' + response.id;
     }
   };
   const handleImagenChange = (event, key) => {
@@ -1476,25 +1507,14 @@ const Form = ({
                 >
                   Codigo Postal
                 </label>
-                <select
+                <Select
                   id='cod_post_id'
                   name='cod_post_id'
-                  onChange={handleChange}
-                  value={formData.cod_post_id}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                >
-                  <option>Seleccione...</option>
-                  {selectedState &&
-                    postalCodes.map(
-                      (
-                        code, // Cambiado de codPosts a postalCodes
-                      ) => (
-                        <option key={code.id} value={code.id}>
-                          {code.code + ' | ' + code.name}
-                        </option>
-                      ),
-                    )}
-                </select>
+                  options={postalCodes}
+                  onChange={handleSelect}
+                  defaultValue={formData.cod_post_id}
+                  isMulti={false} // Enable multi-selection
+                />
               </div>
               {/* <div className='col-span-1'>
                 <label

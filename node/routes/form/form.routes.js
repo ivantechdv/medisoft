@@ -17,6 +17,8 @@ const EmployeeReference = require("../../models/employees/reference.model");
 const EmployeeComplementary = require("../../models/employees/complementary.model");
 const EmployeeSpecific = require("../../models/employees/specific.model");
 const Country = require("../../models/countries/countries.model");
+const CodPost = require("../../models/cod_posts/cod_posts.model");
+const State = require("../../models/states/states.model");
 /* const  authRequired = require('../../middleware/validateToken');*/
 const addModelParam = (model) => {
   return (req, res, next) => {
@@ -75,6 +77,19 @@ router.get(
   "/official-qualifications",
   cors(corsOptions),
   addModelParam(OfficialQualification),
+  controller.get
+);
+
+router.get(
+  "/cod-posts/:provincia_id",
+  cors(corsOptions),
+  addModelParam(CodPost),
+  controller.getByProvincia
+);
+router.get(
+  "/provincia",
+  cors(corsOptions),
+  addModelParam(State),
   controller.get
 );
 

@@ -480,6 +480,7 @@ const Clients = () => {
                   id={id}
                   onAction={action}
                   onFormData={formData}
+                  onGetRecordById={getRecordById}
                 />
               )}
               {activeTab === 'especifico' && (
