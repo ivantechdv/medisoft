@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   ConfirmSweetAlert,
   InfoSweetAlert,
-} from '../../components/SweetAlert/SweetAlert';
+} from '../../components/SweetAlert/SweetAlert2';
 import { postData, putData, deleteById } from '../../api/index';
 
 const Families = ({
@@ -159,21 +159,30 @@ const Families = ({
       });
     }
   };
-
   const deleteFamily = async () => {
-    try {
-      await deleteById('family/', formData.id);
-      getFamilies();
-      onClose();
-    } catch (error) {
-      InfoSweetAlert({
-        title: 'Error',
-        text: 'Hubo un problema al eliminar los datos.',
-        icon: 'error',
-      });
-    }
+    ConfirmSweetAlert({
+      title: 'Confirmar eliminación',
+      text: '¿Estás seguro de eliminar este familiar?',
+      onConfirm: async () => {
+        try {
+          await deleteById('family/', formData.id);
+          InfoSweetAlert({
+            title: 'Eliminado',
+            text: 'Familiar eliminado exitosamente',
+            icon: 'success',
+          });
+          getFamilies();
+          onClose();
+        } catch (error) {
+          InfoSweetAlert({
+            title: 'Error',
+            text: 'Hubo un problema al eliminar los datos.',
+            icon: 'error',
+          });
+        }
+      },
+    });
   };
-
   const toggleNotification = () => {
     if (isValidEmail(formData.email)) {
       setFormData((prevFormData) => ({
