@@ -20,6 +20,7 @@ const Country = require("../../models/countries/countries.model");
 const CodPost = require("../../models/cod_posts/cod_posts.model");
 const State = require("../../models/states/states.model");
 /* const  authRequired = require('../../middleware/validateToken');*/
+const authRequired = require("../../middleware/tokenExternal");
 const addModelParam = (model) => {
   return (req, res, next) => {
     req.params.model = model;
@@ -33,48 +34,56 @@ const corsOptions = {
 };
 router.get(
   "/genders",
+  authRequired,
   cors(corsOptions),
   addModelParam(Gender),
   controller.get
 );
 router.get(
   "/services",
+  authRequired,
   cors(corsOptions),
   addModelParam(Service),
   controller.get
 );
 router.get(
   "/languages",
+  authRequired,
   cors(corsOptions),
   addModelParam(Language),
   controller.get
 );
 router.get(
   "/countries",
+  authRequired,
   cors(corsOptions),
   addModelParam(Country),
   controller.get
 );
 router.get(
   "/educational-levels",
+  authRequired,
   cors(corsOptions),
   addModelParam(EducationalLevel),
   controller.get
 );
 router.get(
   "/time-experiencies",
+  authRequired,
   cors(corsOptions),
   addModelParam(TimeExperiency),
   controller.get
 );
 router.get(
   "/gain-experiencies",
+  authRequired,
   cors(corsOptions),
   addModelParam(GainExperiency),
   controller.get
 );
 router.get(
   "/official-qualifications",
+  authRequired,
   cors(corsOptions),
   addModelParam(OfficialQualification),
   controller.get
@@ -82,29 +91,45 @@ router.get(
 
 router.get(
   "/cod-posts/:provincia_id",
+  authRequired,
   cors(corsOptions),
   addModelParam(CodPost),
   controller.getByProvincia
 );
 router.get(
   "/provincia",
+  authRequired,
   cors(corsOptions),
   addModelParam(State),
   controller.get
 );
 
-router.get("/tasks", cors(corsOptions), addModelParam(Tasks), controller.get);
+router.get(
+  "/tasks",
+  authRequired,
+  cors(corsOptions),
+  addModelParam(Tasks),
+  controller.get
+);
 
-router.get("/cooks", cors(corsOptions), addModelParam(Cook), controller.get);
+router.get(
+  "/cooks",
+  authRequired,
+  cors(corsOptions),
+  addModelParam(Cook),
+  controller.get
+);
 
 router.post(
   "/complementary",
+  authRequired,
   cors(corsOptions),
   addModelParam(EmployeeComplementary),
   controller.create
 );
 router.post(
   "/specific",
+  authRequired,
   cors(corsOptions),
   addModelParam(EmployeeSpecific),
   controller.create
@@ -112,12 +137,13 @@ router.post(
 
 router.post(
   "/employee",
+  authRequired,
   cors(corsOptions),
   addModelParam(Employee),
   controller.create
 );
 
-router.post("/storage", (req, res, next) => {
+router.post("/storage", authRequired, (req, res, next) => {
   const container = req.query.container || "uploads";
   const uploadMiddleware = storageController.upload(container).single("file");
 
