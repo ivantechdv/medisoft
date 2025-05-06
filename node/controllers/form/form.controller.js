@@ -4,11 +4,35 @@ const Client = require("../../models/clients/clients.model");
 const CodPost = require("../../models/cod_posts/cod_posts.model");
 const Cook = require("../../models/cooks/cooks.model");
 const State = require("../../models/states/states.model");
+const Employee = require("../../models/employees/employees.model");
 const Methods = require("../methods/methods.controller");
-
+const validationField = require("../../utils/validators");
 CTRL.create = async (req, res, next) => {
   try {
     const model = req.params.model;
+    if (model == Employee) {
+      const duplicated = await validationField(
+        Employee,
+        {
+          dni: req.body.dni,
+          email: req.body.email,
+          phone: req.body.phone,
+          code_phone: req.body.code_phone,
+          full_name: req.body.full_name,
+          num_social_security: req.body.num_social_security,
+        },
+        null,
+        ["code_phone", "phone"]
+      );
+
+      if (duplicated) {
+        return res.status(409).json({
+          error: `Ya existe un cuidador con los siguientes campos duplicados: ${duplicated.join(
+            ", "
+          )}`,
+        });
+      }
+    }
     Methods.create(req, res, next, model);
   } catch (error) {
     console.log("error", error);

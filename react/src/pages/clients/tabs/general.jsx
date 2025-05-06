@@ -117,6 +117,7 @@ const Form = ({
     handleCancel: () => {},
   });
   const dniRef = useRef(null);
+  const phoneRef = useRef(null);
   const emailRef = useRef(null);
   const dni = useRef(null);
   const ref = useRef(null);
@@ -395,12 +396,12 @@ const Form = ({
         }));
 
         requestAnimationFrame(() => {
-          if (inputRef.current) {
+          if (phoneRef.current) {
             const newCursorPosition = Math.min(
               cursorPosition,
               newFormatted.length,
             );
-            inputRef.current.setSelectionRange(
+            phoneRef.current.setSelectionRange(
               newCursorPosition,
               newCursorPosition,
             );
@@ -717,57 +718,68 @@ const Form = ({
 
   const validateField = async (field, value, ref) => {
     try {
-      if (value !== '') {
-        let response = [];
-        if (field === 'dni' && value !== oldData['dni']) {
-          response = await getData(`clients/all?dni=${value}`);
-        } else if (field === 'email' && value !== oldData['email']) {
-          const { validEmails, invalidEmails } = validateEmails(value);
-          for (let email of validEmails) {
-            const emailResponse = await getData(`clients/all?email=${email}`);
-            if (
-              emailResponse?.length > 0 &&
-              emailResponse[0].id !== oldData.id
-            ) {
-              response.push({ email, id: emailResponse[0].id });
-            }
-          }
+      if (!value || value === oldData[field]) return;
 
-          if (response?.length > 0 || invalidEmails?.length > 0) {
-            let newEmails = validEmails.filter(
-              (e) => !response.some((r) => r.email === e),
-            );
-            setFormData((prevFormData) => ({
-              ...prevFormData,
-              [field]: newEmails.join(';'),
-            }));
-            onHandleChangeCard(field, newEmails.join(';'));
+      let response = [];
+      let invalidValues = [];
 
-            const errorMessage = [
-              ...response.map(
-                (res) =>
-                  `El correo ${res.email} está registrado con el ID ${res.id}`,
-              ),
-              ...invalidEmails.map(
-                (email) => `El correo ${email} no es válido`,
-              ),
-            ].join(', ');
+      // Validación especial para correos (puede separar múltiples con ;)
+      if (field === 'email') {
+        const { validEmails, invalidEmails } = validateEmails(value);
+        invalidValues = invalidEmails;
 
-            ToastNotify({
-              message: errorMessage,
-              position: 'top-center',
-              type: 'error',
-              ref: ref,
-            });
-
-            if (ref && ref.current) {
-              ref.current.focus();
-            }
+        for (let email of validEmails) {
+          const emailResponse = await getData(`clients/all?email=${email}`);
+          if (emailResponse?.length > 0 && emailResponse[0].id !== oldData.id) {
+            response.push({ value: email, id: emailResponse[0].id });
           }
         }
+
+        // Filtrar solo los válidos que no están duplicados
+        const newValidEmails = validEmails.filter(
+          (e) => !response.some((r) => r.value === e),
+        );
+
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          [field]: newValidEmails.join(';'),
+        }));
+        onHandleChangeCard(field, newValidEmails.join(';'));
+      } else {
+        // Para campos únicos simples: dni, phone, full_name, etc.
+        const res = await getData(`clients/all?${field}=${value}`);
+        console.log('res', res);
+        if (res?.length > 0 && res[0].id !== oldData.id) {
+          response.push({ value, id: res[0].id });
+
+          // Limpiar campo si está duplicado
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            [field]: '',
+          }));
+          onHandleChangeCard(field, '');
+        }
+      }
+
+      if (response.length > 0 || invalidValues.length > 0) {
+        const errorMessage = [
+          ...response.map(
+            (r) => `El valor "${r.value}" ya está registrado con el ID ${r.id}`,
+          ),
+          ...invalidValues.map((v) => `El valor "${v}" no es válido`),
+        ].join(', ');
+
+        ToastNotify({
+          message: errorMessage,
+          position: 'top-center',
+          type: 'error',
+          ref,
+        });
+
+        if (ref?.current) ref.current.focus();
       }
     } catch (error) {
-      console.log('Error en la consulta:', error);
+      console.error('Error en la validación del campo:', error);
     }
   };
   const handleOpenCodPost = () => {
@@ -1231,12 +1243,15 @@ const Form = ({
                     ))}
                 </select>
                 <input
-                  ref={inputRef}
                   type='text'
                   id='phone'
                   name='phone'
                   onChange={handleChange}
                   value={formatPhoneNumber(formData.phone)}
+                  ref={phoneRef}
+                  onBlur={() =>
+                    validateField('phone', formData.phone, phoneRef)
+                  }
                   className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
                   placeholder='Número de teléfono'
                 />
