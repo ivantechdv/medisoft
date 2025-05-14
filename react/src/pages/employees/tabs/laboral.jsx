@@ -61,6 +61,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     phone: '',
     from_date: '',
     until_date: '',
+    is_current: false,
   };
   const [formData, setFormData] = useState(initialValues);
   const [employees, setEmployees] = useState([]);
@@ -79,8 +80,19 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       const responseFollowUps = await getData(
         `employees/reference/all?employee_id=${onFormData.id}`,
       );
-      console.log('response =>', responseFollowUps);
-      setFollowUps(responseFollowUps);
+
+      // Ordenar: primero los is_current, luego por from_date descendente
+      const sortedFollowUps = [...responseFollowUps].sort((a, b) => {
+        // Si uno es is_current y el otro no, poner el actual primero
+        if (a.is_current && !b.is_current) return -1;
+        if (!a.is_current && b.is_current) return 1;
+
+        // Ambos iguales en is_current, ordenar por fecha descendente
+        return new Date(b.from_date) - new Date(a.from_date);
+      });
+
+      console.log('response ordenado =>', sortedFollowUps);
+      setFollowUps(sortedFollowUps);
     } catch (error) {
       console.log('error =>', error);
     }
@@ -102,11 +114,23 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   };
 
   const handleChange = (event) => {
-    const { id, value } = event.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
-      [id]: value,
-    }));
+    const { id, value, type, checked } = event.target;
+
+    setFormData((prevFormData) => {
+      // Si se marca el checkbox 'is_current', limpiamos until_date
+      if (id === 'is_current' && checked) {
+        return {
+          ...prevFormData,
+          [id]: checked,
+          until_date: '', // Limpiar la fecha hasta
+        };
+      }
+
+      return {
+        ...prevFormData,
+        [id]: type === 'checkbox' ? checked : value,
+      };
+    });
   };
   const handleChangeSelect = (event, field) => {
     const newValue = event.value;
@@ -133,7 +157,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     event.preventDefault();
     const { date, title, text, employee_id } = formData;
 
-    if (!phone || !contact || !from_date || !until_date) {
+    if (!phone || !contact || !from_date || (!is_current && !until_date)) {
       ToastNotify({
         message: 'Por favor, complete todos los campos requeridos',
         position: 'top-right',
@@ -150,7 +174,14 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
         });
         return;
       } else {
-        const dataToSend = { ...formData, employee_id: onFormData.id };
+        const dataToSend = {
+          ...formData,
+          employee_id: onFormData.id,
+          until_date:
+            formData.is_current || formData.until_date === ''
+              ? null
+              : formData.until_date,
+        };
         handleSend(dataToSend);
       }
     });
@@ -256,7 +287,9 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                           {row.phone}
                         </span>
                         <span className='text-sm text-gray-600'>
-                          Hasta {row.until_date}
+                          {row.is_current
+                            ? 'Hasta la actualidad'
+                            : `Hasta ${row.until_date}`}
                         </span>
                       </div>
                     </div>
@@ -347,9 +380,23 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     id='from_date'
                     value={formData.from_date == null ? '' : formData.from_date}
                     onChange={handleChange}
-                    disabled={isReadOnly}
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   />
+                </div>
+                <div className='mb-2 flex items-center space-x-2'>
+                  <input
+                    type='checkbox'
+                    id='is_current'
+                    checked={formData.is_current || false}
+                    onChange={handleChange}
+                    className='h-4 w-4 text-indigo-600 border-gray-300 rounded'
+                  />
+                  <label
+                    htmlFor='is_current'
+                    className='text-sm font-medium text-secondary'
+                  >
+                    Hasta la actualidad
+                  </label>
                 </div>
                 <div className='mb-2'>
                   <label
@@ -365,7 +412,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                       formData.until_date == null ? '' : formData.until_date
                     }
                     onChange={handleChange}
-                    disabled={isReadOnly}
+                    disabled={formData.is_current}
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   />
                 </div>
@@ -386,7 +433,6 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     isReadOnly ? 'bg-blue-300 cursor-not-allowed' : ''
                   }`}
                   onClick={handleSubmit}
-                  disabled={isReadOnly}
                 >
                   Guardar
                 </button>
