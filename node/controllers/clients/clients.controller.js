@@ -16,26 +16,26 @@ const { Sequelize, Op } = require("sequelize");
 const validationField = require("../../utils/validators");
 CTRL.create = async (req, res, next) => {
   try {
-    const duplicated = await validationField(
-      Client,
-      {
-        dni: req.body.dni,
-        email: req.body.email,
-        phone: req.body.phone,
-        code_phone: req.body.code_phone,
-        full_name: req.body.full_name,
-      },
-      null,
-      ["code_phone", "phone"]
-    );
+    // const duplicated = await validationField(
+    //   Client,
+    //   {
+    //     dni: req.body.dni,
+    //     email: req.body.email,
+    //     phone: req.body.phone,
+    //     code_phone: req.body.code_phone,
+    //     full_name: req.body.full_name,
+    //   },
+    //   null,
+    //   ["code_phone", "phone"]
+    // );
 
-    if (duplicated) {
-      return res.status(409).json({
-        error: `Ya existe un cliente con los siguientes campos duplicados: ${duplicated.join(
-          ", "
-        )}`,
-      });
-    }
+    // if (duplicated) {
+    //   return res.status(409).json({
+    //     error: `Ya existe un cliente con los siguientes campos duplicados: ${duplicated.join(
+    //       ", "
+    //     )}`,
+    //   });
+    // }
     await Methods.create(req, res, next, Client);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -44,24 +44,26 @@ CTRL.create = async (req, res, next) => {
 
 CTRL.update = async (req, res, next) => {
   try {
-    const duplicated = await Validators(
-      Client,
-      {
-        dni: req.body.dni,
-        email: req.body.email,
-        phone: req.body.phone,
-        full_name: req.body.full_name,
-      },
-      req.params.id // <- el ID actual para excluirlo
-    );
+    // const duplicated = await validationField(
+    //   Client,
+    //   {
+    //     dni: req.body.dni,
+    //     email: req.body.email,
+    //     phone: req.body.phone,
+    //     code_phone: req.body.code_phone,
+    //     full_name: req.body.full_name,
+    //   },
+    //   req.params.id, // <- el ID actual para excluirlo
+    //   ["code_phone", "phone"]
+    // );
 
-    if (duplicated) {
-      return res.status(409).json({
-        error: `Ya existe un cliente con los siguientes campos duplicados: ${duplicated.join(
-          ", "
-        )}`,
-      });
-    }
+    // if (duplicated) {
+    //   return res.status(409).json({
+    //     error: `Ya existe un cliente con los siguientes campos duplicados: ${duplicated.join(
+    //       ", "
+    //     )}`,
+    //   });
+    // }
     await Methods.update(req, res, next, Client);
   } catch (error) {
     console.log("error", error);

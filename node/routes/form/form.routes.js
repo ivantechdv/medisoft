@@ -142,6 +142,13 @@ router.post(
   addModelParam(Employee),
   controller.create
 );
+router.post(
+  "/reference",
+  authRequired,
+  cors(corsOptions),
+  addModelParam(EmployeeReference),
+  controller.create
+);
 
 router.post("/storage", authRequired, (req, res, next) => {
   const container = req.query.container || "uploads";

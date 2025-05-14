@@ -611,8 +611,11 @@ const Form = ({
           position: 'top-left',
           type: 'success',
         });
-        navigateTo('/client/' + response.id);
-        window.location.href = '/client/' + response.id;
+
+        setTimeout(
+          () => (window.location.href = '/client/' + response.id),
+          1000,
+        );
       }
       await updateImages(formData);
       setLoadingForm(false);

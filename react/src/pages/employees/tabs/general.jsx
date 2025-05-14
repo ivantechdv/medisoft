@@ -589,7 +589,7 @@ const Form = ({
       message = 'Empleado actualizado con exito';
     }
     //changelogs
-    console.log('changelogs => ', changelogs);
+    console.log('response => ', response);
     const currentData = changeValueSelect(changelogs);
     console.log('oldchangeLogs => ', oldChangelogs);
     console.log('currentData => ', currentData);
@@ -610,7 +610,10 @@ const Form = ({
 
       await updateImages(formData);
       //onGetRecordById(response.id);
-      window.location.href = '/employee/' + response.id;
+      setTimeout(
+        () => (window.location.href = '/employee/' + response.id),
+        1000,
+      );
     }
   };
   const handleImagenChange = (event, key) => {
