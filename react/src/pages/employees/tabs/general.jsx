@@ -876,7 +876,7 @@ const Form = ({
           <div className='grid grid-cols-2 md:grid-cols-1'>
             <div className='col-span-1'>
               <div className='flex'>
-                <label className='block text-sm font-medium text-gray-700'>
+                <label className='block text-sm font-medium text-blue-500'>
                   Foto Principal
                 </label>
               </div>
@@ -930,7 +930,7 @@ const Form = ({
                 )}
               </div>
               <div className='flex'>
-                <label className='block text-sm font-medium text-gray-700'>
+                <label className='block text-sm font-medium text-blue-500'>
                   DNI Frontal
                 </label>
               </div>
@@ -988,7 +988,7 @@ const Form = ({
                 )}
               </div>
               <div className='flex'>
-                <label className='block text-sm font-medium text-gray-700'>
+                <label className='block text-sm font-medium text-blue-500'>
                   DNI Posterior
                 </label>
               </div>
@@ -1078,7 +1078,7 @@ const Form = ({
               />
 
               <div className='flex'>
-                {/* <label className='block text-sm font-medium text-gray-700'>
+                {/* <label className='block text-sm font-medium text-blue-500'>
                   Curriculum
                 </label> */}
               </div>
@@ -1106,7 +1106,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='is_active'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Estado
                 </label>
@@ -1133,7 +1133,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='type'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Tipo
                 </label>
@@ -1158,7 +1158,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='date_start'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Fecha de alta
                 </label>
@@ -1174,7 +1174,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='level_id'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Nivel
                 </label>
@@ -1197,7 +1197,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='statu_id'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Situacion
                 </label>
@@ -1221,7 +1221,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='born_date'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Fecha de nacimiento
                 </label>
@@ -1238,7 +1238,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='age'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Edad
                 </label>
@@ -1254,7 +1254,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='dni'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   DNI
                 </label>
@@ -1272,7 +1272,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='gender_id'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Genero
                 </label>
@@ -1296,7 +1296,7 @@ const Form = ({
             <div className='col-span-1'>
               <label
                 htmlFor='first_name'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Nombre
               </label>
@@ -1312,7 +1312,7 @@ const Form = ({
             <div className='col-span-1'>
               <label
                 htmlFor='last_name'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Apellidos
               </label>
@@ -1329,7 +1329,7 @@ const Form = ({
             <div className='col-span-1'>
               <label
                 htmlFor='phone'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Teléfono
               </label>
@@ -1365,7 +1365,7 @@ const Form = ({
             <div className='col-span-1'>
               <label
                 htmlFor='phone2'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Teléfono [opcional]
               </label>
@@ -1401,7 +1401,7 @@ const Form = ({
             <div className='col-span-1'>
               <label
                 htmlFor='email'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Correo electrónico
               </label>
@@ -1420,7 +1420,7 @@ const Form = ({
             <div className='col-span-1'>
               <label
                 htmlFor='last_name'
-                className='block text-sm font-medium text-gray-700'
+                className='block text-sm font-medium text-blue-500'
               >
                 Numero de seguridad social
               </label>
@@ -1437,7 +1437,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='country_id'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Pais de nacimiento
                 </label>
@@ -1460,7 +1460,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='country_current_id'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Pais de residencia
                 </label>
@@ -1483,7 +1483,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='state_id'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Provincia
                 </label>
@@ -1506,7 +1506,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='cod_post_id'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Codigo Postal
                 </label>
@@ -1522,7 +1522,7 @@ const Form = ({
               {/* <div className='col-span-1'>
                 <label
                   htmlFor='asset'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Código postal
                 </label>
@@ -1599,7 +1599,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='address'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Calle
                 </label>
@@ -1615,7 +1615,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='address_num'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Numero
                 </label>
@@ -1631,7 +1631,7 @@ const Form = ({
               <div className='col-span-1'>
                 <label
                   htmlFor='address_flat'
-                  className='block text-sm font-medium text-gray-700'
+                  className='block text-sm font-medium text-blue-500'
                 >
                   Piso
                 </label>
@@ -1648,7 +1648,7 @@ const Form = ({
                 <div className='mb-2'>
                   <label
                     htmlFor='observations'
-                    className='block text-sm font-medium text-secondary'
+                    className='block text-sm font-medium text-blue-500'
                   >
                     Observaciones
                   </label>
@@ -1701,7 +1701,7 @@ const Form = ({
         <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
           <div className='bg-white p-2 rounded shadow-lg w-3/4 h-[90%]'>
             <button
-              className='absolute top-2 right-2 text-white hover:text-gray-700 text-lg bg-gray-800'
+              className='absolute top-2 right-2 text-white hover:text-blue-500 text-lg bg-gray-800'
               onClick={closeExpandImage}
             >
               <svg

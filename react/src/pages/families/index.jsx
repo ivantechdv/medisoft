@@ -3,7 +3,7 @@ import {
   ConfirmSweetAlert,
   InfoSweetAlert,
 } from '../../components/SweetAlert/SweetAlert2';
-import { postData, putData, deleteById } from '../../api/index';
+import { postData, putData, deleteById, getData } from '../../api/index';
 
 const Families = ({
   isOpen,
@@ -21,10 +21,24 @@ const Families = ({
     priority: '',
     send_invoice: false,
     send_comunication: false,
+    relation_id: 0,
+    observations: '',
   });
 
   const [errors, setErrors] = useState({});
+  const [relations, setRelations] = useState([]);
   const inputRef = useRef(null);
+
+  useEffect(() => {
+    const fetchRelaciones = async () => {
+      const response = await getData('relations/all');
+      console.log('RELATIONS', response);
+      setRelations(response || []);
+    };
+
+    fetchRelaciones();
+  }, []);
+
   // Actualizar el estado si formDataFamily cambia
   useEffect(() => {
     console.log('formDataFamily', formDataFamily);
@@ -38,6 +52,8 @@ const Families = ({
         priority: formDataFamily.priority || '',
         send_invoice: formDataFamily.send_invoice || false,
         send_comunication: formDataFamily.send_comunication || false,
+        relation_id: formDataFamily.relation_id || 0,
+        observations: formDataFamily.observations || '',
       }));
       setErrors({});
     }
@@ -128,6 +144,8 @@ const Families = ({
         send_invoice: formData.send_invoice,
         send_comunication: formData.send_comunication,
         client_id: client_id,
+        relation_id: formData.relation_id,
+        observations: formData.observations,
       };
       if (formData.id == '') {
         await postData('family', dataToSend);
@@ -148,6 +166,8 @@ const Families = ({
         priority: '',
         send_invoice: false,
         send_comunication: false,
+        relation_id: 0,
+        observations: '',
       });
       getFamilies();
       onClose();
@@ -223,6 +243,28 @@ const Families = ({
             />
             {errors.name && (
               <p class='text-red-500 text-xs mt-1'>{errors.name}</p>
+            )}
+          </div>
+          <div class='mb-4 flex items-center'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-28'>
+              Relación
+            </label>
+            <select
+              name='relation_id'
+              value={formData.relation_id}
+              onChange={handleInputChange}
+              className='w-full px-3 mt-1 p-0.5 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+            >
+              <option value=''>Seleccione</option>
+              {relations &&
+                relations.map((rel) => (
+                  <option key={rel.id} value={rel.id}>
+                    {rel.name}
+                  </option>
+                ))}
+            </select>
+            {errors.relation_id && (
+              <p className='text-red-500 text-xs mt-1'>{errors.relation_id}</p>
             )}
           </div>
 
@@ -331,6 +373,23 @@ const Families = ({
                 <label className='ml-2 text-bold'>Facturacion</label>
               </div>
             </div>
+          </div>
+          <div className='mb-4'>
+            <label
+              htmlFor='notas'
+              className='block text-sm font-medium text-[#50a0ec] w-28'
+            >
+              Notas
+            </label>
+            <textarea
+              id='observations'
+              name='observations'
+              rows={4}
+              value={formData.observations || ''}
+              onChange={handleInputChange}
+              className='mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm'
+              placeholder='Agrega notas adicionales aquí'
+            />
           </div>
 
           <div class='flex justify-end'>

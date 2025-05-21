@@ -27,14 +27,14 @@ const FileInput = ({
   return (
     <div className='col-span-1 flex flex-col gap-2'>
       {/* Label arriba */}
-      <label className='block text-sm font-medium text-gray-700'>{label}</label>
+      <label className='block text-sm font-medium text-blue-500'>{label}</label>
 
       {/* Contenedor para selección de archivo y vista previa */}
       <div className='flex items-center gap-2'>
         {/* Botón de selección de archivo */}
         <label
           htmlFor={name}
-          className='cursor-pointer p-2 border border-gray-300 text-gray-700 rounded-lg w-full text-center'
+          className='cursor-pointer p-2 border border-gray-300 text-blue-500 rounded-lg w-full text-center'
         >
           {fileUrl ? 'Cambiar archivo' : 'Seleccionar archivo'}
         </label>

@@ -77,10 +77,10 @@ const MyDataTable = ({
       id: savedWidths.id || 80,
       dni: savedWidths.dni || 120,
       full_name: savedWidths.full_name || 200,
-      email: savedWidths.email || 250,
-      phone: savedWidths.phone || 150,
       family1: savedWidths.family1 || 180,
       family1_phone: savedWidths.family1_phone || 150,
+      email: savedWidths.email || 250,
+      phone: savedWidths.phone || 150,
       family2: savedWidths.family2 || 180,
       family2_phone: savedWidths.family2_phone || 150,
     };
@@ -126,9 +126,6 @@ const MyDataTable = ({
   const columns = [
     resizableColumn('ID', 'id', (row) => row.id),
     resizableColumn('DNI', 'dni', (row) => row.dni),
-    resizableColumn('Nombre completo', 'full_name', (row) => row.full_name),
-    resizableColumn('Correo electrónico', 'email', (row) => row.email),
-    resizableColumn('Teléfono', 'phone', (row) => row.phone),
     resizableColumn(
       'Familiar-1',
       'family1',
@@ -149,6 +146,9 @@ const MyDataTable = ({
       'family2_phone',
       (row) => row.families[1]?.phone || '-',
     ),
+    resizableColumn('Nombre completo', 'full_name', (row) => row.full_name),
+    resizableColumn('Teléfono', 'phone', (row) => row.phone),
+    resizableColumn('Correo electrónico', 'email', (row) => row.email),
   ];
 
   const handleRowClick = (row) => {

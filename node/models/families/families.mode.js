@@ -11,6 +11,10 @@ const Family = sequelize.define("families", {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  relation_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   name: {
     type: DataTypes.STRING(100),
     allowNull: true,
@@ -21,6 +25,10 @@ const Family = sequelize.define("families", {
   },
   email: {
     type: DataTypes.STRING(30),
+    allowNull: true,
+  },
+  observations: {
+    type: DataTypes.TEXT,
     allowNull: true,
   },
   createdAt: {

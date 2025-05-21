@@ -162,6 +162,11 @@ app.use(express.static("public"));
 function routes() {
   // app.use("/api/v1/permisologys", trafic, require("./routes/permisologys/permisologys.routes"))
   app.use("/api/v1/users", trafic, require("./routes/users/users.routes"));
+  app.use(
+    "/api/v1/relations",
+    trafic,
+    require("./routes/families/relations.routes")
+  );
   app.use("/api/v1/clients", trafic, require("./routes/client/client.routes"));
   app.use(
     "/api/v1/cod_posts",
