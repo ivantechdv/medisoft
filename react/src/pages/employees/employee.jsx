@@ -392,7 +392,7 @@ const Employees = () => {
                 Seguimientos
               </button>
             </div>
-            <div className='p-2 w-full'>
+            <div className='p-2 w-full overflow-y-auto flex-1 overflow-y-auto h-[80vh]'>
               {activeTab === 'general' && (
                 <General
                   onHandleChangeCard={handleChangeCard}

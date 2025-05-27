@@ -313,13 +313,13 @@ const Clients = () => {
             : { label: '', route: `/Client/${id}` },
         ]}
       />
-      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-110px)]'>
+      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  max-h-[90vh]'>
         <div className='grid grid-cols-1 md:grid-cols-5'>
-          <div className='col-span-1  border-r-2 border-gray-200 h-full'>
-            <div className='w-full border-r-2 border-gray-200 md:h-screen'>
+          <div className='col-span-1  border-r-2 border-gray-200 '>
+            <div className='w-full border-r-2 border-gray-200'>
               {/* Contenido del lado izquierdo */}
-              <div className='flex relative bg-white border-b-2 border-gray-200 h-36 '>
-                <div className='w-10 bg-blue-300  h-full'></div>
+              <div className='flex relative bg-white border-b-2 border-gray-200 h-40 '>
+                <div className='w-10 bg-blue-300 '></div>
                 <div className='absolute top-12 left-2 bg-white border-2 border-gray-300 rounded-full'>
                   {cardData.photo ? (
                     <img
@@ -426,7 +426,7 @@ const Clients = () => {
               ></Families>
             </div>
           </div>
-          <div className='md:col-span-4'>
+          <div className='col-span-4 '>
             {/* Contenido del lado derecho */}
             <div className='mb-4 border-b-2 border-gray-400 p-2'>
               <button
@@ -473,7 +473,7 @@ const Clients = () => {
                 Seguimientos
               </button>
             </div>
-            <div className='p-2 w-full'>
+            <div className='p-2 w-full overflow-y-auto flex-1 overflow-y-auto h-[80vh]'>
               {activeTab === 'general' && (
                 <General
                   onHandleChangeCard={handleChangeCard}
