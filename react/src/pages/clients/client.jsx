@@ -397,21 +397,21 @@ const Clients = () => {
               </div>
               <div className='col-span-1 mt-8 pr-4 text-xs'>
                 <div className='w-full ml-2 flex justify-between'>
-                  <label className='text-primary mt-4 mb-4  text-base'>
+                  <label className='text-primary mt-2  text-base'>
                     Datos Familiar
                   </label>
                   <label>
                     {' '}
                     <button type='button' onClick={() => openModalFamilies([])}>
-                      <FaPlusCircle className='mt-4 flex-start text-lg' />
+                      <FaPlusCircle className='mt-2 flex-start text-lg' />
                     </button>
                   </label>
                 </div>
               </div>
-              <div className='w-full p-2 mb-2'>
+              <div className='w-full p-2 mb-2 overflow-y-auto h-[250px]'>
                 {families.map((family, index) => (
                   <FamiliarCard
-                    key={index} // Asegúrate de usar una clave única, como un ID, si está disponible
+                    key={index}
                     family={family}
                     openModalFamily={openModalFamilies}
                   />

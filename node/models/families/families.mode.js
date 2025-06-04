@@ -23,8 +23,12 @@ const Family = sequelize.define("families", {
     type: DataTypes.STRING(20),
     allowNull: true,
   },
+  phone2: {
+    type: DataTypes.STRING(20),
+    allowNull: true,
+  },
   email: {
-    type: DataTypes.STRING(30),
+    type: DataTypes.STRING(50),
     allowNull: true,
   },
   observations: {

@@ -17,6 +17,7 @@ const Families = ({
     id: '',
     name: '',
     phone: '',
+    phone2: '',
     email: '',
     priority: '',
     send_invoice: false,
@@ -48,6 +49,7 @@ const Families = ({
         id: formDataFamily.id || '',
         name: formDataFamily.name || '',
         phone: formDataFamily.phone || '',
+        phone2: formDataFamily.phone2 || '',
         email: formDataFamily.email || '',
         priority: formDataFamily.priority || '',
         send_invoice: formDataFamily.send_invoice || false,
@@ -139,6 +141,7 @@ const Families = ({
       const dataToSend = {
         name: formData.name,
         phone: formData.phone,
+        phone2: formData.phone2,
         email: formData.email,
         priority: formData.priority,
         send_invoice: formData.send_invoice,
@@ -162,6 +165,7 @@ const Families = ({
       setFormData({
         name: '',
         phone: '',
+        phone2: '',
         email: '',
         priority: '',
         send_invoice: false,
@@ -285,6 +289,19 @@ const Families = ({
             {errors.phone && (
               <p class='text-red-500 text-xs mt-1'>{errors.phone}</p>
             )}
+          </div>
+          <div class='mb-4 flex items-center'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-28'>
+              Teléfono 2 (Opcional)
+            </label>
+            <input
+              type='text'
+              ref={inputRef} // Asigna la referencia
+              name='phone2'
+              value={formatPhoneNumber(formData.phone2)}
+              onChange={handleInputChange}
+              class={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm`}
+            />
           </div>
 
           <div class='mb-4 flex items-center'>
