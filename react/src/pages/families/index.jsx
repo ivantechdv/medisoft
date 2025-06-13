@@ -86,44 +86,36 @@ const Families = ({
     return /\S+@\S+\.\S+/.test(email); // Valida formato de email
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    let rawValue = value;
-    if (name == 'phone') {
-      const input = e.target;
-      const rawValue = value.replace(/\D/g, ''); // Remueve caracteres no numéricos
-      const prevFormatted = formatPhoneNumber(formData[name] || ''); // Formato anterior
-      const newFormatted = formatPhoneNumber(rawValue); // Nuevo formato
 
-      // Obtener la posición previa del cursor antes de actualizar el estado
-      let cursorPosition = input.selectionStart;
+    const handleInputChange = (e) => {
+  const { name, value } = e.target;
+ // Solo dígitos
+let rawValue=value;
+  if (name === 'phone' || name === 'phone2') {
+      const rawValue = value.replace(/\D/g, '');
+    const input = e.target;
+    const prevFormatted = formatPhoneNumber(formData[name] || '');
+    const newFormatted = formatPhoneNumber(rawValue);
 
-      // Ajustar la posición del cursor según la cantidad de espacios añadidos
-      const addedSpaces =
-        (newFormatted.match(/ /g) || []).length -
-        (prevFormatted.match(/ /g) || []).length;
-      cursorPosition += addedSpaces;
+    let cursorPosition = input.selectionStart;
 
-      if (rawValue.length <= 9) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: rawValue,
-        }));
+    const addedSpaces =
+      (newFormatted.match(/ /g) || []).length -
+      (prevFormatted.match(/ /g) || []).length;
+    cursorPosition += addedSpaces;
 
-        requestAnimationFrame(() => {
-          if (inputRef.current) {
-            const newCursorPosition = Math.min(
-              cursorPosition,
-              newFormatted.length,
-            );
-            inputRef.current.setSelectionRange(
-              newCursorPosition,
-              newCursorPosition,
-            );
-          }
-        });
-      }
-    } else {
+    if (rawValue.length <= 9) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: rawValue,
+      }));
+
+      requestAnimationFrame(() => {
+        const newCursorPosition = Math.min(cursorPosition, newFormatted.length);
+        input.setSelectionRange(newCursorPosition, newCursorPosition);
+      });
+    }
+  } else {
       setFormData({ ...formData, [name]: rawValue });
     }
   };
@@ -296,7 +288,6 @@ const Families = ({
             </label>
             <input
               type='text'
-              ref={inputRef} // Asigna la referencia
               name='phone2'
               value={formatPhoneNumber(formData.phone2)}
               onChange={handleInputChange}

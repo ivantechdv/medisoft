@@ -6,49 +6,40 @@ const Validators = async (
   currentId = null,
   compositeFields = []
 ) => {
-  const orConditions = Object.entries(dataToValidate).map(([field, value]) => ({
-    [field]: value,
-  }));
-
-  // Agregar condición compuesta combinada (AND)
-  if (compositeFields.length > 0) {
-    orConditions.push({
-      [Op.and]: compositeFields.map((field) => ({
-        [field]: dataToValidate[field],
-      })),
-    });
-  }
-
-  const whereCondition = {
-    [Op.or]: orConditions,
-  };
-
-  if (currentId) {
-    whereCondition.id = { [Op.not]: currentId };
-  }
-
-  const existingRecord = await Model.findOne({ where: whereCondition });
-
-  if (!existingRecord) return null;
+  console.log("🧪 Data a validar:", dataToValidate);
 
   const duplicatedFields = [];
 
-  // Excluir los campos que están en combinaciones
+  // Primero verificamos campos compuestos
+  if (compositeFields.length > 0) {
+    const compositeWhere = {
+      [Op.and]: compositeFields.map((field) => ({
+        [field]: dataToValidate[field],
+      })),
+    };
+    if (currentId) compositeWhere.id = { [Op.not]: currentId };
+
+    const compositeExists = await Model.findOne({ where: compositeWhere });
+    if (compositeExists) {
+      duplicatedFields.push(compositeFields.join("+"));
+    }
+  }
+
+  // Luego verificamos cada campo individual, excepto los de compositeFields
   for (const [field, value] of Object.entries(dataToValidate)) {
-    if (!compositeFields.includes(field) && existingRecord[field] === value) {
+    if (compositeFields.includes(field)) continue;
+    if (value == null) continue;
+
+    const where = { [field]: value };
+    if (currentId) where.id = { [Op.not]: currentId };
+
+    const exists = await Model.findOne({ where });
+    if (exists) {
       duplicatedFields.push(field);
     }
   }
 
-  // Verificar si la combinación completa ya existe
-  if (
-    compositeFields.length > 0 &&
-    compositeFields.every(
-      (field) => existingRecord[field] === dataToValidate[field]
-    )
-  ) {
-    duplicatedFields.push(compositeFields.join("+")); // Ej: code_phone+phone
-  }
+  console.log("⚠️ Campos duplicados encontrados:", duplicatedFields);
 
   return duplicatedFields.length ? duplicatedFields : null;
 };

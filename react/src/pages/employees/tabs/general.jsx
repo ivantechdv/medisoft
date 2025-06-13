@@ -35,6 +35,7 @@ const Form = ({
   const [isFormValid, setIsFormValid] = useState(false);
   const [formData, setFormData] = useState({
     dni: '',
+    dni_date_expiration:"",
     start_date: '',
     first_name: '',
     last_name: '',
@@ -66,6 +67,7 @@ const Form = ({
   });
   const [oldData, setOldData] = useState({
     dni: '',
+    dni_date_expiration:"",
     start_date: '',
     first_name: '',
     last_name: '',
@@ -432,6 +434,7 @@ const Form = ({
 
   const requiredFields = [
     { field: 'dni', label: 'DNI' },
+    { field: 'dni_date_expiration', label: 'Fecha de vencimiento DNI' },
     { field: 'start_date', label: 'fecha de inicio' },
     { field: 'first_name', label: 'nombres' },
     { field: 'last_name', label: 'apellidos' },
@@ -854,11 +857,17 @@ const Form = ({
       window.open(fileURL, '_blank'); // Abre el PDF en una nueva pestaña
     }
   };
+      const handleCancel = () => {
+     setTimeout(() => {
+       window.location.href = '/employees';
+        }, 500);
+  };
   return (
+    <>
     <form className=''>
       {loadingForm && <Spinner />}
-      <div className='rounded min-h-[calc(100vh-235px)]'>
-        <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
+      <div className='rounded min-h-[calc(100vh)]'>
+        {/* <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
           <button
             type='button'
             className={`bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
@@ -871,7 +880,7 @@ const Form = ({
           >
             Guardar
           </button>
-        </div>
+        </div> */}
         <div className='md:grid md:grid-cols-4 gap-2'>
           <div className='grid grid-cols-2 md:grid-cols-1'>
             <div className='col-span-1'>
@@ -1269,6 +1278,22 @@ const Form = ({
                   className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                 />
               </div>
+               <div className='col-span-1'>
+                <label
+                  htmlFor='dni_date_expiration'
+                  className='block text-sm font-medium text-blue-500'
+                >
+                  Fecha de vencimiento DNI
+                </label>
+                <input
+                  type='date'
+                  id='dni_date_expiration'
+                  name='dni_date_expiration'
+                  value={formData.dni_date_expiration}
+                  onChange={handleChange}
+                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                />
+              </div>
               <div className='col-span-1'>
                 <label
                   htmlFor='gender_id'
@@ -1292,8 +1317,7 @@ const Form = ({
                     ))}
                 </select>
               </div>
-            </div>
-            <div className='col-span-1'>
+               <div className='col-span-1'>
               <label
                 htmlFor='first_name'
                 className='block text-sm font-medium text-blue-500'
@@ -1324,6 +1348,7 @@ const Form = ({
                 onChange={handleChange}
                 className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />
+            </div>
             </div>
 
             <div className='col-span-1'>
@@ -1694,8 +1719,11 @@ const Form = ({
               </div>
             </div> */}
           </div>
+
         </div>
+
       </div>
+                       
 
       {expandImage && (
         <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
@@ -1838,7 +1866,30 @@ const Form = ({
           </div>
         </div>
       )}
+      
     </form>
+    <div className='absolute bottom-0 left-0 w-full bg-white shadow-md py-3 px-8 flex justify-end gap-4 z-30'>
+  <button
+    type='button'
+    className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
+    onClick={handleCancel}
+  >
+    Cancelar
+  </button>
+  <button
+    type='button'
+    className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+    onClick={
+      formData.is_active === 'false' &&
+      (oldData.is_active === true || oldData.is_active === 'true')
+        ? handleOpenReason
+        : handleSubmit
+    }
+  >
+    Guardar
+  </button>
+</div>
+    </>
   );
 };
 

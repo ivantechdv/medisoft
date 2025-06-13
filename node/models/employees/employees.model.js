@@ -57,6 +57,10 @@ const Employee = sequelize.define(
       type: DataTypes.STRING(100),
       allowNull: true,
     },
+     dni_date_expiration: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
     num_social_security: {
       type: DataTypes.STRING(100),
       allowNull: true,
