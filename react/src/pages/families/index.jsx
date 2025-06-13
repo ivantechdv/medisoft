@@ -17,6 +17,7 @@ const Families = ({
     id: '',
     name: '',
     phone: '',
+    phone2: '',
     email: '',
     priority: '',
     send_invoice: false,
@@ -48,6 +49,7 @@ const Families = ({
         id: formDataFamily.id || '',
         name: formDataFamily.name || '',
         phone: formDataFamily.phone || '',
+        phone2: formDataFamily.phone2 || '',
         email: formDataFamily.email || '',
         priority: formDataFamily.priority || '',
         send_invoice: formDataFamily.send_invoice || false,
@@ -84,44 +86,36 @@ const Families = ({
     return /\S+@\S+\.\S+/.test(email); // Valida formato de email
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    let rawValue = value;
-    if (name == 'phone') {
-      const input = e.target;
-      const rawValue = value.replace(/\D/g, ''); // Remueve caracteres no numéricos
-      const prevFormatted = formatPhoneNumber(formData[name] || ''); // Formato anterior
-      const newFormatted = formatPhoneNumber(rawValue); // Nuevo formato
 
-      // Obtener la posición previa del cursor antes de actualizar el estado
-      let cursorPosition = input.selectionStart;
+    const handleInputChange = (e) => {
+  const { name, value } = e.target;
+ // Solo dígitos
+let rawValue=value;
+  if (name === 'phone' || name === 'phone2') {
+      const rawValue = value.replace(/\D/g, '');
+    const input = e.target;
+    const prevFormatted = formatPhoneNumber(formData[name] || '');
+    const newFormatted = formatPhoneNumber(rawValue);
 
-      // Ajustar la posición del cursor según la cantidad de espacios añadidos
-      const addedSpaces =
-        (newFormatted.match(/ /g) || []).length -
-        (prevFormatted.match(/ /g) || []).length;
-      cursorPosition += addedSpaces;
+    let cursorPosition = input.selectionStart;
 
-      if (rawValue.length <= 9) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [name]: rawValue,
-        }));
+    const addedSpaces =
+      (newFormatted.match(/ /g) || []).length -
+      (prevFormatted.match(/ /g) || []).length;
+    cursorPosition += addedSpaces;
 
-        requestAnimationFrame(() => {
-          if (inputRef.current) {
-            const newCursorPosition = Math.min(
-              cursorPosition,
-              newFormatted.length,
-            );
-            inputRef.current.setSelectionRange(
-              newCursorPosition,
-              newCursorPosition,
-            );
-          }
-        });
-      }
-    } else {
+    if (rawValue.length <= 9) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        [name]: rawValue,
+      }));
+
+      requestAnimationFrame(() => {
+        const newCursorPosition = Math.min(cursorPosition, newFormatted.length);
+        input.setSelectionRange(newCursorPosition, newCursorPosition);
+      });
+    }
+  } else {
       setFormData({ ...formData, [name]: rawValue });
     }
   };
@@ -139,6 +133,7 @@ const Families = ({
       const dataToSend = {
         name: formData.name,
         phone: formData.phone,
+        phone2: formData.phone2,
         email: formData.email,
         priority: formData.priority,
         send_invoice: formData.send_invoice,
@@ -162,6 +157,7 @@ const Families = ({
       setFormData({
         name: '',
         phone: '',
+        phone2: '',
         email: '',
         priority: '',
         send_invoice: false,
@@ -285,6 +281,18 @@ const Families = ({
             {errors.phone && (
               <p class='text-red-500 text-xs mt-1'>{errors.phone}</p>
             )}
+          </div>
+          <div class='mb-4 flex items-center'>
+            <label class='block text-sm font-medium text-[#50a0ec] w-28'>
+              Teléfono 2 (Opcional)
+            </label>
+            <input
+              type='text'
+              name='phone2'
+              value={formatPhoneNumber(formData.phone2)}
+              onChange={handleInputChange}
+              class={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm`}
+            />
           </div>
 
           <div class='mb-4 flex items-center'>

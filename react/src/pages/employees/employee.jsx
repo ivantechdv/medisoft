@@ -221,8 +221,9 @@ const Employees = () => {
   const handleHasChange = (value) => {
     setHasChange(value);
   };
+
   return (
-    <div className='max-w-full mx-auto'>
+    <div className='max-w-full mx-auto relative'>
       <Breadcrumbs
         items={[
           { label: 'Inicio', route: '/' },
@@ -235,7 +236,7 @@ const Employees = () => {
             : { label: '', route: `/employee/${id}` },
         ]}
       />
-      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-110px)]'>
+      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-80px)]'>
         <div className='grid grid-cols-1 md:grid-cols-4'>
           <div className='col-span-1  border-r-2 border-gray-200 h-full'>
             <div className='grid grid-cols-2 md:grid-cols-1'>
