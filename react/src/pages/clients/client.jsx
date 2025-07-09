@@ -300,7 +300,7 @@ const Clients = () => {
     setFamilies(sortedFamilies);
   };
   return (
-    <div className='max-w-full mx-auto'>
+    <div className='max-w-full mx-auto relative'>
       <Breadcrumbs
         items={[
           { label: 'Inicio', route: '/' },
@@ -313,7 +313,7 @@ const Clients = () => {
             : { label: '', route: `/Client/${id}` },
         ]}
       />
-      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  max-h-[90vh]'>
+      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-80px)]'>
         <div className='grid grid-cols-1 md:grid-cols-5'>
           <div className='col-span-1  border-r-2 border-gray-200 '>
             <div className='w-full border-r-2 border-gray-200'>

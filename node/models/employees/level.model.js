@@ -11,6 +11,10 @@ const Level = sequelize.define("levels", {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  color: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,

@@ -18,7 +18,7 @@ import {
   InfoSweetAlert,
 } from '../../../components/SweetAlert/SweetAlert';
 import FileInput from '../../../components/fileInput';
-
+import { tipo_config, estado_config } from '../../../utils/config';
 const Form = ({
   onHandleChangeCard,
   id,
@@ -1129,14 +1129,11 @@ const Form = ({
                   <option value='' disabled>
                     Seleccione...
                   </option>
-                  {[
-                    { value: true, label: 'Activo', key: '1' },
-                    { value: false, label: 'Inactivo', key: '0' },
-                  ].map((option) => (
-                    <option key={option.key} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                  {Object.entries(estado_config).map(([value, option]) => (
+    <option key={value} value={value}>
+      {option.label}
+    </option>
+  ))}
                 </select>
               </div>
               <div className='col-span-1'>
@@ -1153,15 +1150,11 @@ const Form = ({
                   onChange={handleChange}
                   value={formData.type}
                 >
-                  <option value='' disabled>
-                    Seleccione...
-                  </option>
-                  <option value='1' key={'1'}>
-                    Cuidador
-                  </option>
-                  <option value='2' key={'2'}>
-                    Pendiente
-                  </option>
+                   {Object.entries(tipo_config).map(([value, option]) => (
+    <option key={value} value={value}>
+      {option.label}
+    </option>
+  ))}
                 </select>
               </div>
               <div className='col-span-1'>

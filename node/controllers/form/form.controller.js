@@ -28,7 +28,7 @@ if (model=== Employee) {
     console.log("duplicated", duplicated);
 
     if (duplicated) {
-      return res.status(409).json({
+      return res.json({
         error: `Ya existe un cuidador con los siguientes campos duplicados: ${duplicated.join(
           ", "
         )}`,
@@ -38,7 +38,7 @@ if (model=== Employee) {
     Methods.create(req, res, next, model);
   } catch (error) {
     console.log("error", error);
-    res.status(500).json({ error: error.message });
+    res.json({ error: error.message });
   }
 };
 

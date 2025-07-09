@@ -12,6 +12,7 @@ import Filter from './filter';
 import DataTable from 'react-data-table-component';
 import { Resizable } from 'react-resizable';
 import 'react-resizable/css/styles.css'; // Importa los estilos de la librería
+import { tipo_config, estado_config } from '../../utils/config';
 const MyDataTable = ({
   rows,
   onHandleRowClick,
@@ -23,52 +24,24 @@ const MyDataTable = ({
   const [isResizing, setIsResizing] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedRowId, setSelectedRowId] = useState(null);
+
   useEffect(() => {
-    const savedSelectedRows =
-      JSON.parse(localStorage.getItem('selectedRows')) || [];
+    const savedSelectedRows = JSON.parse(localStorage.getItem("selectedRows")) || [];
     setSelectedRows(savedSelectedRows);
   }, []);
 
-  const dataTableKey = `${currentPage}-${selectedRowId}`;
+  useEffect(() => {
+    localStorage.setItem("selectedRows", JSON.stringify(selectedRows));
+  }, [selectedRows]);
 
-  // Añadir efecto para sincronizar selección con paginación
   useEffect(() => {
     if (selectedRowId && !rows.some((row) => row.id === selectedRowId)) {
       setSelectedRowId(null);
     }
   }, [currentPage, rows, selectedRowId]);
 
-  // Modificar los estilos condicionales
-  const conditionalRowStyles = [
-    {
-      when: (row) => row.id === selectedRowId,
-      style: {
-        backgroundColor: '#dee0e2 !important',
-        '&:hover': {
-          backgroundColor: '#dee0e2 !important',
-        },
-      },
-    },
-    {
-      when: (row) => row.id !== selectedRowId,
-      style: {
-        '&:hover': {
-          backgroundColor: '#f3f4f6 !important',
-        },
-      },
-    },
-  ];
-
-  useEffect(() => {
-    localStorage.setItem('selectedRows', JSON.stringify(selectedRows));
-  }, [selectedRows]);
-
-  const handleRowSelected = ({ selectedRows }) => {
-    setSelectedRows(selectedRows);
-  };
-
   const getColumnWidths = () => {
-    const savedWidths = JSON.parse(localStorage.getItem('columnWidths')) || {};
+    const savedWidths = JSON.parse(localStorage.getItem("columnWidths")) || {};
     return {
       id: savedWidths.id || 60,
       dni: savedWidths.dni || 120,
@@ -81,60 +54,158 @@ const MyDataTable = ({
   const [columnWidths, setColumnWidths] = useState(getColumnWidths);
 
   useEffect(() => {
-    localStorage.setItem('columnWidths', JSON.stringify(columnWidths));
+    localStorage.setItem("columnWidths", JSON.stringify(columnWidths));
   }, [columnWidths]);
 
   const handleResizeStart = () => setIsResizing(true);
   const handleResizeStop = () => setIsResizing(false);
 
-  const handleResize =
-    (columnKey) =>
-    (e, { size }) => {
-      setColumnWidths((prev) => {
-        const newWidths = { ...prev, [columnKey]: size.width };
-        localStorage.setItem('columnWidths', JSON.stringify(newWidths));
-        return newWidths;
-      });
-    };
+  const handleResize = (columnKey) => (e, { size }) => {
+    setColumnWidths((prev) => {
+      const newWidths = { ...prev, [columnKey]: size.width };
+      localStorage.setItem("columnWidths", JSON.stringify(newWidths));
+      return newWidths;
+    });
+  };
 
-  const resizableColumn = (name, key, selector) => ({
+const resizableColumn = (name, key, selector) => ({
+  name: (
+    <Resizable
+      width={columnWidths[key]}
+      height={0}
+      onResize={handleResize(key)}
+      onResizeStart={handleResizeStart}
+      onResizeStop={handleResizeStop}
+      draggableOpts={{ enableUserSelectHack: false }}
+      style={{ display: 'inline-block' }}
+    >
+      <div style={{ padding: '4px 8px', cursor: 'col-resize' }}>{name}</div>
+    </Resizable>
+  ),
+  selector,
+  sortable: !isResizing,
+  width: `${columnWidths[key]}px`,
+  cell: (row) => (
+    <div
+      onClick={() => handleRowClick(row)}
+      style={{
+         backgroundColor: key === 'id' ? 'transparent' : getColor('e', row),
+        height: '100%',
+        width: '100%',
+        padding: '4px 8px',
+        cursor: 'pointer',
+        userSelect: 'none',
+      }}
+    >
+      {selector(row)}
+    </div>
+  ),
+});
+  const getColor = (key, row) => {
+    switch (key) {
+      case "e":
+        const hasClientServices = row.clients_services?.length > 0;
+        if (row.is_active === true) {
+          return estado_config[1].color;
+        } else if (hasClientServices) {
+          return estado_config[2].color;
+        } else {
+          return estado_config[0].color;
+        }
+      case "t":
+        return tipo_config[row.type]?.color || "gray";
+        case "n":
+         return row?.level?.color ? `rgb(${row.level.color})` : "gray";
+           case "s":
+         return row?.statu?.color ? `rgb(${row.statu.color})` : "gray";
+      default:
+        return "gray";
+    }
+  };
+const columns = [
+  resizableColumn('ID', 'id', (row) => row.id),
+  {
     name: (
-      <Resizable
-        width={columnWidths[key]}
-        height={0}
-        onResize={handleResize(key)}
-        onResizeStart={handleResizeStart}
-        onResizeStop={handleResizeStop}
-        draggableOpts={{ enableUserSelectHack: false }}
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          width: '100%',
+          padding: '0 8px',
+          userSelect: 'none',
+        }}
       >
-        <div>{name}</div>
-      </Resizable>
+        {['T', 'N', 'S'].map((letter) => (
+          <div key={letter} style={{ width: 20, textAlign: 'center' }}>
+            {letter}
+          </div>
+        ))}
+      </div>
     ),
-    selector,
-    sortable: !isResizing,
-    width: `${columnWidths[key]}px`,
-  });
+    selector: (row) => row,
+    sortable: false,
+    width: '160px',
+    cell: (row) => (
+      <div
+        style={{
+          display: 'flex',
+          gap: 4,
+          justifyContent: 'space-between',
+          width: '100%',
+          userSelect: 'none',
+        }}
+      >
+        {['t', 'n', 's'].map((key) => (
+          <div
+            key={key}
+            title={key.toUpperCase()}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 4,
+              backgroundColor: getColor(key, row),
+              border: '1px solid #000',
+              pointerEvents: 'none', // evita que bloqueen clicks o drags
+            }}
+          />
+        ))}
+      </div>
+    ),
+  },
+  resizableColumn('DNI', 'dni', (row) => row.dni),
+  resizableColumn('Nombre completo', 'full_name', (row) => row.full_name),
+  resizableColumn('Correo electrónico', 'email', (row) => row.email),
+  resizableColumn('Teléfono', 'phone', (row) => row.phone),
+];
 
-  const columns = [
-    resizableColumn('ID', 'id', (row) => row.id),
-    resizableColumn('DNI', 'dni', (row) => row.dni),
-    resizableColumn('Nombre completo', 'full_name', (row) => row.full_name),
-    resizableColumn('Correo electrónico', 'email', (row) => row.email),
-    resizableColumn('Teléfono', 'phone', (row) => row.phone),
-  ];
 
   const handleRowClick = (row) => {
-    console.log('row.', row.id);
     onHandleRowClick(row);
     setSelectedRowId((prev) => (prev === row.id ? null : row.id));
   };
 
-  // Función para ver detalles del cliente
   const handleViewClient = (id) => {
     onHandleViewClient(id);
-    console.log(`Ver detalles del cliente con ID: ${id}`);
-    // Aquí puedes agregar la navegación o modal para ver detalles
   };
+
+  const conditionalRowStyles = [
+    {
+      when: (row) => true,
+      style: (row) => ({
+        backgroundColor: getColor("e", row),
+        '&:hover': {
+          backgroundColor: getColor("e", row),
+        },
+      }),
+    },
+    {
+      when: (row) => row.id === selectedRowId,
+      style: {
+        outline: "2px solid #000",
+      },
+    },
+  ];
+
   return (
     <div>
       <DataTable
@@ -142,38 +213,45 @@ const MyDataTable = ({
         columns={columns}
         data={rows}
         fixedHeader
-        keyField='id'
-        fixedHeaderScrollHeight='calc(100vh - 130px)'
-        selectableRows={true}
-        onSelectedRowsChange={handleRowSelected}
+        keyField="id"
+        fixedHeaderScrollHeight="calc(100vh - 130px)"
+        selectableRows
+        onSelectedRowsChange={({ selectedRows }) => setSelectedRows(selectedRows)}
         pagination={false}
-        conditionalRowStyles={conditionalRowStyles}
+        conditionalRowStyles={''}
         customStyles={{
           rows: {
             style: {
-              minHeight: '32px',
-              height: '32px',
-              fontSize: '14px',
-              padding: '4px 8px',
-              cursor: 'pointer', // 🔥 Cambia el cursor a pointer
+              minHeight: "32px",
+              height: "32px",
+              fontSize: "14px",
+              cursor: "pointer",
+               paddingLeft: '0px',  // quitar padding izquierdo
+        paddingRight: '0px', // quitar padding derecho
             },
+            
           },
+          cells: {
+    style: {
+      paddingLeft: '0px',  // Aquí quitas padding lateral de las celdas
+      paddingRight: '0px',
+    },
+  },
           headCells: {
             style: {
-              position: 'sticky', // 🔥 Hace que los títulos queden fijos
+              position: "sticky",
               top: 0,
-              backgroundColor: '#f8f9fa', // Color de fondo para diferenciarlos
-              zIndex: 2, // Asegura que estén por encima del contenido
-              fontSize: '14px',
-              fontWeight: 'bold',
-              padding: '6px 8px',
+              backgroundColor: "#f8f9fa",
+              zIndex: 2,
+              fontSize: "14px",
+              fontWeight: "bold",
+              padding: "6px 8px",
             },
           },
         }}
-        onRowClicked={(row) => handleRowClick(row)}
+        onRowClicked={handleRowClick}
         onRowDoubleClicked={(row) => handleViewClient(row.id)}
       />
-
       {onRenderPagination()}
     </div>
   );
@@ -181,7 +259,7 @@ const MyDataTable = ({
 const Clients = () => {
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(() => {
-    return Number(localStorage.getItem('pageSize')) || 10; // Carga desde localStorage o usa 10 por defecto
+    return Number(localStorage.getItem('pageSize')) || "todos"; // Carga desde localStorage o usa 10 por defecto
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -211,10 +289,24 @@ const Clients = () => {
     experiences: [],
     services: [],
   });
+  const [filtersT, setFiltersT] = useState({
+  estado: '',
+  tipo: '',
+  nivel: '',
+  situacion: '',
+});
+
+const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+
+const [niveles, setNiveles] = useState([]);
+const [situaciones, setSituaciones] = useState([]);
 
   const [servicesActive, setServicesActive] = useState([]);
   const [preselections, setPreselections] = useState([]);
   const navigateTo = useNavigate();
+
+
 
   useEffect(() => {
     const table = document.querySelector('.table-container'); // Clase de contenedor de la tabla
@@ -235,6 +327,11 @@ const Clients = () => {
           `employees/gain-experience/all?order=${order}`,
         );
         const services = await getData(`services/all?order=${order}`);
+
+          const responseLevels = await getData('employees/level/all');
+                setNiveles(responseLevels);
+                const responseStatus = await getData('employees/status/all');
+                setSituaciones(responseStatus);
 
         // Crear diccionarios
         setDictionaries({
@@ -276,17 +373,21 @@ const Clients = () => {
         setIsLoading(true);
       }
       let response;
-      if (pageSize == 0) {
-        response = await getData(
-          `employees?is_deleted=0&searchTerm=${searchTerm}`,
-        );
-      } else {
-        response = await getData(
-          `employees?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
-        );
-      }
+     let url = `employees?is_deleted=0&searchTerm=${searchTerm}`;
+
+    if (filtersT.estado) url += `&is_active=${filtersT.estado}`;
+    if (filtersT.tipo) url += `&type=${filtersT.tipo}`;
+    if (filtersT.nivel) url += `&level_id=${filtersT.nivel}`;
+    if (filtersT.situacion) url += `&statu_id=${filtersT.situacion}`;
+
+    if (pageSize !== 'todos') {
+      url += `&page=${currentPage}&pageSize=${pageSize}`;
+    }
+    response = await getData(url);
       console.log(response);
       const { data, meta } = response;
+
+      
 
       setRows(data);
       setTotalPages(meta.totalPages);
@@ -380,7 +481,7 @@ const Clients = () => {
   const handleRowClick = async (row, event) => {
     console.log('row', row);
     setSelectedRow(row);
-    setSelectedRowId(rowData.id);
+    setSelectedRowId(row.id);
     const preselection = await getData(
       `client-service-preselection/all?employee_id=${row.id}&status=Pendiente`,
     );
@@ -409,6 +510,8 @@ const Clients = () => {
     }
 
     const { patologies, tasks, experiences, services } = dictionaries;
+
+    console.log("employee especific",row.employee_specific);
 
     const selectedPatologies = mapIdsToNames(
       row?.employee_specific?.patologies || '',
@@ -460,7 +563,7 @@ const Clients = () => {
   const handlePageSizeChange = (event) => {
     if (event.target.value == 'todos') {
       setPageSize(0);
-      localStorage.setItem('pageSize', 0); // Guardar en cache
+      localStorage.setItem('pageSize',"todos"); // Guardar en cache
     } else {
       setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
       localStorage.setItem('pageSize', Number(event.target.value)); // Guardar en cache
@@ -552,6 +655,38 @@ const Clients = () => {
       // Maneja el error según sea necesario
     }
   };
+
+    const handleFilterChange = (e) => {
+      const { name, value } = e.target;
+      setFiltersT((prev) => ({
+    ...prev,
+    [name]: value,
+  }))
+    }
+    const handleAplyFilter = () => {
+     setCurrentPage(1); 
+ getRows();
+    }
+    const [shouldFetch, setShouldFetch] = useState(false);
+    useEffect(() => {
+  if (shouldFetch) {
+    getRows();
+    setShouldFetch(false); // Resetear flag
+  }
+}, [ shouldFetch]);
+
+        const handleResetFilter = () => {
+         setFiltersT({
+    estado: '',
+    tipo: '',
+    nivel: '',
+    situacion: '',
+  });
+   setCurrentPage(1);
+  setShouldFetch(true); //
+    }
+
+
   return (
     <div className='max-w-full mx-auto'>
       <div className='flex justify-between px-4 sm:px-6'>
@@ -563,6 +698,78 @@ const Clients = () => {
         />
         <div className='flex space-x-2'>
           <div className='relative'>
+  <button
+    className="bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-4 pt-2"
+    onClick={() => setIsFilterOpen(!isFilterOpen)}
+  >
+    <FaFilter className="text-lg" />
+  </button>
+
+  {isFilterOpen && (
+    <div
+      className="absolute top-10 right-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2"
+      onMouseLeave={() => setIsFilterOpen(false)} // Cierra cuando sales del popup
+    >
+      <select
+        name="estado"
+        value={filtersT.estado}
+        onChange={handleFilterChange}
+        className="border border-gray-400 rounded w-full text-xs p-1"
+      >
+        <option value="">Estado</option>
+       {Object.entries(estado_config).map(([value, option]) => (
+          <option key={value} value={value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+
+      <select
+        name="tipo"
+        value={filtersT.tipo}
+        onChange={handleFilterChange}
+        className="border border-gray-400 rounded w-full text-xs p-1"
+      >
+        <option value="">Tipo</option>
+        {Object.entries(tipo_config).map(([value, option]) => (
+          <option key={value} value={value}>{option.label}</option>
+        ))}
+      </select>
+
+      <select
+        name="nivel"
+        value={filtersT.nivel}
+        onChange={handleFilterChange}
+        className="border border-gray-400 rounded w-full text-xs p-1"
+      >
+        <option value="">Nivel</option>
+        {niveles.map((n) => (
+          <option key={n.id} value={n.id}>{n.name}</option>
+        ))}
+      </select>
+
+      <select
+        name="situacion"
+        value={filtersT.situacion}
+        onChange={handleFilterChange}
+        className="border border-gray-400 rounded w-full text-xs p-1"
+      >
+        <option value="">Situación</option>
+        {situaciones.map((s) => (
+          <option key={s.id} value={s.id}>{s.name}</option>
+        ))}
+      </select>
+
+      <div className='flex flex-row justify-between gap-2'>
+  <button type='button' className='px-2 py-1 bg-gray-600 text-white rounded text-sm' onClick={handleResetFilter}> 
+    Borrar Filtro
+  </button>
+  <button type='button' className='px-2 py-1 bg-green-600 text-white rounded text-sm' onClick={handleAplyFilter}>
+    Aplicar
+  </button>
+</div>
+        </div>
+  )}
             <input
               type='text'
               className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
@@ -603,7 +810,7 @@ const Clients = () => {
             <option value={20}>20</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
-            <option value={0}>Todos</option>
+            <option value={"todos"}>Todos</option>
           </select>
           <button
             className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
@@ -619,12 +826,12 @@ const Clients = () => {
           >
             <FaMinusCircle className='text-lg' />
           </button>
-          <button
+          {/* <button
             className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
             onClick={handleFilter}
           >
             <FaFilter className='text-lg' />
-          </button>
+          </button> */}
         </div>
       </div>
       <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2'>

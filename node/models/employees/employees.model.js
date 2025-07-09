@@ -4,6 +4,8 @@ const CodPost = require("../cod_posts/cod_posts.model");
 const EmployeeSpecific = require("./specific.model");
 const EmployeeComplementary = require("./complementary.model");
 const Gender = require("../genders/genders.model");
+const Status = require("./status.model");
+const Level = require("./level.model");
 
 const Employee = sequelize.define(
   "employees",
@@ -144,6 +146,14 @@ const Employee = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
+    ipaddress:{
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    was_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+    },
   },
   {
     tableName: "employees",
@@ -154,6 +164,8 @@ const Employee = sequelize.define(
 );
 
 Employee.belongsTo(CodPost, { foreignKey: "cod_post_id" });
+Employee.belongsTo(Status, { foreignKey: "statu_id" });
+Employee.belongsTo(Level, { foreignKey: "level_id" });
 CodPost.hasMany(Employee, { foreignKey: "cod_post_id" });
 Employee.hasOne(EmployeeSpecific, { foreignKey: "employee_id" });
 Employee.hasOne(EmployeeComplementary, { foreignKey: "employee_id" });
