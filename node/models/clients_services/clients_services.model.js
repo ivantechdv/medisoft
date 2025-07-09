@@ -88,6 +88,7 @@ ClientsServices.belongsTo(ClientStatuReason, {
 ClientsServices.belongsTo(Service, { foreignKey: "service_id" });
 Client.hasMany(ClientsServices, { foreignKey: "client_id" });
 ClientsServices.belongsTo(Employee, { foreignKey: "employee_id" });
+Employee.hasMany(ClientsServices,{foreignKey:"employee_id"})
 Service.hasMany(ClientsServices, { foreignKey: "service_id" });
 ClientsServices.belongsTo(Service, { foreignKey: "service_id" });
 

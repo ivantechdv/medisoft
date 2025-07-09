@@ -11,6 +11,9 @@ const Methods = require("../methods/methods.controller");
 const { Sequelize, Op } = require("sequelize");
 const Gender = require("../../models/genders/genders.model");
 const validationField = require("../../utils/validators");
+const ClientsServices = require("../../models/clients_services/clients_services.model");
+const Status = require("../../models/employees/status.model");
+const Level = require("../../models/employees/level.model");
 CTRL.create = async (req, res, next) => {
   try {
     // const duplicated = await validationField(
@@ -95,6 +98,15 @@ CTRL.get = async (req, res, next) => {
       {
         model: EmployeeComplementary,
       },
+      {
+        model:ClientsServices
+      },
+       {
+        model:Status
+      },
+        {
+        model:Level
+      }
     ];
     Methods.get(req, res, next, Employee, condition, include);
   } catch (error) {
@@ -114,6 +126,15 @@ CTRL.getAll = async (req, res, next) => {
       {
         model: EmployeeComplementary,
       },
+      {
+        model:ClientsServices
+      },
+       {
+        model:Status
+      },
+        {
+        model:Level
+      }
     ];
     Methods.getAll(req, res, next, Employee, condition, include);
   } catch (error) {

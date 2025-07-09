@@ -839,11 +839,17 @@ const Form = ({
     setIsOpenModalReason(false);
     handleSubmit();
   };
+        const handleCancel = () => {
+     setTimeout(() => {
+       window.location.href = '/clients';
+        }, 500);
+  };
   return (
+    <>
     <form className=''>
       {loading && <Spinner />}
       <div className='rounded min-h-[calc(100vh-235px)] mb-20'>
-        <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
+        {/* <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
           <button
             type='button'
             className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
@@ -856,7 +862,7 @@ const Form = ({
           >
             Guardar
           </button>
-        </div>
+        </div> */}
         <div className='md:grid md:grid-cols-4 gap-2'>
           <div className='col-span-1'>
             <div className='col-span-1'>
@@ -1618,6 +1624,28 @@ const Form = ({
         </div>
       )}
     </form>
+    <div className='absolute bottom-0 left-0 w-full bg-white shadow-md py-3 px-8 flex justify-end gap-4 z-30'>
+  <button
+    type='button'
+    className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
+    onClick={handleCancel}
+  >
+    Cancelar
+  </button>
+  <button
+            type='button'
+            className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+            onClick={
+              formData.is_active == 'false' &&
+              (oldData.is_active === true || oldData.is_active === 'true')
+                ? handleOpenReason
+                : handleSubmit
+            }
+          >
+            Guardar
+          </button>
+</div>
+</>
   );
 };
 

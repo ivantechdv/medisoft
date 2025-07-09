@@ -132,7 +132,7 @@ function middlewares() {
   // Middlewares
   app.use(
     cors({
-      origin: ["http://localhost:5000"],
+      origin: ["http://localhost:5002"],
       // origin: "*" ,
       credentials: true,
     })

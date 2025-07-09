@@ -15,6 +15,10 @@ const Status = sequelize.define("statu", {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  color: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,
