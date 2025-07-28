@@ -149,6 +149,7 @@ CTRL.get = async (
       where: {
         id: ids.map((idRecord) => idRecord.id),
       },
+       distinct: true,
       include: include,
       ...(pageSize && {
         limit: parsedPageSize,

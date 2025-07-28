@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useLocation } from 'react-router-dom';
 
 import { getData, postData, putData } from '../../api';
@@ -9,257 +9,505 @@ import Breadcrumbs from '../../components/Breadcrumbs';
 import Modal from './modal';
 import { useNavigate } from 'react-router-dom';
 import Filter from './filter';
-import DataTable from 'react-data-table-component';
 import { Resizable } from 'react-resizable';
 import 'react-resizable/css/styles.css'; // Importa los estilos de la librería
 import { tipo_config, estado_config } from '../../utils/config';
+import { ResizableBox } from 'react-resizable';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  flexRender,
+} from '@tanstack/react-table';
+
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { FaSort, FaSortUp, FaSortDown, FaGripVertical } from 'react-icons/fa';
+
+const DraggableHeader = ({ header, index }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: header.column.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    width: `${header.getSize()}px`,
+    padding: "8px",
+    borderBottom: "1px solid #ccc",
+    textAlign: "center",
+    fontSize: "13px",
+    position: "relative",
+    backgroundColor: "#f9f9f9",
+    userSelect: "none",
+    boxSizing: "border-box",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+  };
+
+  const getSortIcon = () => {
+    if (!header.column.getCanSort()) return null;
+    
+    const sortDirection = header.column.getIsSorted();
+    if (sortDirection === 'asc') return <FaSortUp style={{ marginLeft: 4, opacity: 0.8 }} />;
+    if (sortDirection === 'desc') return <FaSortDown style={{ marginLeft: 4, opacity: 0.8 }} />;
+    return <FaSort style={{ marginLeft: 4, opacity: 0.3 }} />;
+  };
+
+  return (
+    <th ref={setNodeRef} style={style}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        width: '100%',
+        height: '100%'
+      }}>
+        {/* Área de ordenamiento - ocupa todo el espacio disponible */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: header.column.getCanSort() ? 'pointer' : 'default',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            padding: '0 4px'
+          }}
+          onClick={header.column.getToggleSortingHandler()}
+        >
+          {flexRender(header.column.columnDef.header, header.getContext())}
+          {header.column.getCanSort() && getSortIcon()}
+        </div>
+
+        {/* Área de drag - solo el ícono */}
+        <div
+          {...attributes}
+          {...listeners}
+          style={{
+            cursor: 'grab',
+            padding: '0 4px',
+            display: 'flex',
+            alignItems: 'center',
+            opacity: 0.5,
+            ':hover': {
+              opacity: 1
+            }
+          }}
+        >
+          <FaGripVertical />
+        </div>
+      </div>
+
+      {header.column.getCanResize() && (
+        <div
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+          style={{
+            position: "absolute",
+            right: 0,
+            top: 0,
+            height: "100%",
+            width: "1px",
+            cursor: "col-resize",
+            zIndex: 1,
+            userSelect: "none",
+            backgroundColor: "#ddd",
+            borderLeft: "3px solid #aaa",
+            transition: "background-color 0.4s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#aaa")}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ddd")}
+        />
+      )}
+    </th>
+  );
+};
+
 const MyDataTable = ({
-  rows,
-  onHandleRowClick,
+  rows = [],
+  onHandleRowClick = () => {},
   onRenderPagination,
   currentPage,
   pageSize,
-  onHandleViewClient,
+  onHandleViewClient = () => {},
 }) => {
-  const [isResizing, setIsResizing] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]);
   const [selectedRowId, setSelectedRowId] = useState(null);
+  const [sorting, setSorting] = useState([]);
+  const [columnSizing, setColumnSizing] = useState(() => {
+    const saved = localStorage.getItem("myDataTableColumnWidths");
+    return saved ? JSON.parse(saved) : {};
+  });
+
+  const [columnOrder, setColumnOrder] = useState(() => {
+    const saved = localStorage.getItem("myDataTableColumnOrder");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   useEffect(() => {
-    const savedSelectedRows = JSON.parse(localStorage.getItem("selectedRows")) || [];
-    setSelectedRows(savedSelectedRows);
-  }, []);
+    localStorage.setItem("myDataTableColumnWidths", JSON.stringify(columnSizing));
+  }, [columnSizing]);
 
   useEffect(() => {
-    localStorage.setItem("selectedRows", JSON.stringify(selectedRows));
-  }, [selectedRows]);
-
-  useEffect(() => {
-    if (selectedRowId && !rows.some((row) => row.id === selectedRowId)) {
-      setSelectedRowId(null);
+    if (columnOrder) {
+      localStorage.setItem("myDataTableColumnOrder", JSON.stringify(columnOrder));
     }
-  }, [currentPage, rows, selectedRowId]);
+  }, [columnOrder]);
 
-  const getColumnWidths = () => {
-    const savedWidths = JSON.parse(localStorage.getItem("columnWidths")) || {};
-    return {
-      id: savedWidths.id || 60,
-      dni: savedWidths.dni || 120,
-      full_name: savedWidths.full_name || 300,
-      email: savedWidths.email || 300,
-      phone: savedWidths.phone || 150,
-    };
+  const clickTimer = useRef(null);
+
+  const onRowInteraction = (row) => {
+    if (!row?.id) return;
+
+    if (clickTimer.current) {
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      onHandleViewClient(row.id);
+    } else {
+      clickTimer.current = setTimeout(() => {
+        clickTimer.current = null;
+        onRowClicked(row);
+      }, 250);
+    }
   };
 
-  const [columnWidths, setColumnWidths] = useState(getColumnWidths);
-
-  useEffect(() => {
-    localStorage.setItem("columnWidths", JSON.stringify(columnWidths));
-  }, [columnWidths]);
-
-  const handleResizeStart = () => setIsResizing(true);
-  const handleResizeStop = () => setIsResizing(false);
-
-  const handleResize = (columnKey) => (e, { size }) => {
-    setColumnWidths((prev) => {
-      const newWidths = { ...prev, [columnKey]: size.width };
-      localStorage.setItem("columnWidths", JSON.stringify(newWidths));
-      return newWidths;
-    });
+  const getRowBackgroundColor = (row) => {
+    if (!estado_config || estado_config.length < 3) return "#ffffff";
+    
+    const hasClientServices = row.clients_services?.length > 0;
+    if (row.is_active === true) {
+      return estado_config[1].color;
+    } else if (hasClientServices) {
+      return estado_config[2].color;
+    }
+    return estado_config[0].color;
   };
 
-const resizableColumn = (name, key, selector) => ({
-  name: (
-    <Resizable
-      width={columnWidths[key]}
-      height={0}
-      onResize={handleResize(key)}
-      onResizeStart={handleResizeStart}
-      onResizeStop={handleResizeStop}
-      draggableOpts={{ enableUserSelectHack: false }}
-      style={{ display: 'inline-block' }}
-    >
-      <div style={{ padding: '4px 8px', cursor: 'col-resize' }}>{name}</div>
-    </Resizable>
-  ),
-  selector,
-  sortable: !isResizing,
-  width: `${columnWidths[key]}px`,
-  cell: (row) => (
-    <div
-      onClick={() => handleRowClick(row)}
-      style={{
-         backgroundColor: key === 'id' ? 'transparent' : getColor('e', row),
-        height: '100%',
-        width: '100%',
-        padding: '4px 8px',
-        cursor: 'pointer',
-        userSelect: 'none',
-      }}
-    >
-      {selector(row)}
-    </div>
-  ),
-});
   const getColor = (key, row) => {
     switch (key) {
-      case "e":
-        const hasClientServices = row.clients_services?.length > 0;
-        if (row.is_active === true) {
-          return estado_config[1].color;
-        } else if (hasClientServices) {
-          return estado_config[2].color;
-        } else {
-          return estado_config[0].color;
-        }
       case "t":
         return tipo_config[row.type]?.color || "gray";
-        case "n":
-         return row?.level?.color ? `rgb(${row.level.color})` : "gray";
-           case "s":
-         return row?.statu?.color ? `rgb(${row.statu.color})` : "gray";
+      case "n":
+        return row?.level?.color ? `rgb(${row.level.color})` : "gray";
+      case "s":
+        return row?.statu?.color ? `rgb(${row.statu.color})` : "gray";
       default:
         return "gray";
     }
   };
-const columns = [
-  resizableColumn('ID', 'id', (row) => row.id),
-  {
-    name: (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          width: '100%',
-          padding: '0 8px',
-          userSelect: 'none',
-        }}
-      >
-        {['T', 'N', 'S'].map((letter) => (
-          <div key={letter} style={{ width: 20, textAlign: 'center' }}>
-            {letter}
-          </div>
-        ))}
-      </div>
-    ),
-    selector: (row) => row,
-    sortable: false,
-    width: '160px',
-    cell: (row) => (
-      <div
-        style={{
-          display: 'flex',
-          gap: 4,
-          justifyContent: 'space-between',
-          width: '100%',
-          userSelect: 'none',
-        }}
-      >
-        {['t', 'n', 's'].map((key) => (
+
+  const IndicatorsCell = ({ row }) => (
+    <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+      {["t", "n", "s"].map((key) => {
+        const title =
+          key === "t"
+            ? tipo_config[row.type]?.label
+            : key === "n"
+            ? row?.level?.name
+            : row?.statu?.name;
+
+        return (
           <div
             key={key}
-            title={key.toUpperCase()}
+            title={title}
             style={{
               width: 20,
               height: 20,
-              borderRadius: 4,
+              borderRadius: 2,
               backgroundColor: getColor(key, row),
-              border: '1px solid #000',
-              pointerEvents: 'none', // evita que bloqueen clicks o drags
             }}
           />
-        ))}
-      </div>
-    ),
-  },
-  resizableColumn('DNI', 'dni', (row) => row.dni),
-  resizableColumn('Nombre completo', 'full_name', (row) => row.full_name),
-  resizableColumn('Correo electrónico', 'email', (row) => row.email),
-  resizableColumn('Teléfono', 'phone', (row) => row.phone),
-];
-
-
-  const handleRowClick = (row) => {
-    onHandleRowClick(row);
-    setSelectedRowId((prev) => (prev === row.id ? null : row.id));
-  };
-
-  const handleViewClient = (id) => {
-    onHandleViewClient(id);
-  };
-
-  const conditionalRowStyles = [
-    {
-      when: (row) => true,
-      style: (row) => ({
-        backgroundColor: getColor("e", row),
-        '&:hover': {
-          backgroundColor: getColor("e", row),
-        },
-      }),
-    },
-    {
-      when: (row) => row.id === selectedRowId,
-      style: {
-        outline: "2px solid #000",
-      },
-    },
-  ];
-
-  return (
-    <div>
-      <DataTable
-        key={currentPage}
-        columns={columns}
-        data={rows}
-        fixedHeader
-        keyField="id"
-        fixedHeaderScrollHeight="calc(100vh - 130px)"
-        selectableRows
-        onSelectedRowsChange={({ selectedRows }) => setSelectedRows(selectedRows)}
-        pagination={false}
-        conditionalRowStyles={''}
-        customStyles={{
-          rows: {
-            style: {
-              minHeight: "32px",
-              height: "32px",
-              fontSize: "14px",
-              cursor: "pointer",
-               paddingLeft: '0px',  // quitar padding izquierdo
-        paddingRight: '0px', // quitar padding derecho
-            },
-            
-          },
-          cells: {
-    style: {
-      paddingLeft: '0px',  // Aquí quitas padding lateral de las celdas
-      paddingRight: '0px',
-    },
-  },
-          headCells: {
-            style: {
-              position: "sticky",
-              top: 0,
-              backgroundColor: "#f8f9fa",
-              zIndex: 2,
-              fontSize: "14px",
-              fontWeight: "bold",
-              padding: "6px 8px",
-            },
-          },
-        }}
-        onRowClicked={handleRowClick}
-        onRowDoubleClicked={(row) => handleViewClient(row.id)}
-      />
-      {onRenderPagination()}
+        );
+      })}
     </div>
   );
+
+  const columnDefs = useMemo(() => [
+    {
+  header: "T",
+  id: "indicator_t",
+  size: 25,
+  minSize: 25,
+  maxSize: 25,
+  enableSorting: false,
+  enableResizing: false,
+  enableColumnDragging: false,
+  cell: ({ row }) => {
+    const data = row.original;
+    const title = tipo_config[data.type]?.label;
+    return (
+      <div
+        title={title}
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 2,
+          margin: "0 auto",
+          backgroundColor: getColor("t", data),
+        }}
+      />
+    );
+  },
+},
+{
+  header: "N",
+  id: "indicator_n",
+  size: 25,
+  minSize: 25,
+  maxSize: 25,
+  enableSorting: false,
+  enableResizing: false,
+  enableColumnDragging: false,
+  cell: ({ row }) => {
+    const data = row.original;
+    const title = data?.level?.name;
+    return (
+      <div
+        title={title}
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 2,
+          margin: "0 auto",
+          backgroundColor: getColor("n", data),
+        }}
+      />
+    );
+  },
+},
+{
+  header: "S",
+  id: "indicator_s",
+  size: 25,
+  minSize: 25,
+  maxSize: 25,
+  enableSorting: false,
+  enableResizing: false,
+  enableColumnDragging: false,
+  cell: ({ row }) => {
+    const data = row.original;
+    const title = data?.statu?.name;
+    return (
+      <div
+        title={title}
+        style={{
+          width: 20,
+          height: 20,
+          borderRadius: 2,
+          margin: "0 auto",
+          backgroundColor: getColor("s", data),
+        }}
+      />
+    );
+  },
+},
+    ...[{ key: "id", label: "ID" },
+  { key: "dni", label: "DNI" },
+  { key: "full_name", label: "Nombre" },
+  { key: "email", label: "Correo Electrónico" },
+  { key: "phone", label: "Teléfono" },].map(({ key, label }) => ({
+      header: label,
+      accessorKey: key,
+      id: key,
+      size: columnSizing[key] ?? (key === "full_name" || key === "email" ? 300 : 120),
+      minSize: key === "email" || key === "full_name" ? 150 : 80,
+      maxSize: key === "email" || key === "full_name" ? 600 : 250,
+      enableSorting: true,
+      enableResizing: true,
+      sortingFn: (rowA, rowB, columnId) => {
+        const valueA = rowA.getValue(columnId);
+        const valueB = rowB.getValue(columnId);
+        
+        if (valueA == null) return 1;
+        if (valueB == null) return -1;
+        if (valueA == null && valueB == null) return 0;
+        
+        if (typeof valueA === 'number' && typeof valueB === 'number') {
+          return valueA - valueB;
+        }
+        
+        return String(valueA).localeCompare(String(valueB));
+      },
+      cell: ({ row, getValue }) => {
+        const isSelected = row.original.id === selectedRowId;
+        const bgColor = isSelected
+          ? "#d3d3d3"
+          : getRowBackgroundColor(row.original);
+        return (
+          <div
+            style={{
+              backgroundColor: bgColor,
+              width: "100%",
+              height: "100%",
+              padding: "4px 4px",
+              display: "flex",
+              alignItems: "center",
+              fontSize: "13px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {getValue()}
+          </div>
+        );
+      },
+    })),
+  ], [selectedRowId, columnSizing, estado_config, tipo_config]);
+
+  const defaultColumnOrder = columnDefs.map((col) => col.id);
+
+  const table = useReactTable({
+    data: rows,
+    columns: columnDefs,
+    state: {
+      sorting,
+      columnSizing,
+      columnOrder: columnOrder || defaultColumnOrder,
+    },
+    onSortingChange: setSorting,
+    onColumnSizingChange: setColumnSizing,
+    onColumnOrderChange: setColumnOrder,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    columnResizeMode: "onEnd",
+    enableColumnResizing: true,
+  });
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const onDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = table.getState().columnOrder.indexOf(active.id);
+      const newIndex = table.getState().columnOrder.indexOf(over.id);
+      const newOrder = arrayMove(table.getState().columnOrder, oldIndex, newIndex);
+      setColumnOrder(newOrder);
+    }
+  };
+
+  const onRowClicked = (row) => {
+   if (!row?.id) return;
+setSelectedRowId(row.id);
+onHandleRowClick(row);
+  };
+
+  return (
+    <>
+      <div style={{ 
+        overflowX: "auto", 
+        maxHeight: "calc(100vh - 130px)", 
+        width: "100%",
+        display: "block"
+      }}>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <div style={{
+            width: 'max-content',
+            minWidth: '100%'
+          }}>
+            <table 
+              style={{ 
+                width: "auto",
+                borderCollapse: "collapse",
+                tableLayout: "fixed"
+              }}
+            >
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <SortableContext
+                    key={headerGroup.id}
+                    items={headerGroup.headers.map((h) => h.column.id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <tr>
+                      {headerGroup.headers.map((header, index) => (
+
+                       index === 0 ||  index === 1 || index===2 ? (
+    // Primera columna: no draggable
+    <th
+      key={header.id}
+      style={{
+        width: `${header.getSize()}px`,
+        padding: "4px",
+        borderBottom: "1px solid #ccc",
+        textAlign: "center",
+        fontSize: "13px",
+        backgroundColor: "#f9f9f9",
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      }}
+    >
+      {flexRender(header.column.columnDef.header, header.getContext())}
+    </th>
+  ) : (
+    <DraggableHeader key={header.id} header={header} index={index} />
+  )
+                      ))}
+                    </tr>
+                  </SortableContext>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row) => {
+                  const isSelected = row.original.id === selectedRowId;
+                  const rowBgColor = getRowBackgroundColor(row.original);
+                  return (
+                    <tr
+                      key={row.id}
+                      onClick={() => onRowInteraction(row.original)}
+                      style={{ 
+                        cursor: "pointer", 
+                      }}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          style={{
+                            fontSize: "12px",
+                            width: `${cell.column.getSize()}px`,
+                            boxSizing: "border-box",
+                            overflow: "hidden",
+                            backgroundColor:"#fff !important",
+                            padding:"0px",
+                            borderBottom:"1px solid #ccc"
+                          }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </DndContext>
+      </div>
+      {pageSize !== "todos" && onRenderPagination?.()}
+    </>
+  );
 };
+
+
 const Clients = () => {
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(() => {
-    return Number(localStorage.getItem('pageSize')) || "todos"; // Carga desde localStorage o usa 10 por defecto
+    return localStorage.getItem('pageSize')|| "10"; // Carga desde localStorage o usa 10 por defecto
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -380,7 +628,7 @@ const [situaciones, setSituaciones] = useState([]);
     if (filtersT.nivel) url += `&level_id=${filtersT.nivel}`;
     if (filtersT.situacion) url += `&statu_id=${filtersT.situacion}`;
 
-    if (pageSize !== 'todos') {
+    if (localStorage.getItem('pageSize') !== 'todos') {
       url += `&page=${currentPage}&pageSize=${pageSize}`;
     }
     response = await getData(url);
@@ -562,7 +810,7 @@ const [situaciones, setSituaciones] = useState([]);
   };
   const handlePageSizeChange = (event) => {
     if (event.target.value == 'todos') {
-      setPageSize(0);
+      setPageSize("todos");
       localStorage.setItem('pageSize',"todos"); // Guardar en cache
     } else {
       setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
@@ -707,68 +955,111 @@ const [situaciones, setSituaciones] = useState([]);
 
   {isFilterOpen && (
     <div
-      className="absolute top-10 right-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2"
-      onMouseLeave={() => setIsFilterOpen(false)} // Cierra cuando sales del popup
+  className="absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2"
+>
+  {/* Estado */}
+  <div className="flex items-center space-x-2">
+    <label htmlFor="estado" className="text-xs w-16">
+      Estado:
+    </label>
+    <select
+      name="estado"
+      id="estado"
+      value={filtersT.estado}
+      onChange={handleFilterChange}
+      className="border border-gray-400 rounded w-full text-xs p-1"
     >
-      <select
-        name="estado"
-        value={filtersT.estado}
-        onChange={handleFilterChange}
-        className="border border-gray-400 rounded w-full text-xs p-1"
-      >
-        <option value="">Estado</option>
-       {Object.entries(estado_config).map(([value, option]) => (
-          <option key={value} value={value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <option value="">Estado</option>
+      {Object.entries(estado_config).map(([value, option]) => (
+        <option key={value} value={value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
 
-      <select
-        name="tipo"
-        value={filtersT.tipo}
-        onChange={handleFilterChange}
-        className="border border-gray-400 rounded w-full text-xs p-1"
-      >
-        <option value="">Tipo</option>
-        {Object.entries(tipo_config).map(([value, option]) => (
-          <option key={value} value={value}>{option.label}</option>
-        ))}
-      </select>
+  {/* Tipo */}
+  <div className="flex items-center space-x-2">
+    <label htmlFor="tipo" className="text-xs w-16">
+      Tipo:
+    </label>
+    <select
+      name="tipo"
+      id="tipo"
+      value={filtersT.tipo}
+      onChange={handleFilterChange}
+      className="border border-gray-400 rounded w-full text-xs p-1"
+    >
+      <option value="">Tipo</option>
+      {Object.entries(tipo_config).map(([value, option]) => (
+        <option key={value} value={value}>
+          {option.label}
+        </option>
+      ))}
+    </select>
+  </div>
 
-      <select
-        name="nivel"
-        value={filtersT.nivel}
-        onChange={handleFilterChange}
-        className="border border-gray-400 rounded w-full text-xs p-1"
-      >
-        <option value="">Nivel</option>
-        {niveles.map((n) => (
-          <option key={n.id} value={n.id}>{n.name}</option>
-        ))}
-      </select>
+  {/* Nivel */}
+  <div className="flex items-center space-x-2">
+    <label htmlFor="nivel" className="text-xs w-16">
+      Nivel:
+    </label>
+    <select
+      name="nivel"
+      id="nivel"
+      value={filtersT.nivel}
+      onChange={handleFilterChange}
+      className="border border-gray-400 rounded w-full text-xs p-1"
+    >
+      <option value="">Nivel</option>
+      {niveles.map((n) => (
+        <option key={n.id} value={n.id}>
+          {n.name}
+        </option>
+      ))}
+    </select>
+  </div>
 
-      <select
-        name="situacion"
-        value={filtersT.situacion}
-        onChange={handleFilterChange}
-        className="border border-gray-400 rounded w-full text-xs p-1"
-      >
-        <option value="">Situación</option>
-        {situaciones.map((s) => (
-          <option key={s.id} value={s.id}>{s.name}</option>
-        ))}
-      </select>
+  {/* Situación */}
+  <div className="flex items-center space-x-2">
+    <label htmlFor="situacion" className="text-xs w-16">
+      Situación:
+    </label>
+    <select
+      name="situacion"
+      id="situacion"
+      value={filtersT.situacion}
+      onChange={handleFilterChange}
+      className="border border-gray-400 rounded w-full text-xs p-1"
+    >
+      <option value="">Situación</option>
+      {situaciones.map((s) => (
+        <option key={s.id} value={s.id}>
+          {s.name}
+        </option>
+      ))}
+    </select>
+  </div>
 
-      <div className='flex flex-row justify-between gap-2'>
-  <button type='button' className='px-2 py-1 bg-gray-600 text-white rounded text-sm' onClick={handleResetFilter}> 
-    Borrar Filtro
-  </button>
-  <button type='button' className='px-2 py-1 bg-green-600 text-white rounded text-sm' onClick={handleAplyFilter}>
-    Aplicar
-  </button>
+  {/* Botones */}
+  <div className="flex flex-row justify-between gap-2 pt-2">
+    <button
+      type="button"
+      className="px-2 py-1 bg-gray-600 text-white rounded text-sm"
+      onClick={handleResetFilter}
+    >
+      Borrar Filtro
+    </button>
+    <button
+      type="button"
+      className="px-2 py-1 bg-green-600 text-white rounded text-sm"
+      onClick={handleAplyFilter}
+    >
+      Aplicar
+    </button>
+  </div>
 </div>
-        </div>
+
   )}
             <input
               type='text'
@@ -826,12 +1117,12 @@ const [situaciones, setSituaciones] = useState([]);
           >
             <FaMinusCircle className='text-lg' />
           </button>
-          {/* <button
+          <button
             className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
             onClick={handleFilter}
           >
             <FaFilter className='text-lg' />
-          </button> */}
+          </button>
         </div>
       </div>
       <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2'>
@@ -927,32 +1218,19 @@ const [situaciones, setSituaciones] = useState([]);
                 {selectedRow.cod_post?.state?.country?.name}
               </p>
               <div className='border-2 border-gray-200 w-full mt-6'></div>
-              <h2 className='text-center text-xs bg-topNav w-full py-1'>
-                <strong>Especifico</strong>
-              </h2>
-              <p className='text-sm p-1 text-xs'>
-                <strong>Disponibilidad horaria:</strong> <br />
-              </p>
-              <ul>
-                {selectedData.services.map((row, index) => (
-                  <li key={index} className='text-sm p-1'>
-                    {row}
-                  </li>
-                ))}
-              </ul>
-
-              <h2 className='text-center text-xs bg-topNav w-full py-1'>
+                 <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Servicios Activos</strong>
               </h2>
               <div className='p-0'>
                 {servicesActive.map((service) => (
                   <>
-                    <a href={`client/${service.client?.id}?tabs=servicios`}>
-                      <p className='text-xs font-bold'>
+                    
+                      <p className='text-xs font-bold text-blue-'>
                         {service.service?.name}
                       </p>
+                      <a href={`client/${service.client?.id}?tabs=servicios`}>
                       <div className=' text-xs mb-2'>
-                        <p className='p-1'>{service.client?.full_name}</p>
+                        <p className='p-1 text-blue-500'>{service.client?.full_name}</p>
                         <p>{formatDate(service.service_alta)}</p>
                       </div>
                     </a>
@@ -960,14 +1238,51 @@ const [situaciones, setSituaciones] = useState([]);
                 ))}
               </div>
               <h2 className='text-center text-xs bg-topNav w-full py-1'>
+                <strong>Especifico</strong>
+              </h2>
+<div className="grid grid-cols-[100px_1fr] gap-x-2 items-start">
+  {/* Disponibilidad */}
+  <p className="text-sm font-bold">Disponibilidad:</p>
+  <ul className="space-y-1">
+    {selectedData.services.map((row, index) => (
+      <li key={index} className="text-xs">- {row}</li>
+    ))}
+  </ul>
+
+  {/* Separador */}
+  <div className="col-span-2 border-t-2 border-gray-200 my-4"></div>
+
+  {/* Tareas */}
+  <p className="text-sm font-bold">Tareas:</p>
+  <ul className="space-y-1">
+    {selectedData.tasks.map((row, index) => (
+      <li key={index} className="text-xs">- {row}</li>
+    ))}
+  </ul>
+
+  {/* Separador */}
+  <div className="col-span-2 border-t-2 border-gray-200 my-4"></div>
+
+  {/* Patologías */}
+  <p className="text-sm font-bold">Patologías:</p>
+  <ul className="space-y-1">
+    {selectedData.patologies.map((row, index) => (
+      <li key={index} className="text-xs">- {row}</li>
+    ))}
+  </ul>
+</div>
+           
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>En proceso de seleccion</strong>
               </h2>
               {preselections.map((pre) => (
                 <>
                   <p className='text-xs font-bold'>{pre.service?.name}</p>
                   <div className=' text-xs mb-2'>
-                    <p className='p-1'>{pre.client?.full_name}</p>
+                    <a href={`client/${pre.client?.id}?tabs=servicios`}>
+                    <p className='p-1 text-blue-500'>{pre.client?.full_name}</p>
                     <p>{formatDate(pre.clients_service.service_alta)}</p>
+                    </a>
                   </div>
                 </>
               ))}

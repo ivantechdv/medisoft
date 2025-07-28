@@ -101,3 +101,12 @@ textarea:disabled {
     0.1
   ); /* Sutil indicador del área de redimensión */
 }
+
+.ag-center-cols-container .ag-cell {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.ag-theme-alpine .ag-row.selected-row {
+  background-color: #e0e0e0 !important;
+}
