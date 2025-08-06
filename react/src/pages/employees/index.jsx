@@ -14,6 +14,11 @@ import 'react-resizable/css/styles.css'; // Importa los estilos de la librería
 import { tipo_config, estado_config } from '../../utils/config';
 import { ResizableBox } from 'react-resizable';
 import {
+  ConfirmSweetAlert,
+  InfoSweetAlert,
+} from '../../components/SweetAlert/SweetAlert';
+import ToastNotify from '../../components/toast/toast';
+import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
@@ -145,9 +150,11 @@ const MyDataTable = ({
   currentPage,
   pageSize,
   onHandleViewClient = () => {},
+  onSelectedRows
 }) => {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [sorting, setSorting] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]); // Nuevo estado para los checkboxes
   const [columnSizing, setColumnSizing] = useState(() => {
     const saved = localStorage.getItem("myDataTableColumnWidths");
     return saved ? JSON.parse(saved) : {};
@@ -210,116 +217,150 @@ const MyDataTable = ({
     }
   };
 
-  const IndicatorsCell = ({ row }) => (
-    <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
-      {["t", "n", "s"].map((key) => {
-        const title =
-          key === "t"
-            ? tipo_config[row.type]?.label
-            : key === "n"
-            ? row?.level?.name
-            : row?.statu?.name;
+  // Función para manejar el cambio de selección de filas
+  const handleRowSelection = (rowId) => {
+    setSelectedRows(prev => {
+      if (prev.includes(rowId)) {
+        return prev.filter(id => id !== rowId);
+      } else {
+        return [...prev, rowId];
+      }
+    });
+    onSelectedRows(prev => {
+      if (prev.includes(rowId)) {
+        return prev.filter(id => id !== rowId);
+      } else {
+        return [...prev, rowId];
+      }
+    });
+  };
 
+  // Función para seleccionar/deseleccionar todas las filas
+  const toggleAllRowsSelection = () => {
+    if (selectedRows.length === rows.length) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(rows.map(row => row.id));
+    }
+  };
+
+  const columnDefs = useMemo(() => [
+    // Columna de selección (checkbox)
+    {
+      header: () => (
+        <input
+          type="checkbox"
+          checked={selectedRows.length === rows.length && rows.length > 0}
+          onChange={toggleAllRowsSelection}
+          style={{ cursor: "pointer" }}
+        />
+      ),
+      id: "selection",
+      size: 40,
+      minSize: 40,
+      maxSize: 40,
+      enableSorting: false,
+      enableResizing: false,
+      enableColumnDragging: false,
+      cell: ({ row }) => {
+        const isSelected = selectedRows.includes(row.original.id);
+        return (
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => handleRowSelection(row.original.id)}
+            onClick={(e) => e.stopPropagation()}
+            style={{ cursor: "pointer", marginLeft: "10px" }}
+          />
+        );
+      },
+    },
+    // Columnas de indicadores
+    {
+      header: "T",
+      id: "indicator_t",
+      size: 25,
+      minSize: 25,
+      maxSize: 25,
+      enableSorting: false,
+      enableResizing: false,
+      enableColumnDragging: false,
+      cell: ({ row }) => {
+        const data = row.original;
+        const title = tipo_config[data.type]?.label;
         return (
           <div
-            key={key}
             title={title}
             style={{
               width: 20,
               height: 20,
               borderRadius: 2,
-              backgroundColor: getColor(key, row),
+              margin: "0 auto",
+              backgroundColor: getColor("t", data),
             }}
           />
         );
-      })}
-    </div>
-  );
-
-  const columnDefs = useMemo(() => [
+      },
+    },
     {
-  header: "T",
-  id: "indicator_t",
-  size: 25,
-  minSize: 25,
-  maxSize: 25,
-  enableSorting: false,
-  enableResizing: false,
-  enableColumnDragging: false,
-  cell: ({ row }) => {
-    const data = row.original;
-    const title = tipo_config[data.type]?.label;
-    return (
-      <div
-        title={title}
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 2,
-          margin: "0 auto",
-          backgroundColor: getColor("t", data),
-        }}
-      />
-    );
-  },
-},
-{
-  header: "N",
-  id: "indicator_n",
-  size: 25,
-  minSize: 25,
-  maxSize: 25,
-  enableSorting: false,
-  enableResizing: false,
-  enableColumnDragging: false,
-  cell: ({ row }) => {
-    const data = row.original;
-    const title = data?.level?.name;
-    return (
-      <div
-        title={title}
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 2,
-          margin: "0 auto",
-          backgroundColor: getColor("n", data),
-        }}
-      />
-    );
-  },
-},
-{
-  header: "S",
-  id: "indicator_s",
-  size: 25,
-  minSize: 25,
-  maxSize: 25,
-  enableSorting: false,
-  enableResizing: false,
-  enableColumnDragging: false,
-  cell: ({ row }) => {
-    const data = row.original;
-    const title = data?.statu?.name;
-    return (
-      <div
-        title={title}
-        style={{
-          width: 20,
-          height: 20,
-          borderRadius: 2,
-          margin: "0 auto",
-          backgroundColor: getColor("s", data),
-        }}
-      />
-    );
-  },
-},
-    ...[{ key: "id", label: "ID" },
-  { key: "dni", label: "DNI" },
-  { key: "full_name", label: "Nombre" },
-  { key: "email", label: "Correo Electrónico" },
-  { key: "phone", label: "Teléfono" },].map(({ key, label }) => ({
+      header: "N",
+      id: "indicator_n",
+      size: 25,
+      minSize: 25,
+      maxSize: 25,
+      enableSorting: false,
+      enableResizing: false,
+      enableColumnDragging: false,
+      cell: ({ row }) => {
+        const data = row.original;
+        const title = data?.level?.name;
+        return (
+          <div
+            title={title}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 2,
+              margin: "0 auto",
+              backgroundColor: getColor("n", data),
+            }}
+          />
+        );
+      },
+    },
+    {
+      header: "S",
+      id: "indicator_s",
+      size: 25,
+      minSize: 25,
+      maxSize: 25,
+      enableSorting: false,
+      enableResizing: false,
+      enableColumnDragging: false,
+      cell: ({ row }) => {
+        const data = row.original;
+        const title = data?.statu?.name;
+        return (
+          <div
+            title={title}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: 2,
+              margin: "0 auto",
+              backgroundColor: getColor("s", data),
+            }}
+          />
+        );
+      },
+    },
+    ...[
+      { key: "id", label: "ID" },
+      { key: "dni", label: "DNI" },
+      { key: "full_name", label: "Nombre" },
+      { key: "email", label: "Correo Electrónico" },
+      { key: "phone", label: "Teléfono" },
+    ].map(({ key, label }) => ({
       header: label,
       accessorKey: key,
       id: key,
@@ -367,7 +408,7 @@ const MyDataTable = ({
         );
       },
     })),
-  ], [selectedRowId, columnSizing, estado_config, tipo_config]);
+  ], [selectedRowId, columnSizing, estado_config, tipo_config, selectedRows, rows]);
 
   const defaultColumnOrder = columnDefs.map((col) => col.id);
 
@@ -401,9 +442,9 @@ const MyDataTable = ({
   };
 
   const onRowClicked = (row) => {
-   if (!row?.id) return;
-setSelectedRowId(row.id);
-onHandleRowClick(row);
+    if (!row?.id) return;
+    setSelectedRowId(row.id);
+    onHandleRowClick(row);
   };
 
   return (
@@ -435,28 +476,27 @@ onHandleRowClick(row);
                   >
                     <tr>
                       {headerGroup.headers.map((header, index) => (
-
-                       index === 0 ||  index === 1 || index===2 ? (
-    // Primera columna: no draggable
-    <th
-      key={header.id}
-      style={{
-        width: `${header.getSize()}px`,
-        padding: "4px",
-        borderBottom: "1px solid #ccc",
-        textAlign: "center",
-        fontSize: "13px",
-        backgroundColor: "#f9f9f9",
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-      }}
-    >
-      {flexRender(header.column.columnDef.header, header.getContext())}
-    </th>
-  ) : (
-    <DraggableHeader key={header.id} header={header} index={index} />
-  )
+                        // Las primeras 4 columnas (checkbox + 3 indicadores) no son draggables
+                        index < 4 ? (
+                          <th
+                            key={header.id}
+                            style={{
+                              width: `${header.getSize()}px`,
+                              padding: "4px",
+                              borderBottom: "1px solid #ccc",
+                              textAlign: "center",
+                              fontSize: "13px",
+                              backgroundColor: "#f9f9f9",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </th>
+                        ) : (
+                          <DraggableHeader key={header.id} header={header} index={index} />
+                        )
                       ))}
                     </tr>
                   </SortableContext>
@@ -499,6 +539,7 @@ onHandleRowClick(row);
         </DndContext>
       </div>
       {pageSize !== "todos" && onRenderPagination?.()}
+      
     </>
   );
 };
@@ -553,7 +594,11 @@ const [situaciones, setSituaciones] = useState([]);
   const [servicesActive, setServicesActive] = useState([]);
   const [preselections, setPreselections] = useState([]);
   const navigateTo = useNavigate();
-
+  const sweetAlert = ConfirmSweetAlert({
+    title: 'Cuidadores',
+    text: '¿Desea eliminar los cuidadores seleccionado?',
+    icon: 'question',
+  });
 
 
   useEffect(() => {
@@ -866,8 +911,11 @@ const [situaciones, setSituaciones] = useState([]);
 
   const handleDelete = async () => {
     try {
+        console.log("selectedRows", selectedRows);
       const result = await sweetAlert.showSweetAlert();
       const isConfirmed = result !== null && result;
+
+      console.log("selectedRows", selectedRows);
 
       if (!isConfirmed) {
         ToastNotify({
@@ -878,13 +926,14 @@ const [situaciones, setSituaciones] = useState([]);
       }
 
       for (const row of selectedRows) {
+        console.log("row", row);
         const id = row; // Asumiendo que cada fila tiene una propiedad 'id'
         const dataToSend = {
           is_deleted: 1,
         };
 
         try {
-          await putData(`clients/${id}`, dataToSend);
+          await putData(`employees/${id}`, dataToSend);
           // Manejar la respuesta según sea necesario
         } catch (error) {
           console.error(`Error al actualizar el cliente con ID ${id}:`, error);
@@ -1114,6 +1163,7 @@ const [situaciones, setSituaciones] = useState([]);
               selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
             }`}
             disabled={selectedRows.length === 0}
+            onClick={handleDelete}
           >
             <FaMinusCircle className='text-lg' />
           </button>
@@ -1139,6 +1189,7 @@ const [situaciones, setSituaciones] = useState([]);
               onRenderPagination={renderPagination}
               currentPage={currentPage}
               pageSize={pageSize}
+              onSelectedRows={setSelectedRows}
             />
           </div>
         </div>
