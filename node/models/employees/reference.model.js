@@ -20,6 +20,14 @@ const EmployeeReference = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
     },
+      observations: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+      url: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
     from_date: {
       type: DataTypes.DATEONLY,
       allowNull: true,
@@ -32,6 +40,11 @@ const EmployeeReference = sequelize.define(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false,
+    },
+     is_active: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+      defaultValue: true,
     },
     createdAt: {
       type: DataTypes.DATE,
