@@ -19,6 +19,9 @@ import {
 } from '../../../components/SweetAlert/SweetAlert';
 import FileInput from '../../../components/fileInput';
 import { tipo_config, estado_config } from '../../../utils/config';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css'; // Estilos por defecto
+
 const Form = ({
   onHandleChangeCard,
   id,
@@ -35,7 +38,7 @@ const Form = ({
   const [isFormValid, setIsFormValid] = useState(false);
   const [formData, setFormData] = useState({
     dni: '',
-    dni_date_expiration:"",
+    dni_date_expiration: '',
     start_date: '',
     first_name: '',
     last_name: '',
@@ -67,7 +70,7 @@ const Form = ({
   });
   const [oldData, setOldData] = useState({
     dni: '',
-    dni_date_expiration:"",
+    dni_date_expiration: '',
     start_date: '',
     first_name: '',
     last_name: '',
@@ -151,6 +154,7 @@ const Form = ({
   const [selectedState, setSelectedState] = useState(null);
   const [postalCodes, setPostalCodes] = useState([]);
 
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const updateImages = async (onFormData) => {
     console.log('onformdata', onFormData);
     if (onFormData.photo) {
@@ -857,17 +861,17 @@ const Form = ({
       window.open(fileURL, '_blank'); // Abre el PDF en una nueva pestaña
     }
   };
-      const handleCancel = () => {
-     setTimeout(() => {
-       window.location.href = '/employees';
-        }, 500);
+  const handleCancel = () => {
+    setTimeout(() => {
+      window.location.href = '/employees';
+    }, 500);
   };
   return (
     <>
-    <form className=''>
-      {loadingForm && <Spinner />}
-      <div className='rounded min-h-[calc(100vh)]'>
-        {/* <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
+      <form className=''>
+        {loadingForm && <Spinner />}
+        <div className='rounded min-h-[calc(100vh)]'>
+          {/* <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
           <button
             type='button'
             className={`bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded`}
@@ -881,217 +885,221 @@ const Form = ({
             Guardar
           </button>
         </div> */}
-        <div className='md:grid md:grid-cols-4 gap-2'>
-          <div className='grid grid-cols-2 md:grid-cols-1'>
-            <div className='col-span-1'>
-              <div className='flex'>
-                <label className='block text-sm font-medium text-blue-500'>
-                  Foto Principal
-                </label>
-              </div>
-              <div className='relative h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
-                {images.photo != '' ? (
-                  <>
-                    <label htmlFor='photo' className='cursor-pointer'>
-                      <img
-                        src={images.photo}
-                        alt='foto carnet'
-                        className='h-40  w-full rounded-lg'
-                        style={{ objectFit: 'contain' }}
-                      />
-                      <input
-                        type='file'
-                        id='photo'
-                        name='photo'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) => handleImagenChange(event, 'photo')}
-                      />
-                    </label>
-                    <div
-                      className='absolute -top-1 -right-3 cursor-pointer'
-                      onClick={() => openImageModal(images.photo)}
-                    >
-                      <FaExpand size={24} />
-                    </div>
-                    <div
-                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                      title='Eliminar imagen'
-                      onClick={() => deleteImage(images.photo, 'photo')}
-                    >
-                      <FaMinusCircle size={24} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label htmlFor='photo' className='cursor-pointer'>
-                      Foto carnet
-                      <input
-                        type='file'
-                        id='photo'
-                        name='photo'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) => handleImagenChange(event, 'photo')}
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-              <div className='flex'>
-                <label className='block text-sm font-medium text-blue-500'>
-                  DNI Frontal
-                </label>
-              </div>
-              <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
-                {images.dniFront != '' ? (
-                  <>
-                    <label htmlFor='dniFront' className='cursor-pointer'>
-                      <img
-                        src={images.dniFront}
-                        alt='DNI Frontal'
-                        className='h-20  w-full rounded-lg'
-                        style={{ objectFit: 'contain' }}
-                      />
-                      <input
-                        type='file'
-                        id='dniFront'
-                        name='dniFront'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniFront')
-                        }
-                      />
-                    </label>
-                    <div
-                      className='absolute -top-1 -right-3 cursor-pointer'
-                      onClick={() => openImageModal(images.dniFront)}
-                    >
-                      <FaExpand size={24} />
-                    </div>
-                    <div
-                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                      title='Eliminar imagen'
-                      onClick={() => deleteImage(images.dniFront, 'dniFront')}
-                    >
-                      <FaMinusCircle size={24} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label htmlFor='dniFront' className='cursor-pointer'>
-                      DNI Frontal
-                      <input
-                        type='file'
-                        id='dniFront'
-                        name='dniFront'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniFront')
-                        }
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-              <div className='flex'>
-                <label className='block text-sm font-medium text-blue-500'>
-                  DNI Posterior
-                </label>
-              </div>
-              <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-start items-start relative'>
-                {images.dniBack != '' ? (
-                  <>
-                    <label htmlFor='dniBack' className='cursor-pointer'>
-                      <img
-                        src={images.dniBack}
-                        alt='DNI Back'
-                        className='h-20  w-full rounded-lg'
-                        style={{ objectFit: 'contain' }}
-                      />
-                      <input
-                        type='file'
-                        id='dniBack'
-                        name='dniBack'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniBack')
-                        }
-                      />
-                    </label>
-                    <div
-                      className='absolute -top-1 -right-3 cursor-pointer'
-                      onClick={() => openImageModal(images.dniBack)}
-                    >
-                      <FaExpand size={24} />
-                    </div>
-                    <div
-                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                      title='Eliminar imagen'
-                      onClick={() => deleteImage(images.dniBack, 'dniBack')}
-                    >
-                      <FaMinusCircle size={24} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label htmlFor='dniBack' className='cursor-pointer'>
-                      DNI Posterior
-                      <input
-                        type='file'
-                        id='dniBack'
-                        name='dniBack'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniBack')
-                        }
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-              <FileInput
-                label='Curriculum'
-                name='attach_curriculum'
-                accept='.pdf'
-                onFileChange={(file) =>
-                  handleFileChange(file, 'attach_curriculum')
-                }
-                fileUrl={
-                  oldData.attach_curriculum &&
-                  getStorage(oldData.attach_curriculum)
-                }
-                onDeleteImage={() =>
-                  deleteImage(oldData.attach_curriculum, 'attach_curriculum')
-                }
-              />
-              <div className='flex mt-2'></div>
-              <FileInput
-                label='Referencia'
-                name='attach_reference'
-                accept='.pdf'
-                onFileChange={(file) =>
-                  handleFileChange(file, 'attach_reference')
-                }
-                fileUrl={
-                  oldData.attach_reference &&
-                  getStorage(oldData.attach_reference)
-                }
-                onDeleteImage={() =>
-                  deleteImage(oldData.attach_reference, 'attach_reference')
-                }
-              />
+          <div className='md:grid md:grid-cols-[180px_1fr_1fr_1fr] gap-2'>
+            <div className='grid grid-cols-2 md:grid-cols-1'>
+              <div className='col-span-1'>
+                <div className='flex'>
+                  <label className='block text-sm font-medium text-blue-500'>
+                    Foto Principal
+                  </label>
+                </div>
+                <div className='relative h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
+                  {images.photo != '' ? (
+                    <>
+                      <label htmlFor='photo' className='cursor-pointer'>
+                        <img
+                          src={images.photo}
+                          alt='foto carnet'
+                          className='h-40  w-full rounded-lg'
+                          style={{ objectFit: 'contain' }}
+                        />
+                        <input
+                          type='file'
+                          id='photo'
+                          name='photo'
+                          accept='image/*'
+                          className='hidden'
+                          onChange={(event) =>
+                            handleImagenChange(event, 'photo')
+                          }
+                        />
+                      </label>
+                      <div
+                        className='absolute -top-1 -right-3 cursor-pointer'
+                        onClick={() => openImageModal(images.photo)}
+                      >
+                        <FaExpand size={24} />
+                      </div>
+                      <div
+                        className='absolute -top-1 -left-3 cursor-pointer text-red-500'
+                        title='Eliminar imagen'
+                        onClick={() => deleteImage(images.photo, 'photo')}
+                      >
+                        <FaMinusCircle size={24} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <label htmlFor='photo' className='cursor-pointer'>
+                        Foto carnet
+                        <input
+                          type='file'
+                          id='photo'
+                          name='photo'
+                          accept='image/*'
+                          className='hidden'
+                          onChange={(event) =>
+                            handleImagenChange(event, 'photo')
+                          }
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
+                <div className='flex'>
+                  <label className='block text-sm font-medium text-blue-500'>
+                    DNI Frontal
+                  </label>
+                </div>
+                <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
+                  {images.dniFront != '' ? (
+                    <>
+                      <label htmlFor='dniFront' className='cursor-pointer'>
+                        <img
+                          src={images.dniFront}
+                          alt='DNI Frontal'
+                          className='h-20  w-full rounded-lg'
+                          style={{ objectFit: 'contain' }}
+                        />
+                        <input
+                          type='file'
+                          id='dniFront'
+                          name='dniFront'
+                          accept='image/*'
+                          className='hidden'
+                          onChange={(event) =>
+                            handleImagenChange(event, 'dniFront')
+                          }
+                        />
+                      </label>
+                      <div
+                        className='absolute -top-1 -right-3 cursor-pointer'
+                        onClick={() => openImageModal(images.dniFront)}
+                      >
+                        <FaExpand size={24} />
+                      </div>
+                      <div
+                        className='absolute -top-1 -left-3 cursor-pointer text-red-500'
+                        title='Eliminar imagen'
+                        onClick={() => deleteImage(images.dniFront, 'dniFront')}
+                      >
+                        <FaMinusCircle size={24} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <label htmlFor='dniFront' className='cursor-pointer'>
+                        DNI Frontal
+                        <input
+                          type='file'
+                          id='dniFront'
+                          name='dniFront'
+                          accept='image/*'
+                          className='hidden'
+                          onChange={(event) =>
+                            handleImagenChange(event, 'dniFront')
+                          }
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
+                <div className='flex'>
+                  <label className='block text-sm font-medium text-blue-500'>
+                    DNI Posterior
+                  </label>
+                </div>
+                <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-start items-start relative'>
+                  {images.dniBack != '' ? (
+                    <>
+                      <label htmlFor='dniBack' className='cursor-pointer'>
+                        <img
+                          src={images.dniBack}
+                          alt='DNI Back'
+                          className='h-20  w-full rounded-lg'
+                          style={{ objectFit: 'contain' }}
+                        />
+                        <input
+                          type='file'
+                          id='dniBack'
+                          name='dniBack'
+                          accept='image/*'
+                          className='hidden'
+                          onChange={(event) =>
+                            handleImagenChange(event, 'dniBack')
+                          }
+                        />
+                      </label>
+                      <div
+                        className='absolute -top-1 -right-3 cursor-pointer'
+                        onClick={() => openImageModal(images.dniBack)}
+                      >
+                        <FaExpand size={24} />
+                      </div>
+                      <div
+                        className='absolute -top-1 -left-3 cursor-pointer text-red-500'
+                        title='Eliminar imagen'
+                        onClick={() => deleteImage(images.dniBack, 'dniBack')}
+                      >
+                        <FaMinusCircle size={24} />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <label htmlFor='dniBack' className='cursor-pointer'>
+                        DNI Posterior
+                        <input
+                          type='file'
+                          id='dniBack'
+                          name='dniBack'
+                          accept='image/*'
+                          className='hidden'
+                          onChange={(event) =>
+                            handleImagenChange(event, 'dniBack')
+                          }
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
+                <FileInput
+                  label='Curriculum'
+                  name='attach_curriculum'
+                  accept='.pdf'
+                  onFileChange={(file) =>
+                    handleFileChange(file, 'attach_curriculum')
+                  }
+                  fileUrl={
+                    oldData.attach_curriculum &&
+                    getStorage(oldData.attach_curriculum)
+                  }
+                  onDeleteImage={() =>
+                    deleteImage(oldData.attach_curriculum, 'attach_curriculum')
+                  }
+                />
+                <div className='flex mt-2'></div>
+                <FileInput
+                  label='Referencia'
+                  name='attach_reference'
+                  accept='.pdf'
+                  onFileChange={(file) =>
+                    handleFileChange(file, 'attach_reference')
+                  }
+                  fileUrl={
+                    oldData.attach_reference &&
+                    getStorage(oldData.attach_reference)
+                  }
+                  onDeleteImage={() =>
+                    deleteImage(oldData.attach_reference, 'attach_reference')
+                  }
+                />
 
-              <div className='flex'>
-                {/* <label className='block text-sm font-medium text-blue-500'>
+                <div className='flex'>
+                  {/* <label className='block text-sm font-medium text-blue-500'>
                   Curriculum
                 </label> */}
-              </div>
-              {/* <input
+                </div>
+                {/* <input
                   type='file'
                   accept='.pdf'
                   name='attach_curriculum'
@@ -1108,436 +1116,310 @@ const Form = ({
                     <FaEye />
                   </a>
                 )} */}
+              </div>
             </div>
-          </div>
-          <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
-            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='is_active'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Estado
-                </label>
-                <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  name='is_active'
-                  id='is_active'
-                  onChange={handleChange}
-                  value={formData.is_active}
-                >
-                  <option value='' disabled>
-                    Seleccione...
-                  </option>
-                  {Object.entries(estado_config).map(([value, option]) => (
-    <option key={value} value={value}>
-      {option.label}
-    </option>
-  ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='type'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Tipo
-                </label>
-                <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  name='type'
-                  id='type'
-                  onChange={handleChange}
-                  value={formData.type}
-                >
-                   {Object.entries(tipo_config).map(([value, option]) => (
-    <option key={value} value={value}>
-      {option.label}
-    </option>
-  ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='date_start'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Fecha de alta
-                </label>
-                <input
-                  type='date'
-                  id='start_date'
-                  name='start_date'
-                  value={formData.start_date}
-                  onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                />
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='level_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Nivel
-                </label>
-                <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  name='level_id'
-                  id='level_id'
-                  onChange={handleChange}
-                  value={formData.level_id}
-                >
-                  <option value=''>Seleccione</option>
-                  {levels.length > 0 &&
-                    levels.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
+            <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
+              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
+                {/* <div className='col-span-1'>
+                  <label
+                    htmlFor='is_active'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Estado
+                  </label>
+                  <select
+                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    name='is_active'
+                    id='is_active'
+                    onChange={handleChange}
+                    value={formData.is_active}
+                  >
+                    <option value='' disabled>
+                      Seleccione...
+                    </option>
+                    {Object.entries(estado_config).map(([value, option]) => (
+                      <option key={value} value={value}>
+                        {option.label}
                       </option>
                     ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='statu_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Situacion
-                </label>
-                <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  name='statu_id'
-                  id='statu_id'
-                  onChange={handleChange}
-                  value={formData.statu_id}
-                >
-                  <option value=''>Seleccione</option>
-                  {status.length > 0 &&
-                    status.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
+                  </select>
+                </div> */}
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='type'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Tipo
+                  </label>
+                  <select
+                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    name='type'
+                    id='type'
+                    onChange={handleChange}
+                    value={formData.type}
+                  >
+                    {Object.entries(tipo_config).map(([value, option]) => (
+                      <option key={value} value={value}>
+                        {option.label}
                       </option>
                     ))}
-                </select>
+                  </select>
+                </div>
+
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='level_id'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Nivel
+                  </label>
+                  <select
+                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    name='level_id'
+                    id='level_id'
+                    onChange={handleChange}
+                    value={formData.level_id}
+                  >
+                    <option value=''>Seleccione</option>
+                    {levels.length > 0 &&
+                      levels.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='statu_id'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Situacion
+                  </label>
+                  <select
+                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    name='statu_id'
+                    id='statu_id'
+                    onChange={handleChange}
+                    value={formData.statu_id}
+                  >
+                    <option value=''>Seleccione</option>
+                    {status.length > 0 &&
+                      status.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='date_start'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Fecha de alta
+                  </label>
+                  <input
+                    type='date'
+                    id='start_date'
+                    name='start_date'
+                    value={formData.start_date}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='date_start'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Antiguedad
+                  </label>
+                  <input
+                    type='text'
+                    id='antique'
+                    name='antique'
+                    value={formData.antique}
+                    disabled={true}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+              </div>
+              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='gender_id'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Genero
+                  </label>
+                  <select
+                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    name='gender_id'
+                    id='gender_id'
+                    onChange={handleChange}
+                    value={formData.gender_id}
+                  >
+                    <option value=''>Seleccione</option>
+                    {genders.length > 0 &&
+                      genders.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className='col-span-3 grid grid-cols-2 gap-2'>
+                  <div>
+                    <label
+                      htmlFor='first_name'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Nombre
+                    </label>
+                    <input
+                      type='text'
+                      id='first_name'
+                      name='first_name'
+                      value={formData.first_name}
+                      onChange={handleChange}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor='last_name'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Apellidos
+                    </label>
+                    <input
+                      type='text'
+                      id='last_name'
+                      name='last_name'
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    />
+                  </div>
+                </div>
+
+                <div className='col-span-1'>
+                  <div className='flex flex-row'>
+                    <div className='flex-1.5'>
+                      <label
+                        htmlFor='born_date'
+                        className='block text-sm font-medium text-blue-500'
+                      >
+                        Fecha de nacimiento
+                      </label>
+                      <input
+                        type='date'
+                        id='born_date'
+                        name='born_date'
+                        value={formData.born_date}
+                        onChange={handleChange}
+                        className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                      />
+                    </div>
+
+                    <div className='flex-0.5 '>
+                      <label
+                        htmlFor='age'
+                        className='block text-sm font-medium text-blue-500'
+                      >
+                        Edad
+                      </label>
+                      <input
+                        type='text'
+                        className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                        id='age'
+                        name='age'
+                        readOnly
+                        value={formData.age}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <div className='col-span-1'>
-                <label
-                  htmlFor='born_date'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Fecha de nacimiento
-                </label>
-                <input
-                  type='date'
-                  id='born_date'
-                  name='born_date'
-                  value={formData.born_date}
-                  onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                />
-              </div>
+              {/* otra columna */}
+              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='dni'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    DNI
+                  </label>
+                  <input
+                    type='text'
+                    id='dni'
+                    name='dni'
+                    value={formData.dni}
+                    onChange={handleChange}
+                    ref={dniRef}
+                    onBlur={() => validateField('dni', formData.dni, dniRef)}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='dni_date_expiration'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Fecha de vencimiento DNI
+                  </label>
+                  <input
+                    type='date'
+                    id='dni_date_expiration'
+                    name='dni_date_expiration'
+                    value={formData.dni_date_expiration}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='last_name'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Numero de seguridad social
+                  </label>
+                  <input
+                    type='text'
+                    id='num_social_security'
+                    name='num_social_security'
+                    value={formData.num_social_security}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='col-span-2'>
+                  <label
+                    htmlFor='country_id'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Pais de nacimiento
+                  </label>
+                  <select
+                    id='country_id'
+                    name='country_id'
+                    onChange={handleChange}
+                    value={formData.country_id}
+                    className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                  >
+                    <option value=''>Seleccione...</option>
+                    {countries.length > 0 &&
+                      countries.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
 
-              <div className='col-span-1'>
-                <label
-                  htmlFor='age'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Edad
-                </label>
-                <input
-                  type='text'
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  id='age'
-                  name='age'
-                  readOnly
-                  value={formData.age}
-                />
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='dni'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  DNI
-                </label>
-                <input
-                  type='text'
-                  id='dni'
-                  name='dni'
-                  value={formData.dni}
-                  onChange={handleChange}
-                  ref={dniRef}
-                  onBlur={() => validateField('dni', formData.dni, dniRef)}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                />
-              </div>
-               <div className='col-span-1'>
-                <label
-                  htmlFor='dni_date_expiration'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Fecha de vencimiento DNI
-                </label>
-                <input
-                  type='date'
-                  id='dni_date_expiration'
-                  name='dni_date_expiration'
-                  value={formData.dni_date_expiration}
-                  onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                />
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='gender_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Genero
-                </label>
-                <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  name='gender_id'
-                  id='gender_id'
-                  onChange={handleChange}
-                  value={formData.gender_id}
-                >
-                  <option value=''>Seleccione</option>
-                  {genders.length > 0 &&
-                    genders.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-               <div className='col-span-1'>
-              <label
-                htmlFor='first_name'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Nombre
-              </label>
-              <input
-                type='text'
-                id='first_name'
-                name='first_name'
-                value={formData.first_name}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='last_name'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Apellidos
-              </label>
-              <input
-                type='text'
-                id='last_name'
-                name='last_name'
-                value={formData.last_name}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            </div>
-
-            <div className='col-span-1'>
-              <label
-                htmlFor='phone'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Teléfono
-              </label>
-              <div className='flex mt-1'>
-                <select
-                  id='code_phone'
-                  name='code_phone'
-                  onChange={handleChange}
-                  value={formData.code_phone}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
-                >
-                  <option value='' disabled>
-                    Seleccione...
-                  </option>
-                  {countries.length > 0 &&
-                    countries.map((option) => (
-                      <option key={option.id} value={option.code_phone}>
-                        {option.code_phone}
-                      </option>
-                    ))}
-                </select>
-                <input
-                  type='text'
-                  id='phone'
-                  name='phone'
-                  onChange={handleChange}
-                  value={formData.phone}
-                  className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                  placeholder='Número de teléfono'
-                />
-              </div>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='phone2'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Teléfono [opcional]
-              </label>
-              <div className='flex mt-1'>
-                <select
-                  id='code_phone2'
-                  name='code_phone2'
-                  onChange={handleChange}
-                  value={formData.code_phone2}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
-                >
-                  <option value='' disabled>
-                    Seleccione...
-                  </option>
-                  {countries.length > 0 &&
-                    countries.map((option) => (
-                      <option key={option.id} value={option.code_phone}>
-                        {option.code_phone}
-                      </option>
-                    ))}
-                </select>
-                <input
-                  type='text'
-                  id='phone2'
-                  name='phone'
-                  onChange={handleChange}
-                  value={formData.phone2}
-                  className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                  placeholder='Número de teléfono'
-                />
-              </div>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='email'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Correo electrónico
-              </label>
-              <input
-                type='text'
-                id='email'
-                name='email'
-                value={formData.email}
-                onChange={handleChange}
-                ref={emailRef}
-                onBlur={() => validateField('email', formData.email, emailRef)}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-
-            <div className='col-span-1'>
-              <label
-                htmlFor='last_name'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Numero de seguridad social
-              </label>
-              <input
-                type='text'
-                id='num_social_security'
-                name='num_social_security'
-                value={formData.num_social_security}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='col-span-2 md:grid md:grid-cols-2 gap-2'>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='country_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Pais de nacimiento
-                </label>
-                <select
-                  id='country_id'
-                  name='country_id'
-                  onChange={handleChange}
-                  value={formData.country_id}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                >
-                  <option value=''>Seleccione...</option>
-                  {countries.length > 0 &&
-                    countries.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='country_current_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Pais de residencia
-                </label>
-                <select
-                  id='country_current_id'
-                  name='country_current_id'
-                  onChange={handleChange}
-                  value={formData.country_current_id}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                >
-                  <option value=''>Seleccione...</option>
-                  {countries.length > 0 &&
-                    countries.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='state_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Provincia
-                </label>
-                <select
-                  id='state_id'
-                  name='state_id'
-                  onChange={handleChange}
-                  value={formData.state_id}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                >
-                  <option>Seleccione...</option>
-                  {selectedCountry &&
-                    selectedCountry.states.map((state) => (
-                      <option key={state.id} value={state.id}>
-                        {state.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='cod_post_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Codigo Postal
-                </label>
-                <Select
-                  id='cod_post_id'
-                  name='cod_post_id'
-                  options={postalCodes}
-                  onChange={handleSelect}
-                  defaultValue={formData.cod_post_id}
-                  isMulti={false} // Enable multi-selection
-                />
-              </div>
-              {/* <div className='col-span-1'>
+                {/* <div className='col-span-1'>
                 <label
                   htmlFor='asset'
                   className='block text-sm font-medium text-blue-500'
@@ -1612,76 +1494,264 @@ const Form = ({
                   )}
                 </div>
               </div> */}
-            </div>
-            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='address'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Calle
-                </label>
-                <input
-                  id='address'
-                  name='address'
-                  rows='3'
-                  value={formData.address}
-                  onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                ></input>
               </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='address_num'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Numero
-                </label>
-                <input
-                  type='text'
-                  id='address_num'
-                  name='address_num'
-                  value={formData.address_num}
-                  onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                />
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='address_flat'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Piso
-                </label>
-                <input
-                  type='text'
-                  id='address_flat'
-                  name='address_flat'
-                  value={formData.address_flat}
-                  onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                />
-              </div>
-              <div className='col-span-3'>
-                <div className='mb-2'>
+              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
+                <div className='col-span-3 grid grid-cols-2 gap-2'>
+                  <div>
+                    <label
+                      htmlFor='phone'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Teléfono
+                    </label>
+                    <div className='flex mt-1'>
+                      <select
+                        id='code_phone'
+                        name='code_phone'
+                        onChange={handleChange}
+                        value={formData.code_phone}
+                        className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
+                      >
+                        <option value='' disabled>
+                          Seleccione...
+                        </option>
+                        {countries.length > 0 &&
+                          countries.map((option) => (
+                            <option key={option.id} value={option.code_phone}>
+                              {option.code_phone}
+                            </option>
+                          ))}
+                      </select>
+                      <input
+                        type='text'
+                        id='phone'
+                        name='phone'
+                        onChange={handleChange}
+                        value={formData.phone}
+                        className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                        placeholder='Número de teléfono'
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor='phone2'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Teléfono [opcional]
+                    </label>
+                    <div className='flex mt-1'>
+                      <select
+                        id='code_phone2'
+                        name='code_phone2'
+                        onChange={handleChange}
+                        value={formData.code_phone2}
+                        className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
+                      >
+                        <option value='' disabled>
+                          Seleccione...
+                        </option>
+                        {countries.length > 0 &&
+                          countries.map((option) => (
+                            <option key={option.id} value={option.code_phone}>
+                              {option.code_phone}
+                            </option>
+                          ))}
+                      </select>
+                      <input
+                        type='text'
+                        id='phone2'
+                        name='phone'
+                        onChange={handleChange}
+                        value={formData.phone2}
+                        className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                        placeholder='Número de teléfono'
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className='col-span-2'>
                   <label
-                    htmlFor='observations'
+                    htmlFor='email'
                     className='block text-sm font-medium text-blue-500'
                   >
-                    Observaciones
+                    Correo electrónico
                   </label>
-                  <textarea
+                  <input
+                    type='text'
+                    id='email'
+                    name='email'
+                    value={formData.email}
+                    onChange={handleChange}
+                    ref={emailRef}
+                    onBlur={() =>
+                      validateField('email', formData.email, emailRef)
+                    }
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='country_current_id'
+                  className='block text-sm font-medium text-blue-500'
+                >
+                  Pais de residencia
+                </label>
+                <select
+                  id='country_current_id'
+                  name='country_current_id'
+                  onChange={handleChange}
+                  value={formData.country_current_id}
+                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                >
+                  <option value=''>Seleccione...</option>
+                  {countries.length > 0 &&
+                    countries.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='state_id'
+                  className='block text-sm font-medium text-blue-500'
+                >
+                  Provincia
+                </label>
+                <select
+                  id='state_id'
+                  name='state_id'
+                  onChange={handleChange}
+                  value={formData.state_id}
+                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                >
+                  <option>Seleccione...</option>
+                  {selectedCountry &&
+                    selectedCountry.states.map((state) => (
+                      <option key={state.id} value={state.id}>
+                        {state.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='col-span-1'>
+                <label
+                  htmlFor='cod_post_id'
+                  className='block text-sm font-medium text-blue-500'
+                >
+                  Codigo Postal
+                </label>
+                <Select
+                  id='cod_post_id'
+                  name='cod_post_id'
+                  options={postalCodes}
+                  onChange={handleSelect}
+                  defaultValue={formData.cod_post_id}
+                  isMulti={false} // Enable multi-selection
+                />
+              </div>
+
+              <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='address'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Calle
+                  </label>
+                  <input
+                    id='address'
+                    name='address'
+                    rows='3'
+                    value={formData.address}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  ></input>
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='address_num'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Numero
+                  </label>
+                  <input
+                    type='text'
+                    id='address_num'
+                    name='address_num'
+                    value={formData.address_num}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='address_flat'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Piso
+                  </label>
+                  <input
+                    type='text'
+                    id='address_flat'
+                    name='address_flat'
+                    value={formData.address_flat}
+                    onChange={handleChange}
+                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+                </div>
+                <div className='col-span-3'>
+                  <div className='mb-2'>
+                    <label
+                      htmlFor='observations'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Observaciones
+                    </label>
+                    <div
+                      className={`${
+                        isFullScreen
+                          ? 'fixed inset-0 z-50 bg-white flex flex-col'
+                          : 'relative'
+                      }`}
+                    >
+                      {/* Botón para maximizar/minimizar */}
+                      <button
+                        type='button'
+                        className='absolute top-2 right-2 z-50 bg-gray-200 px-2 py-1 rounded text-sm'
+                        onClick={() => setIsFullScreen(!isFullScreen)}
+                      >
+                        {isFullScreen ? '⤢ Minimizar' : '⤢ Maximizar'}
+                      </button>
+                      <ReactQuill
+                        theme='snow'
+                        value={formData.observations}
+                        placeholder='Escribe aquí...'
+                        className='bg-white'
+                        style={{ height: isFullScreen ? '100vh' : '200px' }}
+                        onChange={(content) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            observations: content,
+                          }))
+                        }
+                      />{' '}
+                    </div>
+                    {/* <textarea
                     type='textarea'
                     rows={6}
                     id='observations'
                     value={formData.observations}
                     onChange={handleChange}
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  />
+                  /> */}
+                  </div>
                 </div>
               </div>
-            </div>
-            {/* <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
+              {/* <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
               <div>
                 <FileInput
                   label='Curriculum'
@@ -1711,177 +1781,173 @@ const Form = ({
                 />
               </div>
             </div> */}
-          </div>
-
-        </div>
-
-      </div>
-                       
-
-      {expandImage && (
-        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
-          <div className='bg-white p-2 rounded shadow-lg w-3/4 h-[90%]'>
-            <button
-              className='absolute top-2 right-2 text-white hover:text-blue-500 text-lg bg-gray-800'
-              onClick={closeExpandImage}
-            >
-              <svg
-                className='w-6 h-6'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M6 18L18 6M6 6l12 12'
-                />
-              </svg>
-            </button>
-
-            <img
-              alt='imagen'
-              src={dni.current}
-              className='w-auto h-full mx-auto'
-            />
-          </div>
-        </div>
-      )}
-      {isOpenModalReason && (
-        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
-          <div
-            className={`relative bg-white p-2 rounded shadow-lg min-h-60 w-4/5 lg:w-3/5`}
-          >
-            <button
-              className='absolute top-0 right-0 text-gray-800 text-lg'
-              onClick={closeModalReason}
-            >
-              <svg
-                className='w-6 h-6'
-                fill='none'
-                viewBox='0 0 24 24'
-                stroke='currentColor'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M6 18L18 6M6 6l12 12'
-                />
-              </svg>
-            </button>
-            <div className={`col-span-1 md:grid md:grid-cols-2 gap-2 p-2`}>
-              <div className='col-span-1'>
-                <div className='mb-2'>
-                  <label
-                    htmlFor='date'
-                    className='block text-sm font-medium text-secondary'
-                  >
-                    Fecha
-                  </label>
-                  <input
-                    type='date'
-                    rows={15}
-                    id='date'
-                    value={changelogs.date}
-                    onChange={handleChangeLogs}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  />
-                </div>
-              </div>
-              <div className='col-span-1'>
-                <div className='mb-2'>
-                  <label
-                    htmlFor='reason'
-                    className='block text-sm font-medium text-secondary'
-                  >
-                    Motivo
-                  </label>
-                  <Select
-                    id='client_statu_reason_id'
-                    options={clientReason}
-                    placeholder='Seleccione Motivo'
-                    defaultValue={changelogs.client_statu_reason_id}
-                    onChange={(event) =>
-                      handleChangeLogsSelect(event, 'client_statu_reason_id')
-                    }
-                    isSearchable
-                  />
-                </div>
-              </div>
-              <div className='col-span-2'>
-                <div className='mb-2'>
-                  <label
-                    htmlFor='observation'
-                    className='block text-sm font-medium text-secondary'
-                  >
-                    Observaciones
-                  </label>
-                  <textarea
-                    type='textarea'
-                    rows={7}
-                    id='observation'
-                    value={changelogs.observation}
-                    onChange={handleChangeLogs}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  />
-                </div>
-              </div>
             </div>
-            <div className='flex justify-end p-4'>
+          </div>
+        </div>
+
+        {expandImage && (
+          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
+            <div className='bg-white p-2 rounded shadow-lg w-3/4 h-[90%]'>
               <button
-                type='button'
-                className='bg-gray-500 text-white font-bold py-2 px-4 text-sm rounded mr-2'
+                className='absolute top-2 right-2 text-white hover:text-blue-500 text-lg bg-gray-800'
+                onClick={closeExpandImage}
+              >
+                <svg
+                  className='w-6 h-6'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
+              </button>
+
+              <img
+                alt='imagen'
+                src={dni.current}
+                className='w-auto h-full mx-auto'
+              />
+            </div>
+          </div>
+        )}
+        {isOpenModalReason && (
+          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
+            <div
+              className={`relative bg-white p-2 rounded shadow-lg min-h-60 w-4/5 lg:w-3/5`}
+            >
+              <button
+                className='absolute top-0 right-0 text-gray-800 text-lg'
                 onClick={closeModalReason}
               >
-                Cancelar
+                <svg
+                  className='w-6 h-6'
+                  fill='none'
+                  viewBox='0 0 24 24'
+                  stroke='currentColor'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth={2}
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
               </button>
-              <button
-                type='button'
-                className={`font-bold py-2 px-4 text-sm rounded mr-2 ${
-                  changelogs.client_statu_reason_id === '' ||
-                  changelogs.observation === '' ||
-                  changelogs.date === ''
-                    ? 'bg-gray-500 opacity-50 cursor-not-allowed'
-                    : 'bg-green-500 text-white'
-                }`}
-                onClick={handleContinueChange}
-                disabled={
-                  changelogs.client_statu_reason_id == '' ||
-                  changelogs.observation == '' ||
-                  changelogs.date == ''
-                }
-              >
-                Continuar
-              </button>
+              <div className={`col-span-1 md:grid md:grid-cols-2 gap-2 p-2`}>
+                <div className='col-span-1'>
+                  <div className='mb-2'>
+                    <label
+                      htmlFor='date'
+                      className='block text-sm font-medium text-secondary'
+                    >
+                      Fecha
+                    </label>
+                    <input
+                      type='date'
+                      rows={15}
+                      id='date'
+                      value={changelogs.date}
+                      onChange={handleChangeLogs}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    />
+                  </div>
+                </div>
+                <div className='col-span-1'>
+                  <div className='mb-2'>
+                    <label
+                      htmlFor='reason'
+                      className='block text-sm font-medium text-secondary'
+                    >
+                      Motivo
+                    </label>
+                    <Select
+                      id='client_statu_reason_id'
+                      options={clientReason}
+                      placeholder='Seleccione Motivo'
+                      defaultValue={changelogs.client_statu_reason_id}
+                      onChange={(event) =>
+                        handleChangeLogsSelect(event, 'client_statu_reason_id')
+                      }
+                      isSearchable
+                    />
+                  </div>
+                </div>
+                <div className='col-span-2'>
+                  <div className='mb-2'>
+                    <label
+                      htmlFor='observation'
+                      className='block text-sm font-medium text-secondary'
+                    >
+                      Observaciones
+                    </label>
+                    <textarea
+                      type='textarea'
+                      rows={7}
+                      id='observation'
+                      value={changelogs.observation}
+                      onChange={handleChangeLogs}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className='flex justify-end p-4'>
+                <button
+                  type='button'
+                  className='bg-gray-500 text-white font-bold py-2 px-4 text-sm rounded mr-2'
+                  onClick={closeModalReason}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type='button'
+                  className={`font-bold py-2 px-4 text-sm rounded mr-2 ${
+                    changelogs.client_statu_reason_id === '' ||
+                    changelogs.observation === '' ||
+                    changelogs.date === ''
+                      ? 'bg-gray-500 opacity-50 cursor-not-allowed'
+                      : 'bg-green-500 text-white'
+                  }`}
+                  onClick={handleContinueChange}
+                  disabled={
+                    changelogs.client_statu_reason_id == '' ||
+                    changelogs.observation == '' ||
+                    changelogs.date == ''
+                  }
+                >
+                  Continuar
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-      
-    </form>
-    <div className='absolute bottom-0 left-0 w-full bg-white shadow-md py-3 px-8 flex justify-end gap-4 z-30'>
-  <button
-    type='button'
-    className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
-    onClick={handleCancel}
-  >
-    Cancelar
-  </button>
-  <button
-    type='button'
-    className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-    onClick={
-      formData.is_active === 'false' &&
-      (oldData.is_active === true || oldData.is_active === 'true')
-        ? handleOpenReason
-        : handleSubmit
-    }
-  >
-    Guardar
-  </button>
-</div>
+        )}
+      </form>
+      <div className='absolute bottom-0 right-0 w-1/2 bg-transparent py-3 px-8 flex justify-end gap-4 z-30'>
+        <button
+          type='button'
+          className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
+          onClick={handleCancel}
+        >
+          Cancelar
+        </button>
+        <button
+          type='button'
+          className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+          onClick={
+            formData.is_active === 'false' &&
+            (oldData.is_active === true || oldData.is_active === 'true')
+              ? handleOpenReason
+              : handleSubmit
+          }
+        >
+          Guardar
+        </button>
+      </div>
     </>
   );
 };

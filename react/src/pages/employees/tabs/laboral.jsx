@@ -25,13 +25,18 @@ import {
   ConfirmSweetAlert,
   InfoSweetAlert,
 } from '../../../components/SweetAlert/SweetAlert';
+import { FiDownload } from 'react-icons/fi';
 const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Laboral',
     text: '¿Esta seguro que desea registrar la referencia?',
     icon: 'question',
   });
-
+  const sweetAlert2 = ConfirmSweetAlert({
+    title: 'Laboral',
+    text: '¿Esta seguro que desea actualizar la referencia?',
+    icon: 'question',
+  });
   const formatDateTime = () => {
     const options = {
       year: 'numeric',
@@ -62,6 +67,8 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
     from_date: '',
     until_date: '',
     is_current: false,
+    observations: '',
+    url: null,
   };
   const [formData, setFormData] = useState(initialValues);
   const [employees, setEmployees] = useState([]);
@@ -71,6 +78,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const [selectedOption, setSelectedOption] = useState('client');
   const [followUps, setFollowUps] = useState([]);
   const [isReadOnly, setIsReadOnly] = useState([]);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   let loading = loadingCount > 0;
   const quillRef = useRef(null);
   const navigateTo = useNavigate();
@@ -155,7 +163,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const { date, title, text, employee_id } = formData;
+    const { phone, contact, from_date, is_current, until_date } = formData;
 
     if (!phone || !contact || !from_date || (!is_current && !until_date)) {
       ToastNotify({
@@ -165,7 +173,11 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       });
       return;
     }
-    await sweetAlert.showSweetAlert().then((result) => {
+    let customAlert = sweetAlert;
+    if (formData.id) {
+      customAlert = sweetAlert2;
+    }
+    await customAlert.showSweetAlert().then((result) => {
       const isConfirmed = result !== null && result;
       if (!isConfirmed) {
         ToastNotify({
@@ -186,13 +198,45 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       }
     });
   };
+
   const handleSend = async (dataToSend) => {
     setIsLoading(true);
     try {
-      let message = '';
+      // 🔹 Subir archivos antes de enviar dataToSend
+      for (const [key, value] of Object.entries(dataToSend)) {
+        const isFile = value instanceof File;
+        if (isFile) {
+          // Subir archivo
+          const fileUploadResponse = await postStorage(
+            value,
+            'employee/reference',
+          );
+          dataToSend[key] = fileUploadResponse.path; // Reemplazar el File por la URL del storage
 
-      let response = false;
-      response = await postData('employees/reference', dataToSend);
+          // Si había un archivo anterior, lo elimino (opcional, según tu lógica)
+          // if (
+          //   oldData[key] !== null &&
+          //   oldData[key] !== undefined &&
+          //   oldData[key] !== ''
+          // ) {
+          //   const filename = oldData[key].split('/').pop();
+          //   await deleteStorage(filename, 'employee');
+          // }
+        }
+      }
+
+      // 🔹 Enviar data final con rutas en vez de archivos
+      let response = null;
+      console.log('dataToSend =>', dataToSend);
+      if (dataToSend.id) {
+        response = await putData(
+          `employees/reference/${dataToSend.id}`,
+          dataToSend,
+        );
+      } else {
+        response = await postData('employees/reference', dataToSend);
+      }
+
       if (response) {
         ToastNotify({
           message: 'Referencia registrada con exito!',
@@ -203,7 +247,6 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
       console.log('error =>', error);
     } finally {
       getRows();
-
       setIsLoading(false);
       closeModal();
     }
@@ -266,6 +309,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
             followUps.map((row) => (
               <>
                 <div
+                  key={row.id}
                   className='flex justify-between items-center bg-white rounded-lg p-2 shadow-sm border border-gray-300 col-span-2 cursor-pointer'
                   onClick={() => openModal(row)}
                 >
@@ -273,27 +317,81 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     <div className='w-10 h-9 rounded-full mr-4 border border-blue-500 flex justify-center items-center'>
                       {row.id}
                     </div>
-                    <div className='w-full'>
-                      <div className='flex justify-between items-center w-full'>
-                        <h4 className='text-lg font-semibold flex-grow'>
-                          {row.contact}
-                        </h4>
-                        <span className='text-sm text-gray-600'>
-                          Desde {row.from_date}
-                        </span>
+                    <div className='flex flex-row flex-end w-full gap-8'>
+                      <div className='w-full'>
+                        <div className='flex justify-between items-center w-full'>
+                          <h4 className='text-lg font-semibold flex-grow'>
+                            {row.contact}
+                          </h4>
+                          <span className='text-sm text-gray-600'>
+                            Desde {row.from_date}
+                          </span>
+                        </div>
+                        <div className='flex justify-between items-center w-full'>
+                          <span className='text-sm text-gray-600'>
+                            {row.phone}
+                          </span>
+                          <span className='text-sm text-gray-600'>
+                            {row.is_current
+                              ? 'Hasta la actualidad'
+                              : `Hasta ${row.until_date}`}
+                          </span>
+                        </div>
                       </div>
-                      <div className='flex justify-between items-center w-full'>
-                        <span className='text-sm text-gray-600'>
-                          {row.phone}
-                        </span>
-                        <span className='text-sm text-gray-600'>
-                          {row.is_current
-                            ? 'Hasta la actualidad'
-                            : `Hasta ${row.until_date}`}
-                        </span>
+
+                      {/* 👁️ Ojo con tooltip */}
+                      <div className='w-[40px] text-right justify-center items-center flex relative group'>
+                        <button className='bg-transparent border-none text-gray-500 hover:text-blue-500'>
+                          <FaEye className='w-6 h-6' />
+                        </button>
+
+                        {/* Tooltip */}
+                        <div className='absolute top-full right-0 mt-2 w-60 bg-white shadow-lg rounded-lg p-3 border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition duration-200 z-50'>
+                          <p className='text-sm text-left'>
+                            <strong>Contacto:</strong> {row.contact}
+                          </p>
+                          <p className='text-sm text-left'>
+                            <strong>Teléfono:</strong> {row.phone}
+                          </p>
+                          <p className='text-sm text-left'>
+                            <strong>Desde:</strong> {row.from_date}
+                          </p>
+                          <p className='text-sm text-left'>
+                            <strong>Hasta:</strong>{' '}
+                            {row.is_current ? 'la actualidad' : row.until_date}
+                          </p>
+
+                          {/* Referencia (archivo) */}
+                          {row.url && (
+                            <p className='text-sm text-left mt-2'>
+                              <strong>Referencia:</strong>{' '}
+                              <a
+                                href={row.url}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='text-blue-600 underline'
+                              >
+                                Ver archivo
+                              </a>
+                            </p>
+                          )}
+                          {/* Observación (texto enriquecido) */}
+                          {row.observations && (
+                            <div className='text-sm text-left mt-2'>
+                              <strong>Observación:</strong>
+                              <div
+                                className='prose prose-sm max-w-none'
+                                dangerouslySetInnerHTML={{
+                                  __html: row.observations,
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
+
                   <div className='flex items-center'>
                     <button className='bg-transparent border-none text-gray-500 hover:text-red-500'>
                       <i className='fas fa-trash'></i>
@@ -303,7 +401,6 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     </button>
                   </div>
                 </div>
-                <Tooltip id='tooltip' />
               </>
             ))}
         </div>
@@ -331,13 +428,16 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                 />
               </svg>
             </button>
+
             <div className={`col-span-1 md:grid md:grid-cols-1 gap-2 p-2`}>
               <div className='col-span-1'>
                 <h3 className='text-lg font-semibold mb-4'>
                   Referencia Personal
                 </h3>
               </div>
+
               <div className='col-span-1'>
+                {/* Contacto */}
                 <div className='mb-1'>
                   <label
                     htmlFor='contact'
@@ -353,6 +453,8 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   />
                 </div>
+
+                {/* Teléfono */}
                 <div className='mb-1'>
                   <label
                     htmlFor='phone'
@@ -368,6 +470,8 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   />
                 </div>
+
+                {/* Fecha desde */}
                 <div className='mb-2'>
                   <label
                     htmlFor='from_date'
@@ -383,6 +487,8 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   />
                 </div>
+
+                {/* Hasta la actualidad */}
                 <div className='mb-2 flex items-center space-x-2'>
                   <input
                     type='checkbox'
@@ -398,6 +504,8 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     Hasta la actualidad
                   </label>
                 </div>
+
+                {/* Fecha hasta */}
                 <div className='mb-2'>
                   <label
                     htmlFor='until_date'
@@ -416,8 +524,92 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   />
                 </div>
+
+                <div className='mb-2 mt-4'>
+                  <label
+                    htmlFor='url'
+                    className='block text-sm font-medium text-secondary mb-1'
+                  >
+                    Subir PDF
+                  </label>
+                  <input
+                    type='file'
+                    id='url'
+                    accept='application/pdf'
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        url: e.target.files[0], // Guarda como File al subir
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  />
+
+                  {formData.url && (
+                    <div className='flex items-center gap-2 mt-2'>
+                      <p className='text-xs text-gray-500'>
+                        {formData.url.name || formData.url.split('/').pop()}
+                      </p>
+
+                      <a
+                        href={
+                          formData.url instanceof File
+                            ? URL.createObjectURL(formData.url) // si es File -> blob
+                            : getStorage(formData.url) // si es string -> url del backend
+                        }
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='p-1 rounded-md bg-gray-100 hover:bg-gray-200'
+                      >
+                        <FiDownload className='text-gray-600' size={18} />
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* 📝 Observaciones (texto enriquecido con ReactQuill) */}
+                <div className='mb-2'>
+                  <label
+                    htmlFor='observations'
+                    className='block text-sm font-medium text-secondary mb-1'
+                  >
+                    Observaciones
+                  </label>
+                  <div
+                    className={`${
+                      isFullScreen
+                        ? 'fixed inset-0 z-50 bg-white flex flex-col'
+                        : 'relative'
+                    }`}
+                  >
+                    {/* Botón para maximizar/minimizar */}
+                    <button
+                      type='button'
+                      className='absolute top-2 right-2 z-50 bg-gray-200 px-2 py-1 rounded text-sm'
+                      onClick={() => setIsFullScreen(!isFullScreen)}
+                    >
+                      {isFullScreen ? '⤢ Minimizar' : '⤢ Maximizar'}
+                    </button>
+
+                    <ReactQuill
+                      theme='snow'
+                      value={formData.observations || ''}
+                      placeholder='Escribe aquí...'
+                      className='bg-white flex-1'
+                      style={{ height: isFullScreen ? '100vh' : '200px' }}
+                      onChange={(content) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          observations: content,
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Botones */}
             <div className='flex justify-end p-4 mt-12'>
               <div className='flex'>
                 <button
@@ -429,9 +621,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                 </button>
                 <button
                   type='button'
-                  className={`py-2 px-2 text-sm rounded font-bold bg-primary text-white hover:bg-primary-dark ${
-                    isReadOnly ? 'bg-blue-300 cursor-not-allowed' : ''
-                  }`}
+                  className={`py-2 px-2 text-sm rounded font-bold bg-primary text-white hover:bg-primary-dark`}
                   onClick={handleSubmit}
                 >
                   Guardar

@@ -1282,7 +1282,7 @@ const [situaciones, setSituaciones] = useState([]);
                       <a href={`client/${service.client?.id}?tabs=servicios`}>
                       <div className=' text-xs mb-2'>
                         <p className='p-1 text-blue-500'>{service.client?.full_name}</p>
-                        <p>{formatDate(service.service_alta)}</p>
+                        <p>{formatDate(service.service_start)}</p>
                       </div>
                     </a>
                   </>
