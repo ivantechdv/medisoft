@@ -150,10 +150,6 @@ const Employee = sequelize.define(
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    was_active: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-    },
   },
   {
     tableName: "employees",

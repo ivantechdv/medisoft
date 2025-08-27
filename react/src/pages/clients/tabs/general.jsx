@@ -1624,7 +1624,7 @@ const Form = ({
         </div>
       )}
     </form>
-    <div className='absolute bottom-0 left-0 w-full bg-white shadow-md py-3 px-8 flex justify-end gap-4 z-30'>
+    <div className='absolute bottom-0 right-0 w-1/2 bg-transparent py-3 px-8 flex justify-end gap-4 z-30'>
   <button
     type='button'
     className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
