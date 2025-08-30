@@ -48,7 +48,7 @@ const Form = ({
     code_phone2: '',
     phone2: '',
     email: '',
-    born_date: '',
+    born_date: null,
     cod_post_id: 0,
     num_social_security: '',
     address: '',
@@ -60,7 +60,7 @@ const Form = ({
     attach_reference: '',
     attach_curriculum: '',
     is_active: true,
-    country_id: '',
+    country_id: 0,
     type: '1',
     recommendations: '',
     statu_id: '',
@@ -80,7 +80,7 @@ const Form = ({
     code_phone2: '',
     phone2: '',
     email: '',
-    born_date: '',
+    born_date: null,
     cod_post_id: 0,
     num_social_security: '',
     address: '',
@@ -92,7 +92,7 @@ const Form = ({
     attach_reference: '',
     attach_curriculum: '',
     is_active: true,
-    country_id: '',
+    country_id: 0,
     type: '1',
     recommendations: '',
     statu_id: '',
@@ -187,7 +187,7 @@ const Form = ({
           setOldData(onFormData);
 
           //calcula la edad
-          if (onFormData.born_date != '') {
+          if (onFormData.born_date != null && onFormData.born_date != '') {
             const age = calculateAge(onFormData.born_date);
             setFormData((prevFormData) => ({
               ...prevFormData,
@@ -213,7 +213,10 @@ const Form = ({
             state: onFormData.cod_post?.state?.name,
           });
 
-          if (onFormData.cod_post?.state?.country_id != '') {
+          if (
+            onFormData.cod_post?.state?.country_id != '' &&
+            onFormData.cod_post?.state?.country_id != 0
+          ) {
             setFormData((prevFormData) => ({
               ...prevFormData,
               ['country_current_id']: onFormData.cod_post?.state?.country_id,
@@ -456,10 +459,18 @@ const Form = ({
     { field: 'level_id', label: 'nivel' },
     { field: 'state_id', label: 'estado o provincia' },
   ];
+  const minimalFields = [
+    { field: 'first_name', label: 'nombres' },
+    { field: 'last_name', label: 'apellidos' },
+    { field: 'dni', label: 'DNI' },
+    { field: 'phone', label: 'teléfono' },
+  ];
   const validateRequiredFields = () => {
     let isValid = true;
 
-    requiredFields.forEach((required) => {
+    const fieldsToValidate =
+      formData.type == 2 ? minimalFields : requiredFields;
+    fieldsToValidate.forEach((required) => {
       if (
         formData[required.field] === undefined ||
         formData[required.field] === ''
@@ -561,6 +572,46 @@ const Form = ({
       setTimeout(() => setLoadingForm(false), 800);
     }
   };
+
+  const normalizePayload = (data) => {
+    const payload = { ...data };
+
+    // Normalizar fechas
+    ['born_date', 'start_date'].forEach((field) => {
+      if (!payload[field]) {
+        payload[field] = null; // <- en vez de ""
+      } else {
+        const d = new Date(payload[field]);
+        payload[field] = isNaN(d.getTime())
+          ? null
+          : d.toISOString().split('T')[0]; // YYYY-MM-DD
+      }
+    });
+
+    // Normalizar enteros
+    ['country_id', 'cod_post_id', 'statu_id', 'level_id', 'state_id'].forEach(
+      (field) => {
+        if (!payload[field] && payload[field] !== 0) payload[field] = null;
+        else payload[field] = parseInt(payload[field], 10);
+      },
+    );
+
+    // Opcional: normalizar strings vacíos a NULL si quieres
+    [
+      'email',
+      'address',
+      'num_social_security',
+      'photo',
+      'dniFront',
+      'dniBack',
+      'recommendations',
+    ].forEach((field) => {
+      if (payload[field] === '') payload[field] = null;
+    });
+
+    return payload;
+  };
+
   const handleSend = async () => {
     setLoadingForm(true);
     // Validar campos requeridos antes de enviar el formulario
@@ -585,14 +636,14 @@ const Form = ({
       }
     }
     const dataToSend = { ...formData };
-    console.log('data enviada', dataToSend);
+    console.log('data enviada', normalizePayload(dataToSend));
 
     let message = '';
     if (!id) {
-      response = await postData('employees', dataToSend);
+      response = await postData('employees', normalizePayload(dataToSend));
       message = 'Empleado registrado con exito';
     } else {
-      response = await putData('employees/' + id, dataToSend);
+      response = await putData('employees/' + id, normalizePayload(dataToSend));
       message = 'Empleado actualizado con exito';
     }
     //changelogs
@@ -1591,117 +1642,135 @@ const Form = ({
                   />
                 </div>
               </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='country_current_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Pais de residencia
-                </label>
-                <select
-                  id='country_current_id'
-                  name='country_current_id'
-                  onChange={handleChange}
-                  value={formData.country_current_id}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                >
-                  <option value=''>Seleccione...</option>
-                  {countries.length > 0 &&
-                    countries.map((option) => (
-                      <option key={option.id} value={option.id}>
-                        {option.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='state_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Provincia
-                </label>
-                <select
-                  id='state_id'
-                  name='state_id'
-                  onChange={handleChange}
-                  value={formData.state_id}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                >
-                  <option>Seleccione...</option>
-                  {selectedCountry &&
-                    selectedCountry.states.map((state) => (
-                      <option key={state.id} value={state.id}>
-                        {state.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='cod_post_id'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Codigo Postal
-                </label>
-                <Select
-                  id='cod_post_id'
-                  name='cod_post_id'
-                  options={postalCodes}
-                  onChange={handleSelect}
-                  defaultValue={formData.cod_post_id}
-                  isMulti={false} // Enable multi-selection
-                />
-              </div>
 
               <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
                 <div className='col-span-1'>
                   <label
+                    htmlFor='country_current_id'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Pais de residencia
+                  </label>
+                  <select
+                    id='country_current_id'
+                    name='country_current_id'
+                    onChange={handleChange}
+                    value={formData.country_current_id}
+                    className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                  >
+                    <option value=''>Seleccione...</option>
+                    {countries.length > 0 &&
+                      countries.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='state_id'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Provincia
+                  </label>
+                  <select
+                    id='state_id'
+                    name='state_id'
+                    onChange={handleChange}
+                    value={formData.state_id}
+                    className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                  >
+                    <option>Seleccione...</option>
+                    {selectedCountry &&
+                      selectedCountry.states.map((state) => (
+                        <option key={state.id} value={state.id}>
+                          {state.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+                <div className='col-span-1'>
+                  <label
+                    htmlFor='cod_post_id'
+                    className='block text-sm font-medium text-blue-500'
+                  >
+                    Codigo Postal
+                  </label>
+                  <Select
+                    id='cod_post_id'
+                    name='cod_post_id'
+                    options={postalCodes}
+                    onChange={handleSelect}
+                    defaultValue={formData.cod_post_id}
+                    isMulti={false} // Enable multi-selection
+                  />
+                </div>
+                <div className='col-span-3 md:grid md:grid-cols-5 gap-2'>
+                  <div className='col-span-3'>
+                    <label
+                      htmlFor='address'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Calle
+                    </label>
+                    <input
+                      id='address'
+                      name='address'
+                      rows='3'
+                      value={formData.address}
+                      onChange={handleChange}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    ></input>
+                  </div>
+                  <div className='col-span-1'>
+                    <label
+                      htmlFor='address_num'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Numero
+                    </label>
+                    <input
+                      type='text'
+                      id='address_num'
+                      name='address_num'
+                      value={formData.address_num}
+                      onChange={handleChange}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    />
+                  </div>
+                  <div className='col-span-1'>
+                    <label
+                      htmlFor='address_flat'
+                      className='block text-sm font-medium text-blue-500'
+                    >
+                      Piso
+                    </label>
+                    <input
+                      type='text'
+                      id='address_flat'
+                      name='address_flat'
+                      value={formData.address_flat}
+                      onChange={handleChange}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    />
+                  </div>
+                </div>
+                <div className='col-span-3'>
+                  <label
                     htmlFor='address'
                     className='block text-sm font-medium text-blue-500'
                   >
-                    Calle
+                    Alias
                   </label>
                   <input
-                    id='address'
-                    name='address'
+                    id='alias'
+                    name='alias'
                     rows='3'
-                    value={formData.address}
+                    value={formData.alias}
                     onChange={handleChange}
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   ></input>
-                </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='address_num'
-                    className='block text-sm font-medium text-blue-500'
-                  >
-                    Numero
-                  </label>
-                  <input
-                    type='text'
-                    id='address_num'
-                    name='address_num'
-                    value={formData.address_num}
-                    onChange={handleChange}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  />
-                </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='address_flat'
-                    className='block text-sm font-medium text-blue-500'
-                  >
-                    Piso
-                  </label>
-                  <input
-                    type='text'
-                    id='address_flat'
-                    name='address_flat'
-                    value={formData.address_flat}
-                    onChange={handleChange}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  />
                 </div>
                 <div className='col-span-3'>
                   <div className='mb-2'>
@@ -1751,7 +1820,8 @@ const Form = ({
                   </div>
                 </div>
               </div>
-              {/* <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
+            </div>
+            {/* <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
               <div>
                 <FileInput
                   label='Curriculum'
@@ -1781,7 +1851,6 @@ const Form = ({
                 />
               </div>
             </div> */}
-            </div>
           </div>
         </div>
 
