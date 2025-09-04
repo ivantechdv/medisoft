@@ -613,65 +613,87 @@ const Form = ({
   };
 
   const handleSend = async () => {
-    setLoadingForm(true);
-    // Validar campos requeridos antes de enviar el formulario
+    try {
+      setLoadingForm(true);
+      // Validar campos requeridos antes de enviar el formulario
 
-    let response = false;
+      let response = false;
 
-    for (const [key, value] of Object.entries(formData)) {
-      const isFile = value instanceof File;
-      console.log('value ' + key, value);
-      if (isFile) {
-        const fileUploadResponse = await postStorage(value, 'employee');
-        formData[key] = fileUploadResponse.path;
-        console.log('oldatakey', oldData[key]);
-        if (
-          oldData[key] !== null &&
-          oldData[key] !== undefined &&
-          oldData[key] !== ''
-        ) {
-          const filename = oldData[key].split('/').pop();
-          await deleteStorage(filename, 'employee');
+      for (const [key, value] of Object.entries(formData)) {
+        const isFile = value instanceof File;
+        console.log('value ' + key, value);
+        if (isFile) {
+          const fileUploadResponse = await postStorage(value, 'employee');
+          formData[key] = fileUploadResponse.path;
+          console.log('oldatakey', oldData[key]);
+          if (
+            oldData[key] !== null &&
+            oldData[key] !== undefined &&
+            oldData[key] !== ''
+          ) {
+            const filename = oldData[key].split('/').pop();
+            await deleteStorage(filename, 'employee');
+          }
         }
       }
-    }
-    const dataToSend = { ...formData };
-    console.log('data enviada', normalizePayload(dataToSend));
+      const dataToSend = { ...formData };
+      console.log('data enviada', dataToSend);
 
-    let message = '';
-    if (!id) {
-      response = await postData('employees', normalizePayload(dataToSend));
-      message = 'Empleado registrado con exito';
-    } else {
-      response = await putData('employees/' + id, normalizePayload(dataToSend));
-      message = 'Empleado actualizado con exito';
-    }
-    //changelogs
-    console.log('response => ', response);
-    const currentData = changeValueSelect(changelogs);
-    console.log('oldchangeLogs => ', oldChangelogs);
-    console.log('currentData => ', currentData);
-    await ChangeLogger({
-      oldData: oldChangelogs,
-      newData: currentData,
-      user: null,
-      module: 'employees',
-      module_id: response.id,
-    });
-    //changelogs
-    if (response) {
-      ToastNotify({
-        message: message,
-        position: 'top-left',
-        type: 'success',
+      let message = '';
+      if (!id) {
+        response = await postData('employees', dataToSend);
+        message = 'Empleado registrado con exito';
+      } else {
+        response = await putData('employees/' + id, dataToSend);
+        message = 'Empleado actualizado con exito';
+      }
+      //changelogs
+      console.log('response => ', response);
+      const currentData = changeValueSelect(changelogs);
+      console.log('oldchangeLogs => ', oldChangelogs);
+      console.log('currentData => ', currentData);
+      await ChangeLogger({
+        oldData: oldChangelogs,
+        newData: currentData,
+        user: null,
+        module: 'employees',
+        module_id: response.id,
       });
+      //changelogs
+      if (response) {
+        ToastNotify({
+          message: message,
+          position: 'top-left',
+          type: 'success',
+        });
 
-      await updateImages(formData);
-      //onGetRecordById(response.id);
-      setTimeout(
-        () => (window.location.href = '/employee/' + response.id),
-        1000,
-      );
+        await updateImages(formData);
+        //onGetRecordById(response.id);
+        setTimeout(
+          () => (window.location.href = '/employee/' + response.id),
+          1000,
+        );
+      }
+    } catch (error) {
+      console.error('Error en handleSend', error);
+
+      // Si viene error 409 desde Axios
+      if (error.response?.status === 409 && error.response?.data?.errors) {
+        const errorMsg = error.response.data.errors.join('\n');
+        ToastNotify({
+          message: errorMsg,
+          position: 'top-left',
+          type: 'error',
+        });
+      } else {
+        ToastNotify({
+          message: 'Error al procesar el formulario',
+          position: 'top-left',
+          type: 'error',
+        });
+      }
+    } finally {
+      setTimeout(() => setLoadingForm(false), 800);
     }
   };
   const handleImagenChange = (event, key) => {

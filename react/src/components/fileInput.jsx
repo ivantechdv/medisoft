@@ -36,7 +36,7 @@ const FileInput = ({
           htmlFor={name}
           className='cursor-pointer p-2 border border-gray-300 text-blue-500 rounded-lg w-full text-center'
         >
-          {fileUrl ? 'Cambiar archivo' : 'Seleccionar archivo'}
+          {fileUrl ? 'Cambiar' : 'Archivo'}
         </label>
 
         <input

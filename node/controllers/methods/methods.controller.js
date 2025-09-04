@@ -1,27 +1,35 @@
 const CTRL = {};
 const sequelize = require("../../database/sequelize");
 const { Sequelize, Op, col } = require("sequelize");
-
+const { UniqueConstraintError } = require("sequelize");
 const ITEMS_PER_PAGE = 20; // Puedes ajustar esto según tus necesidades
 (CTRL.create = async (req, res, next, Model) => {
   try {
     const data = await Model.create(req.body);
     res.status(201).json(data);
   } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      const errors = error.errors.map(
+        (e) => `El valor '${e.value}' ya existe.`
+      );
+      return res.status(409).json({ errors });
+    }
+
+    // Otros errores de base de datos
     const isSequelizeError =
       error.name?.startsWith("Sequelize") || Boolean(error.parent?.sqlMessage);
 
     if (isSequelizeError) {
-      // Manejo de errores de base de datos
       const sqlMessage = error.parent?.sqlMessage || error.message;
       const fieldMatch = sqlMessage.match(/column '(.+?)'/);
-
       return res.status(400).json({
         error: sqlMessage,
         field: fieldMatch?.[1] || "unknown",
         type: "DATABASE_ERROR",
       });
     }
+
+    // Errores generales
     console.log("error", error);
     next(error);
   }
@@ -98,11 +106,11 @@ CTRL.get = async (
   try {
     const { page = 1, pageSize, searchTerm, is_deleted } = req.query;
     const {
-  is_active,  // filtro estado
-  type,       // filtro tipo
-  level_id,   // filtro nivel
-  statu_id,   // filtro situacion
-} = req.query;
+      is_active, // filtro estado
+      type, // filtro tipo
+      level_id, // filtro nivel
+      statu_id, // filtro situacion
+    } = req.query;
     // Validación de parámetros de consulta
     let parsedPage;
     let parsedPageSize;
@@ -113,23 +121,23 @@ CTRL.get = async (
 
       offset = (parsedPage - 1) * parsedPageSize;
     }
-   const searchWhere = {
-  ...(searchTerm && {
-    [Op.or]: [
-      { full_name: { [Op.like]: `%${searchTerm}%` } },
-      { email: { [Op.like]: `%${searchTerm}%` } },
-      { dni: { [Op.like]: `%${searchTerm}%` } },
-      { phone: { [Op.like]: `%${searchTerm}%` } },
-      { id: { [Op.like]: `%${searchTerm}%` } },
-      ...additionalSearchConditions,
-    ],
-  }),
-  ...(typeof is_deleted !== "undefined" && { is_deleted }),
-  ...(typeof is_active !== "undefined" && { is_active }),
-  ...(typeof type !== "undefined" && { type }),
-  ...(typeof level_id !== "undefined" && { level_id }),
-  ...(typeof statu_id !== "undefined" && { statu_id }),
-};
+    const searchWhere = {
+      ...(searchTerm && {
+        [Op.or]: [
+          { full_name: { [Op.like]: `%${searchTerm}%` } },
+          { email: { [Op.like]: `%${searchTerm}%` } },
+          { dni: { [Op.like]: `%${searchTerm}%` } },
+          { phone: { [Op.like]: `%${searchTerm}%` } },
+          { id: { [Op.like]: `%${searchTerm}%` } },
+          ...additionalSearchConditions,
+        ],
+      }),
+      ...(typeof is_deleted !== "undefined" && { is_deleted }),
+      ...(typeof is_active !== "undefined" && { is_active }),
+      ...(typeof type !== "undefined" && { type }),
+      ...(typeof level_id !== "undefined" && { level_id }),
+      ...(typeof statu_id !== "undefined" && { statu_id }),
+    };
 
     // Combinar la cláusula where existente con la cláusula de búsqueda
     const combinedWhere = {
@@ -149,7 +157,7 @@ CTRL.get = async (
       where: {
         id: ids.map((idRecord) => idRecord.id),
       },
-       distinct: true,
+      distinct: true,
       include: include,
       ...(pageSize && {
         limit: parsedPageSize,
