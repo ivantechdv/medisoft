@@ -8,41 +8,33 @@ const EmployeeSpecific = require("../../models/employees/specific.model");
 const EmployeeComplementary = require("../../models/employees/complementary.model");
 const State = require("../../models/states/states.model");
 const Methods = require("../methods/methods.controller");
-const { Sequelize, Op } = require("sequelize");
+const { Sequelize, Op, UniqueConstraintError } = require("sequelize");
 const Gender = require("../../models/genders/genders.model");
 const validationField = require("../../utils/validators");
 const ClientsServices = require("../../models/clients_services/clients_services.model");
 const Status = require("../../models/employees/status.model");
 const Level = require("../../models/employees/level.model");
+
 CTRL.create = async (req, res, next) => {
   try {
-    // const duplicated = await validationField(
-    //   Employee,
-    //   {
-    //     dni: req.body.dni,
-    //     email: req.body.email,
-    //     phone: req.body.phone,
-    //     code_phone: req.body.code_phone,
-    //     full_name: req.body.full_name,
-    //     num_social_security: req.body.num_social_security,
-    //   },
-    //   null,
-    //   ["code_phone", "phone"]
-    // );
-
-    // if (duplicated) {
-    //   return res.status(409).json({
-    //     error: `Ya existe un cuidador con los siguientes campos duplicados: ${duplicated.join(
-    //       ", "
-    //     )}`,
-    //   });
-    // }
-    Methods.create(req, res, next, Employee);
+    await Methods.create(req, res, next, Employee);
   } catch (error) {
-    console.log("error", error);
-    res.status(500).json({ error: error.message });
+    console.error("Error Sequelize:", error);
+
+    // Manejo de unique constraint (compuesto o simple)
+    if (error.name === "SequelizeUniqueConstraintError") {
+      const errors = error.errors.map(
+        (e) =>
+          `El valor '${e.value}' ya está registrado en el campo '${e.path}'`
+      );
+      return res.status(409).json({ errors });
+    }
+
+    // Otros errores
+    return res.status(500).json({ error: error.message });
   }
 };
+
 CTRL.update = async (req, res, next) => {
   try {
     // const duplicated = await validationField(
@@ -69,6 +61,31 @@ CTRL.update = async (req, res, next) => {
     await Methods.update(req, res, next, Employee);
   } catch (error) {
     console.log("error", error);
+    if (error instanceof UniqueConstraintError) {
+      // Mapeamos todos los errores
+      const duplicates = await Promise.all(
+        error.errors.map(async (err) => {
+          const field = err.path; // campo (dni, email, etc.)
+          const value = err.value; // valor duplicado
+
+          // Buscar en qué registro ya existe
+          const existing = await Employee.findOne({
+            where: { [field]: value },
+            attributes: ["id", "full_name", field],
+          });
+
+          if (existing) {
+            return `El valor '${value}' ya está registrado en el campo '${field}' en el registro #${existing.id} (${existing.full_name}).`;
+          }
+
+          return `El valor '${value}' ya está registrado en el campo '${field}'.`;
+        })
+      );
+
+      return res.status(409).json({ errors: duplicates });
+    }
+
+    console.error("error", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -99,14 +116,14 @@ CTRL.get = async (req, res, next) => {
         model: EmployeeComplementary,
       },
       {
-        model:ClientsServices
+        model: ClientsServices,
       },
-       {
-        model:Status
+      {
+        model: Status,
       },
-        {
-        model:Level
-      }
+      {
+        model: Level,
+      },
     ];
     Methods.get(req, res, next, Employee, condition, include);
   } catch (error) {
@@ -127,14 +144,14 @@ CTRL.getAll = async (req, res, next) => {
         model: EmployeeComplementary,
       },
       {
-        model:ClientsServices
+        model: ClientsServices,
       },
-       {
-        model:Status
+      {
+        model: Status,
       },
-        {
-        model:Level
-      }
+      {
+        model: Level,
+      },
     ];
     Methods.getAll(req, res, next, Employee, condition, include);
   } catch (error) {

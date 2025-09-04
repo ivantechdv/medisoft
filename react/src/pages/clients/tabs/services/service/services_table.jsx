@@ -1274,7 +1274,7 @@ const ServicesTable = forwardRef(
                         F. Alta
                       </th>
                       <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
-                        Activación
+                        Alta Cuidador/a
                       </th>
                       <th className='px-2 py-2 text-left text-xs font-medium uppercase tracking-wider border'>
                         F. Baja

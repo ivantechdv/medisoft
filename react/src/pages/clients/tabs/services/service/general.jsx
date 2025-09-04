@@ -93,7 +93,7 @@ const ServiceGeneral = ({
             htmlFor='service_start'
             className='block text-sm font-medium text-secondary'
           >
-            Activación de servicio
+            Alta Cuidador/a
           </label>
         </div>
         <div className='col-span-2'>

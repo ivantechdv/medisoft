@@ -6,6 +6,8 @@ import {
   FaMapMarkerAlt,
   FaPhoneSquareAlt,
   FaFileAlt,
+  FaChevronLeft,
+  FaChevronRight,
   FaEnvelope,
 } from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
 import { getData, postData, putData, getStorage } from '../../api';
@@ -74,7 +76,7 @@ const Employees = () => {
     code_phone: '',
   });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-
+  const [collapsed, setCollapsed] = useState(false);
   const getRecordById = async (id) => {
     try {
       //setIsLoading(true);
@@ -237,103 +239,141 @@ const Employees = () => {
         ]}
       />
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-80px)]'>
-       <div className="grid grid-cols-[280px_1fr] md:grid-cols-[280px_280px_1fr_1fr]">
-          <div className='col-span-1  border-r-2 border-gray-200 h-full'>
-            <div className='grid grid-cols-2 md:grid-cols-1'>
-              <div className='col-span-1'>
-                <div className='w-full border-r-2 border-gray-200'>
-                  {/* Contenido del lado izquierdo */}
-                  <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>
-                    <div className='w-10 bg-blue-300 h-full border-l'></div>
-                    <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
-                      {cardData.photo ? (
-                        <img
-                          src={cardData.photo}
-                          alt=''
-                          className='h-12 w-12 rounded-full'
-                          style={{ objectFit: 'cover' }}
-                        />
-                      ) : (
-                        <FaUser className='text-gray-300 text-5xl p-2' />
-                      )}
-                    </div>
-                    <div className='mt-8 ml-8'>
-                      <label className='font-semibold text-md block uppercase'>
-                        {cardData.full_name}
-                      </label>
-                      <label className='font-light text-sm block mt-2'>
-                        {cardData.dni}
-                      </label>
-                      <label className='font-light text-sm block '>
-                        {cardData.fecha}
-                      </label>
-                      {cardData.id && (
-                        <div className='flex items-center'>
-                          <label className='font-light text-sm block'>
-                            ID CLIENTE
-                          </label>
-                          {'  '}
-                          <div className='ml-4 w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center mr-2'>
-                            <span className='text-lg font-bold'>
-                              {cardData.id}
-                            </span>
+        <div className='grid grid-cols-[auto_1fr] md:grid-cols-[auto_280px_1fr_1fr] h-screen'>
+          {/* Sidebar */}
+          <div
+            className={`relative border-r-2 border-gray-200 h-full transition-all duration-300 ease-in-out ${
+              collapsed ? 'w-[50px]' : 'w-[280px]'
+            }`}
+          >
+            {/* Botón flecha */}
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className='absolute -right-3 top-4 bg-white border border-gray-300 rounded-full p-1 shadow z-10'
+            >
+              {collapsed ? <FaChevronRight /> : <FaChevronLeft />}
+            </button>
+
+            {/* Contenido */}
+            {!collapsed ? (
+              <div className='grid grid-cols-2 md:grid-cols-1'>
+                <div className='col-span-1'>
+                  <div className='w-full border-r-2 border-gray-200'>
+                    <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>
+                      <div className='w-10 bg-blue-300 h-full border-l'></div>
+                      <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
+                        {cardData.photo ? (
+                          <img
+                            src={cardData.photo}
+                            alt=''
+                            className='h-12 w-12 rounded-full object-cover'
+                          />
+                        ) : (
+                          <FaUser className='text-gray-300 text-5xl p-2' />
+                        )}
+                      </div>
+                      <div className='mt-8 ml-8'>
+                        <label className='font-semibold text-md block uppercase'>
+                          {cardData.full_name}
+                        </label>
+                        <label className='font-light text-sm block mt-2'>
+                          {cardData.dni}
+                        </label>
+                        <label className='font-light text-sm block '>
+                          {cardData.fecha}
+                        </label>
+                        {cardData.id && (
+                          <div className='flex items-center'>
+                            <label className='font-light text-sm block'>
+                              ID CLIENTE
+                            </label>
+                            <div className='ml-4 w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center mr-2'>
+                              <span className='text-lg font-bold'>
+                                {cardData.id}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                      {/* <button type='button' onClick={handleLogs}>
-                        <FaFileAlt size={32} />
-                      </button> */}
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className='col-span-1 mt-8 pr-4 text-xs'>
-                <div className='w-full ml-5'>
-                  <label className='text-primary mt-4 mb-4 mt-12 text-base'>
-                    Datos de contacto
-                  </label>
-                </div>
-
-                <div className='w-full ml-5 flex items-center '>
-                  <FaMapMarkerAlt className='mr-2' />
-                  <label className='flex truncate text-wrap'>
-                    {cardData.address +
-                      ', calle ' +
-                      cardData.address_num +
-                      ' numero ' +
-                      cardData.address_flat}
-                  </label>
-                </div>
-                <div className='w-full ml-5 flex items-center'>
-                  <FaMapMarkerAlt className='mr-2' />
-                  <label className='flex truncate text-wrap'>
-                    {cardData.cod_post}
-                  </label>
-                </div>
-
-                <div className='w-full ml-5 flex items-center'>
-                  <FaEnvelope className='mr-2' />
-                  <a
-                    href={`mailto:${cardData.email}`}
-                    className='truncate max-w-xs hover:text-blue-600 transition-colors text-wrap'
-                    title={cardData.email} // Mostrar el correo completo en un tooltip
-                  >
-                    {cardData.email || 'Enviar correo'}
-                  </a>
-                </div>
-
-                <div className='w-full ml-5 flex items-center'>
-                  <FaPhoneSquareAlt className='mr-2' />
-                  <a
-                    href={`tel:${cardData.code_phone}${cardData.phone}`}
-                    className='truncate max-w-xs hover:text-blue-600 transition-colors'
-                    title={`${cardData.code_phone} ${cardData.phone}`} // Mostrar el teléfono completo en un tooltip
-                  >
-                    {`${cardData.code_phone} ${cardData.phone || 'Teléfono'}`}
-                  </a>
+                <div className='col-span-1 mt-8 pr-4 text-xs'>
+                  <div className='w-full ml-5'>
+                    <label className='text-primary mt-4 mb-4 mt-12 text-base'>
+                      Datos de contacto
+                    </label>
+                  </div>
+                  <div className='w-full ml-5 flex items-center'>
+                    <FaMapMarkerAlt className='mr-2' />
+                    <label className='flex truncate text-wrap'>
+                      {cardData.address +
+                        ', calle ' +
+                        cardData.address_num +
+                        ' numero ' +
+                        cardData.address_flat}
+                    </label>
+                  </div>
+                  <div className='w-full ml-5 flex items-center'>
+                    <FaMapMarkerAlt className='mr-2' />
+                    <label className='flex truncate text-wrap'>
+                      {cardData.cod_post}
+                    </label>
+                  </div>
+                  <div className='w-full ml-5 flex items-center'>
+                    <FaEnvelope className='mr-2' />
+                    <a
+                      href={`mailto:${cardData.email}`}
+                      className='truncate max-w-xs hover:text-blue-600 transition-colors text-wrap'
+                      title={cardData.email}
+                    >
+                      {cardData.email || 'Enviar correo'}
+                    </a>
+                  </div>
+                  <div className='w-full ml-5 flex items-center'>
+                    <FaPhoneSquareAlt className='mr-2' />
+                    <a
+                      href={`tel:${cardData.code_phone}${cardData.phone}`}
+                      className='truncate max-w-xs hover:text-blue-600 transition-colors'
+                      title={`${cardData.code_phone} ${cardData.phone}`}
+                    >
+                      {`${cardData.code_phone} ${cardData.phone || 'Teléfono'}`}
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <>
+                {' '}
+                <div className='w-full bg-blue-300 h-[200px] border-l relative'>
+                  <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2  bg-white border-1 border-gray-300 rounded-full'>
+                    {cardData.photo ? (
+                      <img
+                        src={cardData.photo}
+                        alt=''
+                        className='h-12 w-12 rounded-full object-cover'
+                      />
+                    ) : (
+                      <FaUser className='text-gray-300 text-5xl p-2' />
+                    )}
+                  </div>
+                  <div className=' w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center mr-2 absolute left-1/2 -translate-x-1/2 -bottom-5'>
+                    <span className='text-lg font-bold'>{cardData.id}</span>
+                  </div>
+                </div>
+                <div className='flex items-start justify-center h-full'>
+                  <div
+                    style={{
+                      writingMode: 'vertical-rl',
+                      transform: 'rotate(180deg)',
+                    }}
+                    className='mt-16 font-bold'
+                  >
+                    {cardData.full_name}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div className='md:col-span-3'>
             {/* Contenido del lado derecho */}
