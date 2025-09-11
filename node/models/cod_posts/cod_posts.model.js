@@ -20,6 +20,10 @@ const CodPost = sequelize.define("cod_posts", {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  alias: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,
