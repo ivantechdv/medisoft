@@ -88,6 +88,7 @@ const Employee = sequelize.define(
     },
     observations: DataTypes.TEXT,
     ipaddress: DataTypes.TEXT,
+    alias: DataTypes.TEXT,
   },
   {
     tableName: "employees",

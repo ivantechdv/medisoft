@@ -11,6 +11,8 @@ import { json, useNavigate } from 'react-router-dom';
 import Select from '../../../components/Select';
 import ToastNotify from '../../../components/toast/toast';
 import { FaExpand, FaMinusCircle, FaEye } from 'react-icons/fa';
+import { FaRotate } from 'react-icons/fa6';
+
 import Spinner from '../../../components/Spinner/Spinner';
 import ChangeLogger from '../../../components/changeLogger';
 import {
@@ -30,6 +32,7 @@ const Form = ({
   onHandleHasChange,
   onGetRecordById,
 }) => {
+  console.log('onformdata en form', onFormData);
   const sweetAlert = ConfirmSweetAlert({
     title: 'Información',
     text: '¿Esta seguro que desea enviar los datos?',
@@ -939,6 +942,66 @@ const Form = ({
       window.location.href = '/employees';
     }, 500);
   };
+  const handleAlias = async () => {
+    const response = await getData(
+      'employees/specific/all?employee_id=' + onFormData.id,
+    );
+    let alias = '';
+    if (response.length > 0) {
+      const data = response[0];
+
+      // Convert comma-separated strings into arrays
+      const servicesArray = data.services
+        ? data.services.split(',').map(Number)
+        : [];
+      const patologiesArray = data.patologies
+        ? data.patologies.split(',').map(Number)
+        : [];
+      const tasksArray = data.tasks ? data.tasks.split(',').map(Number) : [];
+      const experiencesArray = data.experiences
+        ? data.experiences.split(',').map(Number)
+        : [];
+      const order = 'name-asc';
+      if (servicesArray.length > 0) {
+        const option_services = await getData(`services/all?order=${order}`);
+        const aliasMap = option_services.reduce((acc, service) => {
+          acc[service.id] = service.alias;
+          return acc;
+        }, {});
+
+        // Obtenemos solo los alias que correspondan a los ids del empleado
+        const employeeAliases = servicesArray
+          .map((id) => aliasMap[id])
+          .join(' ');
+
+        alias = employeeAliases;
+      }
+      alias = alias + ' ' + onFormData.full_name;
+      if (tasksArray.length > 0) {
+        const tasks = await getData(`employees/task/all?order=${order}`);
+        console.log('tasks', tasks);
+
+        const aliasMap = tasks.reduce((acc, task) => {
+          acc[task.id] = task.alias;
+          return acc;
+        }, {});
+
+        // Usamos tasksArray (ids) en lugar de tasks
+        const taskAliases = tasksArray
+          .map((id) => aliasMap[id])
+          .filter((alias) => alias && alias.trim() !== '') // filtra null, undefined o string vacío
+          .join(' ');
+
+        alias = alias + ' ' + taskAliases;
+
+        console.log('taskAliases', taskAliases);
+      }
+
+      alias = alias + ' ' + onFormData.cod_post?.alias;
+
+      setFormData({ ...formData, ['alias']: alias });
+    }
+  };
   return (
     <>
       <form className=''>
@@ -958,11 +1021,11 @@ const Form = ({
             Guardar
           </button>
         </div> */}
-          <div className='md:grid md:grid-cols-[180px_1fr_1fr_1fr] gap-2'>
+          <div className='md:grid md:grid-cols-[180px_1fr_1fr_1fr] gap-2 text-[12px]'>
             <div className='grid grid-cols-2 md:grid-cols-1'>
               <div className='col-span-1'>
                 <div className='flex'>
-                  <label className='block text-sm font-medium text-blue-500'>
+                  <label className='block text-[12px] font-medium text-blue-500'>
                     Foto Principal
                   </label>
                 </div>
@@ -1020,7 +1083,7 @@ const Form = ({
                   )}
                 </div>
                 <div className='flex'>
-                  <label className='block text-sm font-medium text-blue-500'>
+                  <label className='block text-[12px] font-medium text-blue-500'>
                     DNI Frontal
                   </label>
                 </div>
@@ -1078,7 +1141,7 @@ const Form = ({
                   )}
                 </div>
                 <div className='flex'>
-                  <label className='block text-sm font-medium text-blue-500'>
+                  <label className='block text-[12px] font-medium text-blue-500'>
                     DNI Posterior
                   </label>
                 </div>
@@ -1150,7 +1213,7 @@ const Form = ({
                     deleteImage(oldData.attach_curriculum, 'attach_curriculum')
                   }
                 />
-                <div className='flex mt-2'></div>
+                {/* <div className='flex mt-2'></div>
                 <FileInput
                   label='Referencia'
                   name='attach_reference'
@@ -1165,10 +1228,10 @@ const Form = ({
                   onDeleteImage={() =>
                     deleteImage(oldData.attach_reference, 'attach_reference')
                   }
-                />
+                /> */}
 
                 <div className='flex'>
-                  {/* <label className='block text-sm font-medium text-blue-500'>
+                  {/* <label className='block text-[12px] font-medium text-blue-500'>
                   Curriculum
                 </label> */}
                 </div>
@@ -1191,12 +1254,12 @@ const Form = ({
                 )} */}
               </div>
             </div>
-            <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
-              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
+            <div className='col-span-3 md:grid md:grid-cols-2 gap-2 text-[12px]'>
+              <div className='col-span-2 md:grid md:grid-cols-5 gap-2 text-[12px]'>
                 {/* <div className='col-span-1'>
                   <label
                     htmlFor='is_active'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Estado
                   </label>
@@ -1220,7 +1283,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='type'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Tipo
                   </label>
@@ -1242,7 +1305,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='level_id'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Nivel
                   </label>
@@ -1265,7 +1328,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='statu_id'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Situacion
                   </label>
@@ -1288,7 +1351,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='date_start'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Fecha de alta
                   </label>
@@ -1304,7 +1367,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='date_start'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Antiguedad
                   </label>
@@ -1322,7 +1385,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='gender_id'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Genero
                   </label>
@@ -1346,7 +1409,7 @@ const Form = ({
                   <div>
                     <label
                       htmlFor='first_name'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Nombre
                     </label>
@@ -1362,7 +1425,7 @@ const Form = ({
                   <div>
                     <label
                       htmlFor='last_name'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Apellidos
                     </label>
@@ -1379,12 +1442,12 @@ const Form = ({
 
                 <div className='col-span-1'>
                   <div className='flex flex-row'>
-                    <div className='flex-1.5'>
+                    <div className='w-[65%]'>
                       <label
                         htmlFor='born_date'
-                        className='block text-sm font-medium text-blue-500'
+                        className='block text-[12px] font-medium text-blue-500'
                       >
-                        Fecha de nacimiento
+                        F. de nacimiento
                       </label>
                       <input
                         type='date'
@@ -1396,10 +1459,10 @@ const Form = ({
                       />
                     </div>
 
-                    <div className='flex-0.5 '>
+                    <div className='w-[30%]'>
                       <label
                         htmlFor='age'
-                        className='block text-sm font-medium text-blue-500'
+                        className='block text-[12px] font-medium text-blue-500'
                       >
                         Edad
                       </label>
@@ -1421,7 +1484,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='dni'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     DNI
                   </label>
@@ -1439,9 +1502,9 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='dni_date_expiration'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
-                    Fecha de vencimiento DNI
+                    F. Vto. DNI
                   </label>
                   <input
                     type='date'
@@ -1455,9 +1518,9 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='last_name'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
-                    Numero de seguridad social
+                    Número SS
                   </label>
                   <input
                     type='text'
@@ -1471,7 +1534,7 @@ const Form = ({
                 <div className='col-span-2'>
                   <label
                     htmlFor='country_id'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Pais de nacimiento
                   </label>
@@ -1495,7 +1558,7 @@ const Form = ({
                 {/* <div className='col-span-1'>
                 <label
                   htmlFor='asset'
-                  className='block text-sm font-medium text-blue-500'
+                  className='block text-[12px] font-medium text-blue-500'
                 >
                   Código postal
                 </label>
@@ -1573,7 +1636,7 @@ const Form = ({
                   <div>
                     <label
                       htmlFor='phone'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Teléfono
                     </label>
@@ -1609,7 +1672,7 @@ const Form = ({
                   <div>
                     <label
                       htmlFor='phone2'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Teléfono [opcional]
                     </label>
@@ -1646,7 +1709,7 @@ const Form = ({
                 <div className='col-span-2'>
                   <label
                     htmlFor='email'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Correo electrónico
                   </label>
@@ -1669,7 +1732,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='country_current_id'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Pais de residencia
                   </label>
@@ -1692,7 +1755,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='state_id'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Provincia
                   </label>
@@ -1715,7 +1778,7 @@ const Form = ({
                 <div className='col-span-1'>
                   <label
                     htmlFor='cod_post_id'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Codigo Postal
                   </label>
@@ -1732,7 +1795,7 @@ const Form = ({
                   <div className='col-span-3'>
                     <label
                       htmlFor='address'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Calle
                     </label>
@@ -1748,7 +1811,7 @@ const Form = ({
                   <div className='col-span-1'>
                     <label
                       htmlFor='address_num'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Numero
                     </label>
@@ -1764,7 +1827,7 @@ const Form = ({
                   <div className='col-span-1'>
                     <label
                       htmlFor='address_flat'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Piso
                     </label>
@@ -1781,24 +1844,33 @@ const Form = ({
                 <div className='col-span-3'>
                   <label
                     htmlFor='address'
-                    className='block text-sm font-medium text-blue-500'
+                    className='block text-[12px] font-medium text-blue-500'
                   >
                     Alias
                   </label>
-                  <input
-                    id='alias'
-                    name='alias'
-                    rows='3'
-                    value={formData.alias}
-                    onChange={handleChange}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  ></input>
+                  <div className='flex flex-row space-between'>
+                    <input
+                      id='alias'
+                      name='alias'
+                      rows='3'
+                      value={formData.alias}
+                      onChange={handleChange}
+                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    ></input>
+                    <button
+                      className='btn px-4 py-1'
+                      type='button'
+                      onClick={handleAlias}
+                    >
+                      <FaRotate />
+                    </button>
+                  </div>
                 </div>
                 <div className='col-span-3'>
                   <div className='mb-2'>
                     <label
                       htmlFor='observations'
-                      className='block text-sm font-medium text-blue-500'
+                      className='block text-[12px] font-medium text-blue-500'
                     >
                       Observaciones
                     </label>
@@ -1812,7 +1884,7 @@ const Form = ({
                       {/* Botón para maximizar/minimizar */}
                       <button
                         type='button'
-                        className='absolute top-2 right-2 z-50 bg-gray-200 px-2 py-1 rounded text-sm'
+                        className='absolute top-2 right-2 z-50 bg-gray-200 px-2 py-1 rounded text-[12px]'
                         onClick={() => setIsFullScreen(!isFullScreen)}
                       >
                         {isFullScreen ? '⤢ Minimizar' : '⤢ Maximizar'}
@@ -1877,7 +1949,7 @@ const Form = ({
         </div>
 
         {expandImage && (
-          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
+          <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-50'>
             <div className='bg-white p-2 rounded shadow-lg w-3/4 h-[90%]'>
               <button
                 className='absolute top-2 right-2 text-white hover:text-blue-500 text-lg bg-gray-800'
@@ -1934,7 +2006,7 @@ const Form = ({
                   <div className='mb-2'>
                     <label
                       htmlFor='date'
-                      className='block text-sm font-medium text-secondary'
+                      className='block text-[12px] font-medium text-secondary'
                     >
                       Fecha
                     </label>
@@ -1952,7 +2024,7 @@ const Form = ({
                   <div className='mb-2'>
                     <label
                       htmlFor='reason'
-                      className='block text-sm font-medium text-secondary'
+                      className='block text-[12px] font-medium text-secondary'
                     >
                       Motivo
                     </label>
@@ -1972,7 +2044,7 @@ const Form = ({
                   <div className='mb-2'>
                     <label
                       htmlFor='observation'
-                      className='block text-sm font-medium text-secondary'
+                      className='block text-[12px] font-medium text-secondary'
                     >
                       Observaciones
                     </label>
@@ -1990,14 +2062,14 @@ const Form = ({
               <div className='flex justify-end p-4'>
                 <button
                   type='button'
-                  className='bg-gray-500 text-white font-bold py-2 px-4 text-sm rounded mr-2'
+                  className='bg-gray-500 text-white font-bold py-2 px-4 text-[12px] rounded mr-2'
                   onClick={closeModalReason}
                 >
                   Cancelar
                 </button>
                 <button
                   type='button'
-                  className={`font-bold py-2 px-4 text-sm rounded mr-2 ${
+                  className={`font-bold py-2 px-4 text-[12px] rounded mr-2 ${
                     changelogs.client_statu_reason_id === '' ||
                     changelogs.observation === '' ||
                     changelogs.date === ''

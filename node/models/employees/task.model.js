@@ -11,6 +11,10 @@ const Task = sequelize.define("tasks", {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  alias: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,
