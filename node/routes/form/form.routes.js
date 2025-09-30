@@ -19,7 +19,7 @@ const EmployeeSpecific = require("../../models/employees/specific.model");
 const Country = require("../../models/countries/countries.model");
 const CodPost = require("../../models/cod_posts/cod_posts.model");
 const State = require("../../models/states/states.model");
-const Patology= require("../../models/patologies/patologies.model");
+const Patology = require("../../models/patologies/patologies.model");
 /* const  authRequired = require('../../middleware/validateToken');*/
 const authRequired = require("../../middleware/tokenExternal");
 const addModelParam = (model) => {
@@ -118,6 +118,14 @@ router.get(
   authRequired,
   cors(corsOptions),
   addModelParam(Cook),
+  controller.get
+);
+
+router.get(
+  "/patologies",
+  authRequired,
+  cors(corsOptions),
+  addModelParam(Patology),
   controller.get
 );
 

@@ -79,6 +79,9 @@ const Families = ({
     ) {
       newErrors.priority = 'La prioridad debe ser un número entero positivo.';
     }
+    if (!formData.relation_id) {
+      newErrors.relation_id = 'Seleccione la relacion familiar.';
+    }
     return newErrors;
   };
 
@@ -86,36 +89,38 @@ const Families = ({
     return /\S+@\S+\.\S+/.test(email); // Valida formato de email
   };
 
-
-    const handleInputChange = (e) => {
-  const { name, value } = e.target;
- // Solo dígitos
-let rawValue=value;
-  if (name === 'phone' || name === 'phone2') {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    // Solo dígitos
+    let rawValue = value;
+    if (name === 'phone' || name === 'phone2') {
       const rawValue = value.replace(/\D/g, '');
-    const input = e.target;
-    const prevFormatted = formatPhoneNumber(formData[name] || '');
-    const newFormatted = formatPhoneNumber(rawValue);
+      const input = e.target;
+      const prevFormatted = formatPhoneNumber(formData[name] || '');
+      const newFormatted = formatPhoneNumber(rawValue);
 
-    let cursorPosition = input.selectionStart;
+      let cursorPosition = input.selectionStart;
 
-    const addedSpaces =
-      (newFormatted.match(/ /g) || []).length -
-      (prevFormatted.match(/ /g) || []).length;
-    cursorPosition += addedSpaces;
+      const addedSpaces =
+        (newFormatted.match(/ /g) || []).length -
+        (prevFormatted.match(/ /g) || []).length;
+      cursorPosition += addedSpaces;
 
-    if (rawValue.length <= 9) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [name]: rawValue,
-      }));
+      if (rawValue.length <= 9) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          [name]: rawValue,
+        }));
 
-      requestAnimationFrame(() => {
-        const newCursorPosition = Math.min(cursorPosition, newFormatted.length);
-        input.setSelectionRange(newCursorPosition, newCursorPosition);
-      });
-    }
-  } else {
+        requestAnimationFrame(() => {
+          const newCursorPosition = Math.min(
+            cursorPosition,
+            newFormatted.length,
+          );
+          input.setSelectionRange(newCursorPosition, newCursorPosition);
+        });
+      }
+    } else {
       setFormData({ ...formData, [name]: rawValue });
     }
   };
@@ -249,7 +254,9 @@ let rawValue=value;
               name='relation_id'
               value={formData.relation_id}
               onChange={handleInputChange}
-              className='w-full px-3 mt-1 p-0.5 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+              className={`w-full px-3 mt-1 p-0.5 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 ${
+                errors.relation_id ? 'border-red-500' : ''
+              }`}
             >
               <option value=''>Seleccione</option>
               {relations &&
@@ -274,7 +281,7 @@ let rawValue=value;
               name='phone'
               value={formatPhoneNumber(formData.phone)}
               onChange={handleInputChange}
-              class={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm ${
+              className={`mt-1 block w-full rounded-md border border-gray-300 shadow-sm ${
                 errors.phone ? 'border-red-500' : ''
               }`}
             />

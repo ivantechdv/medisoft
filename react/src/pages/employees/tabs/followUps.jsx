@@ -25,6 +25,7 @@ import {
   ConfirmSweetAlert,
   InfoSweetAlert,
 } from '../../../components/SweetAlert/SweetAlert';
+import { formatDateToDMY } from '../../../utils/customFormat';
 const FollowUps = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Seguimientos',
@@ -300,7 +301,7 @@ const FollowUps = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                           {row.title}
                         </h4>
                         <span className='text-sm text-gray-600'>
-                          {row.date}
+                          {formatDateToDMY(row.date)}
                           {' ' + row.time}
                         </span>
                       </div>

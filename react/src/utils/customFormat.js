@@ -32,3 +32,10 @@ export const formatFullName = (name) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
+
+export const formatDateToDMY = (dateStr) => {
+  console.log(dateStr);
+  if (!dateStr) return '';
+  const [year, month, day] = dateStr.split('-');
+  return `${day}/${month}/${year}`;
+};

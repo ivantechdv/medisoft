@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
 import { getData, postData, putData } from '../../api';
@@ -32,14 +32,14 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-} from "@dnd-kit/core";
+} from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   useSortable,
   verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { FaSort, FaSortUp, FaSortDown, FaGripVertical } from 'react-icons/fa';
 
 const DraggableHeader = ({ header, index }) => {
@@ -50,37 +50,41 @@ const DraggableHeader = ({ header, index }) => {
     transform: CSS.Transform.toString(transform),
     transition,
     width: `${header.getSize()}px`,
-    padding: "8px",
-    borderBottom: "1px solid #ccc",
-    textAlign: "center",
-    fontSize: "13px",
-    position: "relative",
-    backgroundColor: "#f9f9f9",
-    userSelect: "none",
-    boxSizing: "border-box",
-    overflow: "hidden",
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
+    padding: '8px',
+    borderBottom: '1px solid #ccc',
+    textAlign: 'center',
+    fontSize: '13px',
+    position: 'relative',
+    backgroundColor: '#f9f9f9',
+    userSelect: 'none',
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
   };
 
   const getSortIcon = () => {
     if (!header.column.getCanSort()) return null;
-    
+
     const sortDirection = header.column.getIsSorted();
-    if (sortDirection === 'asc') return <FaSortUp style={{ marginLeft: 4, opacity: 0.8 }} />;
-    if (sortDirection === 'desc') return <FaSortDown style={{ marginLeft: 4, opacity: 0.8 }} />;
+    if (sortDirection === 'asc')
+      return <FaSortUp style={{ marginLeft: 4, opacity: 0.8 }} />;
+    if (sortDirection === 'desc')
+      return <FaSortDown style={{ marginLeft: 4, opacity: 0.8 }} />;
     return <FaSort style={{ marginLeft: 4, opacity: 0.3 }} />;
   };
 
   return (
     <th ref={setNodeRef} style={style}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        height: '100%'
-      }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          width: '100%',
+          height: '100%',
+        }}
+      >
         {/* Área de ordenamiento - ocupa todo el espacio disponible */}
         <div
           style={{
@@ -91,7 +95,7 @@ const DraggableHeader = ({ header, index }) => {
             cursor: header.column.getCanSort() ? 'pointer' : 'default',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
-            padding: '0 4px'
+            padding: '0 4px',
           }}
           onClick={header.column.getToggleSortingHandler()}
         >
@@ -110,8 +114,8 @@ const DraggableHeader = ({ header, index }) => {
             alignItems: 'center',
             opacity: 0.5,
             ':hover': {
-              opacity: 1
-            }
+              opacity: 1,
+            },
           }}
         >
           <FaGripVertical />
@@ -123,20 +127,20 @@ const DraggableHeader = ({ header, index }) => {
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}
           style={{
-            position: "absolute",
+            position: 'absolute',
             right: 0,
             top: 0,
-            height: "100%",
-            width: "1px",
-            cursor: "col-resize",
+            height: '100%',
+            width: '1px',
+            cursor: 'col-resize',
             zIndex: 1,
-            userSelect: "none",
-            backgroundColor: "#ddd",
-            borderLeft: "3px solid #aaa",
-            transition: "background-color 0.4s",
+            userSelect: 'none',
+            backgroundColor: '#ddd',
+            borderLeft: '3px solid #aaa',
+            transition: 'background-color 0.4s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#aaa")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#ddd")}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#aaa')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ddd')}
         />
       )}
     </th>
@@ -150,28 +154,34 @@ const MyDataTable = ({
   currentPage,
   pageSize,
   onHandleViewClient = () => {},
-  onSelectedRows
+  onSelectedRows,
 }) => {
   const [selectedRowId, setSelectedRowId] = useState(null);
   const [sorting, setSorting] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]); // Nuevo estado para los checkboxes
   const [columnSizing, setColumnSizing] = useState(() => {
-    const saved = localStorage.getItem("myDataTableColumnWidths");
+    const saved = localStorage.getItem('myDataTableColumnWidths');
     return saved ? JSON.parse(saved) : {};
   });
 
   const [columnOrder, setColumnOrder] = useState(() => {
-    const saved = localStorage.getItem("myDataTableColumnOrder");
+    const saved = localStorage.getItem('myDataTableColumnOrder');
     return saved ? JSON.parse(saved) : null;
   });
 
   useEffect(() => {
-    localStorage.setItem("myDataTableColumnWidths", JSON.stringify(columnSizing));
+    localStorage.setItem(
+      'myDataTableColumnWidths',
+      JSON.stringify(columnSizing),
+    );
   }, [columnSizing]);
 
   useEffect(() => {
     if (columnOrder) {
-      localStorage.setItem("myDataTableColumnOrder", JSON.stringify(columnOrder));
+      localStorage.setItem(
+        'myDataTableColumnOrder',
+        JSON.stringify(columnOrder),
+      );
     }
   }, [columnOrder]);
 
@@ -193,8 +203,8 @@ const MyDataTable = ({
   };
 
   const getRowBackgroundColor = (row) => {
-    if (!estado_config || estado_config.length < 3) return "#ffffff";
-    
+    if (!estado_config || estado_config.length < 3) return '#ffffff';
+
     const hasClientServices = row.clients_services?.length > 0;
     if (row.is_active === true) {
       return estado_config[1].color;
@@ -206,29 +216,29 @@ const MyDataTable = ({
 
   const getColor = (key, row) => {
     switch (key) {
-      case "t":
-        return tipo_config[row.type]?.color || "gray";
-      case "n":
-        return row?.level?.color ? `rgb(${row.level.color})` : "gray";
-      case "s":
-        return row?.statu?.color ? `rgb(${row.statu.color})` : "gray";
+      case 't':
+        return tipo_config[row.type]?.color || 'gray';
+      case 'n':
+        return row?.level?.color ? `rgb(${row.level.color})` : 'gray';
+      case 's':
+        return row?.statu?.color ? `rgb(${row.statu.color})` : 'gray';
       default:
-        return "gray";
+        return 'gray';
     }
   };
 
   // Función para manejar el cambio de selección de filas
   const handleRowSelection = (rowId) => {
-    setSelectedRows(prev => {
+    setSelectedRows((prev) => {
       if (prev.includes(rowId)) {
-        return prev.filter(id => id !== rowId);
+        return prev.filter((id) => id !== rowId);
       } else {
         return [...prev, rowId];
       }
     });
-    onSelectedRows(prev => {
+    onSelectedRows((prev) => {
       if (prev.includes(rowId)) {
-        return prev.filter(id => id !== rowId);
+        return prev.filter((id) => id !== rowId);
       } else {
         return [...prev, rowId];
       }
@@ -240,175 +250,190 @@ const MyDataTable = ({
     if (selectedRows.length === rows.length) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(rows.map(row => row.id));
+      setSelectedRows(rows.map((row) => row.id));
     }
   };
 
-  const columnDefs = useMemo(() => [
-    // Columna de selección (checkbox)
-    {
-      header: () => (
-        <input
-          type="checkbox"
-          checked={selectedRows.length === rows.length && rows.length > 0}
-          onChange={toggleAllRowsSelection}
-          style={{ cursor: "pointer" }}
-        />
-      ),
-      id: "selection",
-      size: 40,
-      minSize: 40,
-      maxSize: 40,
-      enableSorting: false,
-      enableResizing: false,
-      enableColumnDragging: false,
-      cell: ({ row }) => {
-        const isSelected = selectedRows.includes(row.original.id);
-        return (
+  const columnDefs = useMemo(
+    () => [
+      // Columna de selección (checkbox)
+      {
+        header: () => (
           <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => handleRowSelection(row.original.id)}
-            onClick={(e) => e.stopPropagation()}
-            style={{ cursor: "pointer", marginLeft: "10px" }}
+            type='checkbox'
+            checked={selectedRows.length === rows.length && rows.length > 0}
+            onChange={toggleAllRowsSelection}
+            style={{ cursor: 'pointer' }}
           />
-        );
+        ),
+        id: 'selection',
+        size: 40,
+        minSize: 40,
+        maxSize: 40,
+        enableSorting: false,
+        enableResizing: false,
+        enableColumnDragging: false,
+        cell: ({ row }) => {
+          const isSelected = selectedRows.includes(row.original.id);
+          return (
+            <input
+              type='checkbox'
+              checked={isSelected}
+              onChange={() => handleRowSelection(row.original.id)}
+              onClick={(e) => e.stopPropagation()}
+              style={{ cursor: 'pointer', marginLeft: '10px' }}
+            />
+          );
+        },
       },
-    },
-    // Columnas de indicadores
-    {
-      header: "T",
-      id: "indicator_t",
-      size: 25,
-      minSize: 25,
-      maxSize: 25,
-      enableSorting: false,
-      enableResizing: false,
-      enableColumnDragging: false,
-      cell: ({ row }) => {
-        const data = row.original;
-        const title = tipo_config[data.type]?.label;
-        return (
-          <div
-            title={title}
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 2,
-              margin: "0 auto",
-              backgroundColor: getColor("t", data),
-            }}
-          />
-        );
+      // Columnas de indicadores
+      {
+        header: 'T',
+        id: 'indicator_t',
+        size: 25,
+        minSize: 25,
+        maxSize: 25,
+        enableSorting: false,
+        enableResizing: false,
+        enableColumnDragging: false,
+        cell: ({ row }) => {
+          const data = row.original;
+          const title = tipo_config[data.type]?.label;
+          return (
+            <div
+              title={title}
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 2,
+                margin: '0 auto',
+                backgroundColor: getColor('t', data),
+              }}
+            />
+          );
+        },
       },
-    },
-    {
-      header: "N",
-      id: "indicator_n",
-      size: 25,
-      minSize: 25,
-      maxSize: 25,
-      enableSorting: false,
-      enableResizing: false,
-      enableColumnDragging: false,
-      cell: ({ row }) => {
-        const data = row.original;
-        const title = data?.level?.name;
-        return (
-          <div
-            title={title}
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 2,
-              margin: "0 auto",
-              backgroundColor: getColor("n", data),
-            }}
-          />
-        );
+      {
+        header: 'N',
+        id: 'indicator_n',
+        size: 25,
+        minSize: 25,
+        maxSize: 25,
+        enableSorting: false,
+        enableResizing: false,
+        enableColumnDragging: false,
+        cell: ({ row }) => {
+          const data = row.original;
+          const title = data?.level?.name;
+          return (
+            <div
+              title={title}
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 2,
+                margin: '0 auto',
+                backgroundColor: getColor('n', data),
+              }}
+            />
+          );
+        },
       },
-    },
-    {
-      header: "S",
-      id: "indicator_s",
-      size: 25,
-      minSize: 25,
-      maxSize: 25,
-      enableSorting: false,
-      enableResizing: false,
-      enableColumnDragging: false,
-      cell: ({ row }) => {
-        const data = row.original;
-        const title = data?.statu?.name;
-        return (
-          <div
-            title={title}
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: 2,
-              margin: "0 auto",
-              backgroundColor: getColor("s", data),
-            }}
-          />
-        );
+      {
+        header: 'S',
+        id: 'indicator_s',
+        size: 25,
+        minSize: 25,
+        maxSize: 25,
+        enableSorting: false,
+        enableResizing: false,
+        enableColumnDragging: false,
+        cell: ({ row }) => {
+          const data = row.original;
+          const title = data?.statu?.name;
+          return (
+            <div
+              title={title}
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 2,
+                margin: '0 auto',
+                backgroundColor: getColor('s', data),
+              }}
+            />
+          );
+        },
       },
-    },
-    ...[
-      { key: "id", label: "ID" },
-      { key: "dni", label: "DNI" },
-      { key: "full_name", label: "Nombre" },
-      { key: "email", label: "Correo Electrónico" },
-      { key: "phone", label: "Teléfono" },
-    ].map(({ key, label }) => ({
-      header: label,
-      accessorKey: key,
-      id: key,
-      size: columnSizing[key] ?? (key === "full_name" || key === "email" ? 300 : 120),
-      minSize: key === "email" || key === "full_name" ? 150 : 80,
-      maxSize: key === "email" || key === "full_name" ? 600 : 250,
-      enableSorting: true,
-      enableResizing: true,
-      sortingFn: (rowA, rowB, columnId) => {
-        const valueA = rowA.getValue(columnId);
-        const valueB = rowB.getValue(columnId);
-        
-        if (valueA == null) return 1;
-        if (valueB == null) return -1;
-        if (valueA == null && valueB == null) return 0;
-        
-        if (typeof valueA === 'number' && typeof valueB === 'number') {
-          return valueA - valueB;
-        }
-        
-        return String(valueA).localeCompare(String(valueB));
-      },
-      cell: ({ row, getValue }) => {
-        const isSelected = row.original.id === selectedRowId;
-        const bgColor = isSelected
-          ? "#d3d3d3"
-          : getRowBackgroundColor(row.original);
-        return (
-          <div
-            style={{
-              backgroundColor: bgColor,
-              width: "100%",
-              height: "100%",
-              padding: "4px 4px",
-              display: "flex",
-              alignItems: "center",
-              fontSize: "13px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {getValue()}
-          </div>
-        );
-      },
-    })),
-  ], [selectedRowId, columnSizing, estado_config, tipo_config, selectedRows, rows]);
+      ...[
+        { key: 'id', label: 'ID' },
+        { key: 'dni', label: 'DNI' },
+        { key: 'full_name', label: 'Nombre' },
+        { key: 'email', label: 'Correo Electrónico' },
+        { key: 'phone', label: 'Teléfono' },
+        { key: 'alias', label: 'Alias' },
+      ].map(({ key, label }) => ({
+        header: label,
+        accessorKey: key,
+        id: key,
+        size:
+          columnSizing[key] ??
+          (['full_name', 'email', 'alias'].includes(key) ? 300 : 120),
+        minSize: ['full_name', 'email', 'alias'].includes(key) ? 150 : 80,
+        maxSize: ['full_name', 'email', 'alias'].includes(key) ? 600 : 250,
+        enableSorting: true,
+        enableResizing: true,
+        sortingFn: (rowA, rowB, columnId) => {
+          const valueA = rowA.getValue(columnId);
+          const valueB = rowB.getValue(columnId);
+
+          if (valueA == null) return 1;
+          if (valueB == null) return -1;
+          if (valueA == null && valueB == null) return 0;
+
+          if (typeof valueA === 'number' && typeof valueB === 'number') {
+            return valueA - valueB;
+          }
+
+          return String(valueA).localeCompare(String(valueB));
+        },
+        cell: ({ row, getValue, column }) => {
+          const isSelected = row.original.id === selectedRowId;
+          const bgColor = isSelected
+            ? '#d3d3d3'
+            : getRowBackgroundColor(row.original);
+          const isAlias = column.id === 'alias'; // 👈 detectar columna alias
+          return (
+            <div
+              style={{
+                backgroundColor: bgColor,
+                width: '100%',
+                height: '100%',
+                padding: '4px 4px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '13px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: isAlias ? 'normal' : 'nowrap',
+                wordBreak: isAlias ? 'break-word' : 'normal',
+              }}
+            >
+              {getValue()}
+            </div>
+          );
+        },
+      })),
+    ],
+    [
+      selectedRowId,
+      columnSizing,
+      estado_config,
+      tipo_config,
+      selectedRows,
+      rows,
+    ],
+  );
 
   const defaultColumnOrder = columnDefs.map((col) => col.id);
 
@@ -425,7 +450,7 @@ const MyDataTable = ({
     onColumnOrderChange: setColumnOrder,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    columnResizeMode: "onEnd",
+    columnResizeMode: 'onEnd',
     enableColumnResizing: true,
   });
 
@@ -436,7 +461,11 @@ const MyDataTable = ({
     if (active.id !== over?.id) {
       const oldIndex = table.getState().columnOrder.indexOf(active.id);
       const newIndex = table.getState().columnOrder.indexOf(over.id);
-      const newOrder = arrayMove(table.getState().columnOrder, oldIndex, newIndex);
+      const newOrder = arrayMove(
+        table.getState().columnOrder,
+        oldIndex,
+        newIndex,
+      );
       setColumnOrder(newOrder);
     }
   };
@@ -449,22 +478,30 @@ const MyDataTable = ({
 
   return (
     <>
-      <div style={{ 
-        overflowX: "auto", 
-        maxHeight: "calc(100vh - 130px)", 
-        width: "100%",
-        display: "block"
-      }}>
-        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-          <div style={{
-            width: 'max-content',
-            minWidth: '100%'
-          }}>
-            <table 
-              style={{ 
-                width: "auto",
-                borderCollapse: "collapse",
-                tableLayout: "fixed"
+      <div
+        style={{
+          overflowX: 'auto',
+          maxHeight: 'calc(100vh - 130px)',
+          width: '100%',
+          display: 'block',
+        }}
+      >
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={onDragEnd}
+        >
+          <div
+            style={{
+              width: 'max-content',
+              minWidth: '100%',
+            }}
+          >
+            <table
+              style={{
+                width: 'auto',
+                borderCollapse: 'collapse',
+                tableLayout: 'fixed',
               }}
             >
               <thead>
@@ -475,29 +512,36 @@ const MyDataTable = ({
                     strategy={verticalListSortingStrategy}
                   >
                     <tr>
-                      {headerGroup.headers.map((header, index) => (
+                      {headerGroup.headers.map((header, index) =>
                         // Las primeras 4 columnas (checkbox + 3 indicadores) no son draggables
                         index < 4 ? (
                           <th
                             key={header.id}
                             style={{
                               width: `${header.getSize()}px`,
-                              padding: "4px",
-                              borderBottom: "1px solid #ccc",
-                              textAlign: "center",
-                              fontSize: "13px",
-                              backgroundColor: "#f9f9f9",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
+                              padding: '4px',
+                              borderBottom: '1px solid #ccc',
+                              textAlign: 'center',
+                              fontSize: '13px',
+                              backgroundColor: '#f9f9f9',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
                             }}
                           >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
                           </th>
                         ) : (
-                          <DraggableHeader key={header.id} header={header} index={index} />
-                        )
-                      ))}
+                          <DraggableHeader
+                            key={header.id}
+                            header={header}
+                            index={index}
+                          />
+                        ),
+                      )}
                     </tr>
                   </SortableContext>
                 ))}
@@ -510,24 +554,27 @@ const MyDataTable = ({
                     <tr
                       key={row.id}
                       onClick={() => onRowInteraction(row.original)}
-                      style={{ 
-                        cursor: "pointer", 
+                      style={{
+                        cursor: 'pointer',
                       }}
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
                           style={{
-                            fontSize: "12px",
+                            fontSize: '12px',
                             width: `${cell.column.getSize()}px`,
-                            boxSizing: "border-box",
-                            overflow: "hidden",
-                            backgroundColor:"#fff !important",
-                            padding:"0px",
-                            borderBottom:"1px solid #ccc"
+                            boxSizing: 'border-box',
+                            overflow: 'hidden',
+                            backgroundColor: '#fff !important',
+                            padding: '0px',
+                            borderBottom: '1px solid #ccc',
                           }}
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
                         </td>
                       ))}
                     </tr>
@@ -538,17 +585,15 @@ const MyDataTable = ({
           </div>
         </DndContext>
       </div>
-      {pageSize !== "todos" && onRenderPagination?.()}
-      
+      {pageSize !== 'todos' && onRenderPagination?.()}
     </>
   );
 };
 
-
 const Clients = () => {
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(() => {
-    return localStorage.getItem('pageSize')|| "10"; // Carga desde localStorage o usa 10 por defecto
+    return localStorage.getItem('pageSize') || '10'; // Carga desde localStorage o usa 10 por defecto
   });
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -579,17 +624,16 @@ const Clients = () => {
     services: [],
   });
   const [filtersT, setFiltersT] = useState({
-  estado: '',
-  tipo: '',
-  nivel: '',
-  situacion: '',
-});
+    estado: '',
+    tipo: '',
+    nivel: '',
+    situacion: '',
+  });
 
-const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-
-const [niveles, setNiveles] = useState([]);
-const [situaciones, setSituaciones] = useState([]);
+  const [niveles, setNiveles] = useState([]);
+  const [situaciones, setSituaciones] = useState([]);
 
   const [servicesActive, setServicesActive] = useState([]);
   const [preselections, setPreselections] = useState([]);
@@ -599,7 +643,6 @@ const [situaciones, setSituaciones] = useState([]);
     text: '¿Desea eliminar los cuidadores seleccionado?',
     icon: 'question',
   });
-
 
   useEffect(() => {
     const table = document.querySelector('.table-container'); // Clase de contenedor de la tabla
@@ -621,10 +664,10 @@ const [situaciones, setSituaciones] = useState([]);
         );
         const services = await getData(`services/all?order=${order}`);
 
-          const responseLevels = await getData('employees/level/all');
-                setNiveles(responseLevels);
-                const responseStatus = await getData('employees/status/all');
-                setSituaciones(responseStatus);
+        const responseLevels = await getData('employees/level/all');
+        setNiveles(responseLevels);
+        const responseStatus = await getData('employees/status/all');
+        setSituaciones(responseStatus);
 
         // Crear diccionarios
         setDictionaries({
@@ -666,21 +709,19 @@ const [situaciones, setSituaciones] = useState([]);
         setIsLoading(true);
       }
       let response;
-     let url = `employees?is_deleted=0&searchTerm=${searchTerm}`;
+      let url = `employees?is_deleted=0&searchTerm=${searchTerm}`;
 
-    if (filtersT.estado) url += `&is_active=${filtersT.estado}`;
-    if (filtersT.tipo) url += `&type=${filtersT.tipo}`;
-    if (filtersT.nivel) url += `&level_id=${filtersT.nivel}`;
-    if (filtersT.situacion) url += `&statu_id=${filtersT.situacion}`;
+      if (filtersT.estado) url += `&is_active=${filtersT.estado}`;
+      if (filtersT.tipo) url += `&type=${filtersT.tipo}`;
+      if (filtersT.nivel) url += `&level_id=${filtersT.nivel}`;
+      if (filtersT.situacion) url += `&statu_id=${filtersT.situacion}`;
 
-    if (localStorage.getItem('pageSize') !== 'todos') {
-      url += `&page=${currentPage}&pageSize=${pageSize}`;
-    }
-    response = await getData(url);
+      if (localStorage.getItem('pageSize') !== 'todos') {
+        url += `&page=${currentPage}&pageSize=${pageSize}`;
+      }
+      response = await getData(url);
       console.log(response);
       const { data, meta } = response;
-
-      
 
       setRows(data);
       setTotalPages(meta.totalPages);
@@ -804,7 +845,7 @@ const [situaciones, setSituaciones] = useState([]);
 
     const { patologies, tasks, experiences, services } = dictionaries;
 
-    console.log("employee especific",row.employee_specific);
+    console.log('employee especific', row.employee_specific);
 
     const selectedPatologies = mapIdsToNames(
       row?.employee_specific?.patologies || '',
@@ -855,8 +896,8 @@ const [situaciones, setSituaciones] = useState([]);
   };
   const handlePageSizeChange = (event) => {
     if (event.target.value == 'todos') {
-      setPageSize("todos");
-      localStorage.setItem('pageSize',"todos"); // Guardar en cache
+      setPageSize('todos');
+      localStorage.setItem('pageSize', 'todos'); // Guardar en cache
     } else {
       setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
       localStorage.setItem('pageSize', Number(event.target.value)); // Guardar en cache
@@ -911,11 +952,11 @@ const [situaciones, setSituaciones] = useState([]);
 
   const handleDelete = async () => {
     try {
-        console.log("selectedRows", selectedRows);
+      console.log('selectedRows', selectedRows);
       const result = await sweetAlert.showSweetAlert();
       const isConfirmed = result !== null && result;
 
-      console.log("selectedRows", selectedRows);
+      console.log('selectedRows', selectedRows);
 
       if (!isConfirmed) {
         ToastNotify({
@@ -926,7 +967,7 @@ const [situaciones, setSituaciones] = useState([]);
       }
 
       for (const row of selectedRows) {
-        console.log("row", row);
+        console.log('row', row);
         const id = row; // Asumiendo que cada fila tiene una propiedad 'id'
         const dataToSend = {
           is_deleted: 1,
@@ -953,36 +994,35 @@ const [situaciones, setSituaciones] = useState([]);
     }
   };
 
-    const handleFilterChange = (e) => {
-      const { name, value } = e.target;
-      setFiltersT((prev) => ({
-    ...prev,
-    [name]: value,
-  }))
-    }
-    const handleAplyFilter = () => {
-     setCurrentPage(1); 
- getRows();
-    }
-    const [shouldFetch, setShouldFetch] = useState(false);
-    useEffect(() => {
-  if (shouldFetch) {
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFiltersT((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+  const handleAplyFilter = () => {
+    setCurrentPage(1);
     getRows();
-    setShouldFetch(false); // Resetear flag
-  }
-}, [ shouldFetch]);
-
-        const handleResetFilter = () => {
-         setFiltersT({
-    estado: '',
-    tipo: '',
-    nivel: '',
-    situacion: '',
-  });
-   setCurrentPage(1);
-  setShouldFetch(true); //
+  };
+  const [shouldFetch, setShouldFetch] = useState(false);
+  useEffect(() => {
+    if (shouldFetch) {
+      getRows();
+      setShouldFetch(false); // Resetear flag
     }
+  }, [shouldFetch]);
 
+  const handleResetFilter = () => {
+    setFiltersT({
+      estado: '',
+      tipo: '',
+      nivel: '',
+      situacion: '',
+    });
+    setCurrentPage(1);
+    setShouldFetch(true); //
+  };
 
   return (
     <div className='max-w-full mx-auto'>
@@ -995,121 +1035,118 @@ const [situaciones, setSituaciones] = useState([]);
         />
         <div className='flex space-x-2'>
           <div className='relative'>
-  <button
-    className="bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-4 pt-2"
-    onClick={() => setIsFilterOpen(!isFilterOpen)}
-  >
-    <FaFilter className="text-lg" />
-  </button>
+            <button
+              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-4 pt-2'
+              onClick={() => setIsFilterOpen(!isFilterOpen)}
+            >
+              <FaFilter className='text-lg' />
+            </button>
 
-  {isFilterOpen && (
-    <div
-  className="absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2"
->
-  {/* Estado */}
-  <div className="flex items-center space-x-2">
-    <label htmlFor="estado" className="text-xs w-16">
-      Estado:
-    </label>
-    <select
-      name="estado"
-      id="estado"
-      value={filtersT.estado}
-      onChange={handleFilterChange}
-      className="border border-gray-400 rounded w-full text-xs p-1"
-    >
-      <option value="">Estado</option>
-      {Object.entries(estado_config).map(([value, option]) => (
-        <option key={value} value={value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  </div>
+            {isFilterOpen && (
+              <div className='absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2'>
+                {/* Estado */}
+                <div className='flex items-center space-x-2'>
+                  <label htmlFor='estado' className='text-xs w-16'>
+                    Estado:
+                  </label>
+                  <select
+                    name='estado'
+                    id='estado'
+                    value={filtersT.estado}
+                    onChange={handleFilterChange}
+                    className='border border-gray-400 rounded w-full text-xs p-1'
+                  >
+                    <option value=''>Estado</option>
+                    {Object.entries(estado_config).map(([value, option]) => (
+                      <option key={value} value={value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-  {/* Tipo */}
-  <div className="flex items-center space-x-2">
-    <label htmlFor="tipo" className="text-xs w-16">
-      Tipo:
-    </label>
-    <select
-      name="tipo"
-      id="tipo"
-      value={filtersT.tipo}
-      onChange={handleFilterChange}
-      className="border border-gray-400 rounded w-full text-xs p-1"
-    >
-      <option value="">Tipo</option>
-      {Object.entries(tipo_config).map(([value, option]) => (
-        <option key={value} value={value}>
-          {option.label}
-        </option>
-      ))}
-    </select>
-  </div>
+                {/* Tipo */}
+                <div className='flex items-center space-x-2'>
+                  <label htmlFor='tipo' className='text-xs w-16'>
+                    Tipo:
+                  </label>
+                  <select
+                    name='tipo'
+                    id='tipo'
+                    value={filtersT.tipo}
+                    onChange={handleFilterChange}
+                    className='border border-gray-400 rounded w-full text-xs p-1'
+                  >
+                    <option value=''>Tipo</option>
+                    {Object.entries(tipo_config).map(([value, option]) => (
+                      <option key={value} value={value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-  {/* Nivel */}
-  <div className="flex items-center space-x-2">
-    <label htmlFor="nivel" className="text-xs w-16">
-      Nivel:
-    </label>
-    <select
-      name="nivel"
-      id="nivel"
-      value={filtersT.nivel}
-      onChange={handleFilterChange}
-      className="border border-gray-400 rounded w-full text-xs p-1"
-    >
-      <option value="">Nivel</option>
-      {niveles.map((n) => (
-        <option key={n.id} value={n.id}>
-          {n.name}
-        </option>
-      ))}
-    </select>
-  </div>
+                {/* Nivel */}
+                <div className='flex items-center space-x-2'>
+                  <label htmlFor='nivel' className='text-xs w-16'>
+                    Nivel:
+                  </label>
+                  <select
+                    name='nivel'
+                    id='nivel'
+                    value={filtersT.nivel}
+                    onChange={handleFilterChange}
+                    className='border border-gray-400 rounded w-full text-xs p-1'
+                  >
+                    <option value=''>Nivel</option>
+                    {niveles.map((n) => (
+                      <option key={n.id} value={n.id}>
+                        {n.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-  {/* Situación */}
-  <div className="flex items-center space-x-2">
-    <label htmlFor="situacion" className="text-xs w-16">
-      Situación:
-    </label>
-    <select
-      name="situacion"
-      id="situacion"
-      value={filtersT.situacion}
-      onChange={handleFilterChange}
-      className="border border-gray-400 rounded w-full text-xs p-1"
-    >
-      <option value="">Situación</option>
-      {situaciones.map((s) => (
-        <option key={s.id} value={s.id}>
-          {s.name}
-        </option>
-      ))}
-    </select>
-  </div>
+                {/* Situación */}
+                <div className='flex items-center space-x-2'>
+                  <label htmlFor='situacion' className='text-xs w-16'>
+                    Situación:
+                  </label>
+                  <select
+                    name='situacion'
+                    id='situacion'
+                    value={filtersT.situacion}
+                    onChange={handleFilterChange}
+                    className='border border-gray-400 rounded w-full text-xs p-1'
+                  >
+                    <option value=''>Situación</option>
+                    {situaciones.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-  {/* Botones */}
-  <div className="flex flex-row justify-between gap-2 pt-2">
-    <button
-      type="button"
-      className="px-2 py-1 bg-gray-600 text-white rounded text-sm"
-      onClick={handleResetFilter}
-    >
-      Borrar Filtro
-    </button>
-    <button
-      type="button"
-      className="px-2 py-1 bg-green-600 text-white rounded text-sm"
-      onClick={handleAplyFilter}
-    >
-      Aplicar
-    </button>
-  </div>
-</div>
-
-  )}
+                {/* Botones */}
+                <div className='flex flex-row justify-between gap-2 pt-2'>
+                  <button
+                    type='button'
+                    className='px-2 py-1 bg-gray-600 text-white rounded text-sm'
+                    onClick={handleResetFilter}
+                  >
+                    Borrar Filtro
+                  </button>
+                  <button
+                    type='button'
+                    className='px-2 py-1 bg-green-600 text-white rounded text-sm'
+                    onClick={handleAplyFilter}
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            )}
             <input
               type='text'
               className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
@@ -1150,7 +1187,7 @@ const [situaciones, setSituaciones] = useState([]);
             <option value={20}>20</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
-            <option value={"todos"}>Todos</option>
+            <option value={'todos'}>Todos</option>
           </select>
           <button
             className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
@@ -1269,19 +1306,20 @@ const [situaciones, setSituaciones] = useState([]);
                 {selectedRow.cod_post?.state?.country?.name}
               </p>
               <div className='border-2 border-gray-200 w-full mt-6'></div>
-                 <h2 className='text-center text-xs bg-topNav w-full py-1'>
+              <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Servicios Activos</strong>
               </h2>
               <div className='p-0'>
                 {servicesActive.map((service) => (
                   <>
-                    
-                      <p className='text-xs font-bold text-blue-'>
-                        {service.service?.name}
-                      </p>
-                      <a href={`client/${service.client?.id}?tabs=servicios`}>
+                    <p className='text-xs font-bold text-blue-'>
+                      {service.service?.name}
+                    </p>
+                    <a href={`client/${service.client?.id}?tabs=servicios`}>
                       <div className=' text-xs mb-2'>
-                        <p className='p-1 text-blue-500'>{service.client?.full_name}</p>
+                        <p className='p-1 text-blue-500'>
+                          {service.client?.full_name}
+                        </p>
                         <p>{formatDate(service.service_start)}</p>
                       </div>
                     </a>
@@ -1291,38 +1329,44 @@ const [situaciones, setSituaciones] = useState([]);
               <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>Especifico</strong>
               </h2>
-<div className="grid grid-cols-[100px_1fr] gap-x-2 items-start">
-  {/* Disponibilidad */}
-  <p className="text-sm font-bold">Disponibilidad:</p>
-  <ul className="space-y-1">
-    {selectedData.services.map((row, index) => (
-      <li key={index} className="text-xs">- {row}</li>
-    ))}
-  </ul>
+              <div className='grid grid-cols-[100px_1fr] gap-x-2 items-start'>
+                {/* Disponibilidad */}
+                <p className='text-sm font-bold'>Disponibilidad:</p>
+                <ul className='space-y-1'>
+                  {selectedData.services.map((row, index) => (
+                    <li key={index} className='text-xs'>
+                      - {row}
+                    </li>
+                  ))}
+                </ul>
 
-  {/* Separador */}
-  <div className="col-span-2 border-t-2 border-gray-200 my-4"></div>
+                {/* Separador */}
+                <div className='col-span-2 border-t-2 border-gray-200 my-4'></div>
 
-  {/* Tareas */}
-  <p className="text-sm font-bold">Tareas:</p>
-  <ul className="space-y-1">
-    {selectedData.tasks.map((row, index) => (
-      <li key={index} className="text-xs">- {row}</li>
-    ))}
-  </ul>
+                {/* Tareas */}
+                <p className='text-sm font-bold'>Tareas:</p>
+                <ul className='space-y-1'>
+                  {selectedData.tasks.map((row, index) => (
+                    <li key={index} className='text-xs'>
+                      - {row}
+                    </li>
+                  ))}
+                </ul>
 
-  {/* Separador */}
-  <div className="col-span-2 border-t-2 border-gray-200 my-4"></div>
+                {/* Separador */}
+                <div className='col-span-2 border-t-2 border-gray-200 my-4'></div>
 
-  {/* Patologías */}
-  <p className="text-sm font-bold">Patologías:</p>
-  <ul className="space-y-1">
-    {selectedData.patologies.map((row, index) => (
-      <li key={index} className="text-xs">- {row}</li>
-    ))}
-  </ul>
-</div>
-           
+                {/* Patologías */}
+                <p className='text-sm font-bold'>Patologías:</p>
+                <ul className='space-y-1'>
+                  {selectedData.patologies.map((row, index) => (
+                    <li key={index} className='text-xs'>
+                      - {row}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
               <h2 className='text-center text-xs bg-topNav w-full py-1'>
                 <strong>En proceso de seleccion</strong>
               </h2>
@@ -1331,8 +1375,10 @@ const [situaciones, setSituaciones] = useState([]);
                   <p className='text-xs font-bold'>{pre.service?.name}</p>
                   <div className=' text-xs mb-2'>
                     <a href={`client/${pre.client?.id}?tabs=servicios`}>
-                    <p className='p-1 text-blue-500'>{pre.client?.full_name}</p>
-                    <p>{formatDate(pre.clients_service.service_alta)}</p>
+                      <p className='p-1 text-blue-500'>
+                        {pre.client?.full_name}
+                      </p>
+                      <p>{formatDate(pre.clients_service.service_alta)}</p>
                     </a>
                   </div>
                 </>
