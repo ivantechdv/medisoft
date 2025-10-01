@@ -239,7 +239,7 @@ const Employees = () => {
         ]}
       />
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-80px)]'>
-        <div className='grid grid-cols-[auto_1fr] md:grid-cols-[auto_280px_1fr_1fr] h-screen'>
+        <div className='grid grid-cols-[auto_1fr] md:grid-cols-[auto_280px_1fr_1fr] '>
           {/* Sidebar */}
           <div
             className={`relative border-r-2 border-gray-200 h-full transition-all duration-300 ease-in-out ${

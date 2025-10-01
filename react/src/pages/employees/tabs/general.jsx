@@ -232,6 +232,10 @@ const Form = ({
               ...prevFormData,
               ['antique']: calculateSeniority(onFormData.start_date),
             }));
+            setOldData((prevFormData) => ({
+              ...prevFormData,
+              ['antique']: calculateSeniority(onFormData.start_date),
+            }));
           }
 
           await updateImages(onFormData);
@@ -1057,7 +1061,7 @@ const Form = ({
     <>
       <form className=''>
         {loadingForm && <Spinner />}
-        <div className='rounded min-h-[calc(100vh)]'>
+        <div className='rounded min-h-[calc(100vh-600px)]'>
           {/* <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
           <button
             type='button'

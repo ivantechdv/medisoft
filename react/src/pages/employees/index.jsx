@@ -715,6 +715,7 @@ const Clients = () => {
       if (filtersT.tipo) url += `&type=${filtersT.tipo}`;
       if (filtersT.nivel) url += `&level_id=${filtersT.nivel}`;
       if (filtersT.situacion) url += `&statu_id=${filtersT.situacion}`;
+      if (filtersT.alias) url += `&statu_id=${filtersT.alias}`;
 
       if (localStorage.getItem('pageSize') !== 'todos') {
         url += `&page=${currentPage}&pageSize=${pageSize}`;
