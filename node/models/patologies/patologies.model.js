@@ -11,6 +11,10 @@ const Patology = sequelize.define("patologies", {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  alias: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+  },
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

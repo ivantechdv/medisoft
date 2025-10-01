@@ -127,6 +127,7 @@ CTRL.get = async (
           { full_name: { [Op.like]: `%${searchTerm}%` } },
           { email: { [Op.like]: `%${searchTerm}%` } },
           { dni: { [Op.like]: `%${searchTerm}%` } },
+          { alias: { [Op.like]: `%${searchTerm}%` } },
           { phone: { [Op.like]: `%${searchTerm}%` } },
           { id: { [Op.like]: `%${searchTerm}%` } },
           ...additionalSearchConditions,

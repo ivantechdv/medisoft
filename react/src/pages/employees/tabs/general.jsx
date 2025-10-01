@@ -23,6 +23,7 @@ import FileInput from '../../../components/fileInput';
 import { tipo_config, estado_config } from '../../../utils/config';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Estilos por defecto
+import ColorSelect from '../../../components/ColorSelect/colorSelect';
 
 const Form = ({
   onHandleChangeCard,
@@ -70,6 +71,7 @@ const Form = ({
     level_id: '',
     state_id: '',
     observations: '',
+    antique: '',
   });
   const [oldData, setOldData] = useState({
     dni: '',
@@ -102,6 +104,7 @@ const Form = ({
     level_id: '',
     state_id: '',
     observations: '',
+    antique: '',
   });
   const [images, setImages] = useState({
     photo: '',
@@ -179,7 +182,29 @@ const Form = ({
       }));
     }
   };
+  const calculateSeniority = (startDate) => {
+    const start = new Date(startDate);
+    const today = new Date();
 
+    let years = today.getFullYear() - start.getFullYear();
+    let months = today.getMonth() - start.getMonth();
+    let days = today.getDate() - start.getDate();
+
+    // Ajustar días
+    if (days < 0) {
+      months--;
+      const prevMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+      days += prevMonth.getDate();
+    }
+
+    // Ajustar meses
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    return `${years} años ${months} meses ${days} días`;
+  };
   const navigateTo = useNavigate();
   useEffect(() => {
     const initForm = async () => {
@@ -199,6 +224,17 @@ const Form = ({
             setOldData((prevFormData) => ({
               ...prevFormData,
               ['age']: age,
+            }));
+          }
+
+          if (onFormData.start_date != null && onFormData.start_date != '') {
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              ['antique']: calculateSeniority(onFormData.start_date),
+            }));
+            setOldData((prevFormData) => ({
+              ...prevFormData,
+              ['antique']: calculateSeniority(onFormData.start_date),
             }));
           }
 
@@ -996,6 +1032,25 @@ const Form = ({
 
         console.log('taskAliases', taskAliases);
       }
+      if (patologiesArray.length > 0) {
+        const patologies = await getData(`patologies/all?order=${order}`);
+        console.log('patologies', patologies);
+
+        const aliasMap = patologies.reduce((acc, patology) => {
+          acc[patology.id] = patology.alias;
+          return acc;
+        }, {});
+
+        // Usamos patologyArray (ids) en lugar de tasks
+        const patologyAliases = patologiesArray
+          .map((id) => aliasMap[id])
+          .filter((alias) => alias && alias.trim() !== '') // filtra null, undefined o string vacío
+          .join(' ');
+
+        alias = alias + ' ' + patologyAliases;
+
+        console.log('patologyAliases', patologyAliases);
+      }
 
       alias = alias + ' ' + onFormData.cod_post?.alias;
 
@@ -1006,7 +1061,7 @@ const Form = ({
     <>
       <form className=''>
         {loadingForm && <Spinner />}
-        <div className='rounded min-h-[calc(100vh)]'>
+        <div className='rounded min-h-[calc(100vh-600px)]'>
           {/* <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
           <button
             type='button'
@@ -1287,7 +1342,7 @@ const Form = ({
                   >
                     Tipo
                   </label>
-                  <select
+                  {/* <select
                     className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                     name='type'
                     id='type'
@@ -1296,10 +1351,18 @@ const Form = ({
                   >
                     {Object.entries(tipo_config).map(([value, option]) => (
                       <option key={value} value={value}>
+                        <span style={{ color: option.color }}>●</span>{' '}
                         {option.label}
                       </option>
                     ))}
-                  </select>
+                  </select> */}
+                  <ColorSelect
+                    value={formData.type}
+                    onChange={(val) =>
+                      setFormData((prev) => ({ ...prev, type: val }))
+                    }
+                    optionsConfig={tipo_config}
+                  />
                 </div>
 
                 <div className='col-span-1'>
@@ -1309,21 +1372,27 @@ const Form = ({
                   >
                     Nivel
                   </label>
-                  <select
-                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    name='level_id'
-                    id='level_id'
-                    onChange={handleChange}
-                    value={formData.level_id}
-                  >
-                    <option value=''>Seleccione</option>
-                    {levels.length > 0 &&
-                      levels.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.name}
-                        </option>
-                      ))}
-                  </select>
+
+                  <ColorSelect
+                    value={String(formData.level_id)} // 👈 lo pasamos a string para que haga match
+                    onChange={
+                      (val) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          level_id: Number(val),
+                        })) // 👈 lo guardamos como número
+                    }
+                    optionsConfig={levels.reduce((acc, level) => {
+                      const rgb = `rgb(${level.color})`;
+
+                      acc[String(level.id)] = {
+                        // 👈 lo guardamos como string
+                        label: level.name,
+                        color: rgb,
+                      };
+                      return acc;
+                    }, {})}
+                  />
                 </div>
                 <div className='col-span-1'>
                   <label
@@ -1332,21 +1401,26 @@ const Form = ({
                   >
                     Situacion
                   </label>
-                  <select
-                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    name='statu_id'
-                    id='statu_id'
-                    onChange={handleChange}
-                    value={formData.statu_id}
-                  >
-                    <option value=''>Seleccione</option>
-                    {status.length > 0 &&
-                      status.map((option) => (
-                        <option key={option.id} value={option.id}>
-                          {option.name}
-                        </option>
-                      ))}
-                  </select>
+
+                  <ColorSelect
+                    value={String(formData.statu_id)} // 👈 lo forzamos a string
+                    onChange={
+                      (val) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          statu_id: Number(val),
+                        })) // 👈 lo devolvemos como número
+                    }
+                    optionsConfig={status.reduce((acc, statu) => {
+                      const rgb = `rgb(${statu.color})`;
+                      acc[String(statu.id)] = {
+                        // 👈 lo guardamos como string
+                        label: statu.name,
+                        color: rgb,
+                      };
+                      return acc;
+                    }, {})}
+                  />
                 </div>
                 <div className='col-span-1'>
                   <label

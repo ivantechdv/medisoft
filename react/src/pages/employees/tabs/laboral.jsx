@@ -26,6 +26,7 @@ import {
   InfoSweetAlert,
 } from '../../../components/SweetAlert/SweetAlert';
 import { FiDownload } from 'react-icons/fi';
+import { formatDateToDMY } from '../../../utils/customFormat';
 const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
   const sweetAlert = ConfirmSweetAlert({
     title: 'Laboral',
@@ -324,7 +325,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                             {row.contact}
                           </h4>
                           <span className='text-sm text-gray-600'>
-                            Desde {row.from_date}
+                            Desde {formatDateToDMY(row.from_date)}
                           </span>
                         </div>
                         <div className='flex justify-between items-center w-full'>
@@ -334,7 +335,7 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                           <span className='text-sm text-gray-600'>
                             {row.is_current
                               ? 'Hasta la actualidad'
-                              : `Hasta ${row.until_date}`}
+                              : `Hasta ${formatDateToDMY(row.until_date)}`}
                           </span>
                         </div>
                       </div>
@@ -354,11 +355,14 @@ const Form = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
                             <strong>Teléfono:</strong> {row.phone}
                           </p>
                           <p className='text-sm text-left'>
-                            <strong>Desde:</strong> {row.from_date}
+                            <strong>Desde:</strong>{' '}
+                            {formatDateToDMY(row.from_date)}
                           </p>
                           <p className='text-sm text-left'>
                             <strong>Hasta:</strong>{' '}
-                            {row.is_current ? 'la actualidad' : row.until_date}
+                            {row.is_current
+                              ? 'la actualidad'
+                              : formatDateToDMY(row.until_date)}
                           </p>
 
                           {/* Referencia (archivo) */}
