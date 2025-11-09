@@ -19,6 +19,9 @@ const Service = sequelize.define("services", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+   position:{
+    type:Number,
+  },
   cost: {
     type: DataTypes.DOUBLE,
     allowNull: true,

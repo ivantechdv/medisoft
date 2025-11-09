@@ -193,7 +193,8 @@ const MyDataTable = ({
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
-      onHandleViewClient(row.id);
+      const color=getRowBackgroundColor(row);
+      onHandleViewClient(row.id, color);
     } else {
       clickTimer.current = setTimeout(() => {
         clickTimer.current = null;
@@ -878,9 +879,11 @@ const Clients = () => {
   const handleClosePanel = () => {
     setSelectedRow(false);
   };
-  const handleViewClient = (clientId) => {
-    navigateTo(`/employee/${clientId}`);
-  };
+const handleViewClient = (clientId, color) => {
+  navigateTo(`/employee/${clientId}`, {
+    state: { color },
+  });
+};
 
   const handleFormEmployee = () => {
     navigateTo('/employee');
@@ -1151,7 +1154,7 @@ const Clients = () => {
             <input
               type='text'
               className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
-              placeholder='Campo de busqueda'
+              placeholder='Búsqueda Rápida'
               value={searchTerm}
               onChange={handleSearchTermChange}
             />

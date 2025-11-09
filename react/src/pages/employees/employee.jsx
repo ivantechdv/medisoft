@@ -20,6 +20,7 @@ import Complementary from './tabs/complementary';
 import Laboral from './tabs/laboral';
 import Specific from './tabs/specific';
 import FollowUps from './tabs/followUps';
+import { estado_config } from '../../utils/config';
 const Employees = () => {
   const [formData, setFormData] = useState({
     dni: '',
@@ -77,6 +78,13 @@ const Employees = () => {
   });
   const [unsavedChanges, setUnsavedChanges] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [colorLateral, setColorLateral]=useState("#fff");
+
+  const location = useLocation();
+  const { color } = location.state || {};
+
+  console.log("color de estado", color);
+
   const getRecordById = async (id) => {
     try {
       //setIsLoading(true);
@@ -86,6 +94,10 @@ const Employees = () => {
       if (response) {
         setFormData(response);
         setCardData(response);
+
+         const hasClientServices = response.clients_services?.length > 0;
+       setColorLateral(color);
+
         if (response.photo !== null && response.photo !== '') {
           setCardData((prevCardData) => ({
             ...prevCardData,
@@ -260,7 +272,10 @@ const Employees = () => {
                 <div className='col-span-1'>
                   <div className='w-full border-r-2 border-gray-200'>
                     <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>
-                      <div className='w-10 bg-blue-300 h-full border-l'></div>
+                      <div
+  className="w-10 h-full border-l"
+  style={{ backgroundColor: colorLateral }}
+></div>
                       <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
                         {cardData.photo ? (
                           <img
