@@ -24,6 +24,7 @@ import { tipo_config, estado_config } from '../../../utils/config';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Estilos por defecto
 import ColorSelect from '../../../components/ColorSelect/colorSelect';
+import { validarDNI, validarDocumento, validarNSS } from '../../../utils/customFormat';
 
 const Form = ({
   onHandleChangeCard,
@@ -152,6 +153,7 @@ const Form = ({
     handleCancel: () => {},
   });
   const dniRef = useRef(null);
+  const nssRef = useRef(null);
   const emailRef = useRef(null);
   const dni = useRef(null);
   const ref = useRef(null);
@@ -399,78 +401,83 @@ const Form = ({
     return age;
   };
 
-  const handleChange = (event) => {
-    const { id, value } = event.target;
-    if (id === 'born_date') {
-      const age = calculateAge(value);
+ const handleChange = (event) => {
+  const { id, value, type } = event.target;
+  
+  // Evitar trimming en textarea
+  const cleanValue = type === "textarea" ? value : value.trim();
+
+  if (id === 'born_date') {
+    const age = calculateAge(cleanValue);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      ['age']: age,
+    }));
+  }
+
+  if (id === 'phone') {
+    const newValue = cleanValue.replace(/\D/g, '');
+    if (newValue.length <= 9) {
       setFormData((prevFormData) => ({
         ...prevFormData,
-        ['age']: age,
+        [id]: newValue,
       }));
     }
-    if (id === 'phone') {
-      const newValue = value.replace(/\D/g, '');
-      if (newValue.length <= 9) {
-        setFormData((prevFormData) => ({
-          ...prevFormData,
-          [id]: newValue,
-        }));
-      }
-    } else {
-      setFormData((prevFormData) => {
-        const updatedFormData = {
-          ...prevFormData,
-          [id]: value,
-        };
+  } else {
+    setFormData((prevFormData) => {
+      const updatedFormData = {
+        ...prevFormData,
+        [id]: id === "dni" ? cleanValue.toUpperCase() : cleanValue,
+      };
 
-        // Si el id es first_name o last_name, actualizar full_name
-        if (id === 'first_name' || id === 'last_name') {
-          const firstName =
-            id === 'first_name' ? value : prevFormData.first_name || '';
-          const lastName =
-            id === 'last_name' ? value : prevFormData.last_name || '';
-          updatedFormData.full_name = `${firstName} ${lastName}`.trim();
-        }
-
-        return updatedFormData;
-      });
-
+      // Actualizar full_name si cambia nombre o apellido
       if (id === 'first_name' || id === 'last_name') {
-        const firstName = id === 'first_name' ? value : formData.first_name;
-        const lastName = id === 'last_name' ? value : formData.last_name;
-        const fullName = `${firstName} ${lastName}`.trim();
-        onHandleChangeCard('full_name', fullName);
-      }
-      if (id === 'dni') {
-        onHandleChangeCard(id, value);
+        const firstName =
+          id === 'first_name' ? cleanValue : prevFormData.first_name || '';
+        const lastName =
+          id === 'last_name' ? cleanValue : prevFormData.last_name || '';
+        updatedFormData.full_name = `${firstName} ${lastName}`.trim();
       }
 
-      if (id === 'country_current_id') {
-        const country = countries.find((c) => c.id === parseInt(value));
-        setSelectedCountry(country);
-        setSelectedState(null); // Resetear el estado
-        setPostalCodes([]);
-      }
-      if (id === 'state_id') {
-        const state = selectedCountry.states.find(
-          (s) => s.id === parseInt(value),
-        );
-        setSelectedState(state);
+      return updatedFormData;
+    });
 
-        // Establecer los códigos postales según el estado seleccionado
-        if (state) {
-          const options = state?.cod_posts.map((item, index) => ({
-            value: item.id,
-            label: item.code + '|' + item.name,
-            key: item.id ?? `default-key-${index}`,
-          }));
-          setPostalCodes(options);
-        } else {
-          setPostalCodes([]); // Resetear si no se encuentra el estado
-        }
-      }
+    if (id === 'first_name' || id === 'last_name') {
+      const firstName = id === 'first_name' ? cleanValue : formData.first_name;
+      const lastName = id === 'last_name' ? cleanValue : formData.last_name;
+      const fullName = `${firstName} ${lastName}`.trim();
+      onHandleChangeCard('full_name', fullName);
     }
-  };
+
+    if (id === 'dni') {
+      onHandleChangeCard(id, cleanValue);
+    }
+
+    if (id === 'country_current_id') {
+      const country = countries.find((c) => c.id === parseInt(cleanValue));
+      setSelectedCountry(country);
+      setSelectedState(null);
+      setPostalCodes([]);
+    }
+
+    if (id === 'state_id') {
+      const state = selectedCountry.states.find(
+        (s) => s.id === parseInt(cleanValue),
+      );
+      setSelectedState(state);
+      setPostalCodes(
+        state
+          ? state.cod_posts.map((item, index) => ({
+              value: item.id,
+              label: item.code + '|' + item.name,
+              key: item.id ?? `default-key-${index}`,
+            }))
+          : [],
+      );
+    }
+  }
+};
+
   const handleSelect = (selected) => {
     setFormData((prevFormData) => ({
       ...prevFormData,
@@ -816,12 +823,36 @@ const Form = ({
 
     return { validEmails, invalidEmails };
   };
-
+ const [errors, setErrors] = useState({});
   const validateField = async (field, value, ref) => {
     try {
       if (value !== '') {
+          if (field === "num_social_security" && value !== oldData["num_social_security"]) {
+      if (!validarNSS(value)) {
+        ToastNotify({
+              message: "NSS Invalido",
+              position: 'top-center',
+              type: 'error',
+              ref: ref,
+            });
+        // focus tras breve delay (espera al alert cerrar)
+        setTimeout(() => ref.current?.focus(), 100);
+        return;
+      }
+    }
+
         let response = [];
         if (field === 'dni' && value !== oldData['dni']) {
+           if (!validarDocumento(value)) {
+        ToastNotify({
+              message: "Formato inválido: introduce un DNI o NIE válido",
+              position: 'top-center',
+              type: 'error',
+              ref: ref,
+            });
+        // focus tras breve delay (espera al alert cerrar)
+        setTimeout(() => ref.current?.focus(), 100);
+      } 
           response = await getData(`clients/all?dni=${value}`);
         } else if (field === 'email' && value !== oldData['email']) {
           const { validEmails, invalidEmails } = validateEmails(value);
@@ -978,85 +1009,85 @@ const Form = ({
       window.location.href = '/employees';
     }, 500);
   };
-  const handleAlias = async () => {
-    const response = await getData(
-      'employees/specific/all?employee_id=' + onFormData.id,
-    );
-    let alias = '';
-    if (response.length > 0) {
-      const data = response[0];
+ const handleAlias = async () => {
+  const response = await getData('employees/specific/all?employee_id=' + onFormData.id);
+  let alias = '';
+  if (response.length === 0) return;
 
-      // Convert comma-separated strings into arrays
-      const servicesArray = data.services
-        ? data.services.split(',').map(Number)
-        : [];
-      const patologiesArray = data.patologies
-        ? data.patologies.split(',').map(Number)
-        : [];
-      const tasksArray = data.tasks ? data.tasks.split(',').map(Number) : [];
-      const experiencesArray = data.experiences
-        ? data.experiences.split(',').map(Number)
-        : [];
-      const order = 'name-asc';
-      if (servicesArray.length > 0) {
-        const option_services = await getData(`services/all?order=${order}`);
-        const aliasMap = option_services.reduce((acc, service) => {
-          acc[service.id] = service.alias;
-          return acc;
-        }, {});
+  const data = response[0];
+  const order = 'name-asc';
 
-        // Obtenemos solo los alias que correspondan a los ids del empleado
-        const employeeAliases = servicesArray
-          .map((id) => aliasMap[id])
-          .join(' ');
+  const toArray = (v) => (v ? v.split(',').map(Number) : []);
 
-        alias = employeeAliases;
-      }
-      alias = alias + ' ' + onFormData.full_name;
-      if (tasksArray.length > 0) {
-        const tasks = await getData(`employees/task/all?order=${order}`);
-        console.log('tasks', tasks);
+  const servicesArray = toArray(data.services);
+  const patologiesArray = toArray(data.patologies);
+  const tasksArray = toArray(data.tasks);
+  const experiencesArray = toArray(data.experiences);
 
-        const aliasMap = tasks.reduce((acc, task) => {
-          acc[task.id] = task.alias;
-          return acc;
-        }, {});
+  // --- SERVICES ---
+  if (servicesArray.length > 0) {
+    const option_services = await getData(`services/all?order=${order}`);
+    // Ordena por "position"
+    const sorted = option_services
+      .filter((s) => servicesArray.includes(s.id))
+      .sort((a, b) => a.position - b.position);
+    const employeeAliases = sorted.map((s) => s.alias).join(' ');
+    alias += employeeAliases + ' ';
+  }
 
-        // Usamos tasksArray (ids) en lugar de tasks
-        const taskAliases = tasksArray
-          .map((id) => aliasMap[id])
-          .filter((alias) => alias && alias.trim() !== '') // filtra null, undefined o string vacío
-          .join(' ');
+  alias += onFormData.full_name + ' ';
 
-        alias = alias + ' ' + taskAliases;
+  // --- TASKS ---
+  if (tasksArray.length > 0) {
+    const tasks = await getData(`employees/task/all?order=${order}`);
+    const sorted = tasks
+      .filter((t) => tasksArray.includes(t.id))
+      .sort((a, b) => a.position - b.position);
+    const taskAliases = sorted
+      .map((t) => t.alias)
+      .filter(Boolean)
+      .join(' ');
+    alias += taskAliases + ' ';
+  }
 
-        console.log('taskAliases', taskAliases);
-      }
-      if (patologiesArray.length > 0) {
-        const patologies = await getData(`patologies/all?order=${order}`);
-        console.log('patologies', patologies);
+  // --- PATOLOGIES ---
+  if (patologiesArray.length > 0) {
+    const patologies = await getData(`patologies/all?order=${order}`);
+    const sorted = patologies
+      .filter((p) => patologiesArray.includes(p.id))
+      .sort((a, b) => a.position - b.position);
+    const patologyAliases = sorted
+      .map((p) => p.alias)
+      .filter(Boolean)
+      .join(' ');
+    alias += patologyAliases + ' ';
+  }
 
-        const aliasMap = patologies.reduce((acc, patology) => {
-          acc[patology.id] = patology.alias;
-          return acc;
-        }, {});
+  alias += onFormData.cod_post?.alias || '';
 
-        // Usamos patologyArray (ids) en lugar de tasks
-        const patologyAliases = patologiesArray
-          .map((id) => aliasMap[id])
-          .filter((alias) => alias && alias.trim() !== '') // filtra null, undefined o string vacío
-          .join(' ');
+  setFormData({ ...formData, alias });
 
-        alias = alias + ' ' + patologyAliases;
+  // --- SYNC CONTACT ---
+  try {
+    const datos = { name: alias, phone: onFormData.phone };
+    const sync = await fetch('http://localhost:3000/auth/contacts/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos),
+    });
 
-        console.log('patologyAliases', patologyAliases);
-      }
-
-      alias = alias + ' ' + onFormData.cod_post?.alias;
-
-      setFormData({ ...formData, ['alias']: alias });
+    const res = await sync.json();
+    if (res.error === 'NO_REFRESH_TOKEN') {
+      window.location.href = 'http://localhost:3000/auth/google';
+      return;
     }
-  };
+
+    console.log('Contacto sincronizado:', data);
+  } catch (err) {
+    console.error('Error sincronizando contacto con Google:', err);
+  }
+};
+
   return (
     <>
       <form className=''>
@@ -1601,7 +1632,9 @@ const Form = ({
                     id='num_social_security'
                     name='num_social_security'
                     value={formData.num_social_security}
+                    ref={nssRef}
                     onChange={handleChange}
+                    onBlur={() => validateField('num_social_security', formData.num_social_security, nssRef)}
                     className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
                   />
                 </div>

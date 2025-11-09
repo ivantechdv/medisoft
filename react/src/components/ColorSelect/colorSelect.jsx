@@ -22,7 +22,7 @@ const ColorSelect = ({ value, onChange, optionsConfig }) => {
   return (
     <Select
       options={options}
-      value={options.find((opt) => opt.value === value)}
+      value={options.find((opt) => opt.value == value)}
       onChange={(selected) => onChange(selected.value)}
       styles={{
         control: (base) => ({

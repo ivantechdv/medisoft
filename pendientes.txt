@@ -1,69 +1,7 @@
-Errores detectados:
-Pestaña "General"
-1. Error introduciendo la Fecha de Activación. Al escribir el año muestra error
-listo, valida al salir del campo de texto y si da error borra el input
+Detectados errores en las pantallas de gestión de Cuidadores:
 
-2. Si introduzco Fecha de Activación sin haber asignado los cuidadores, el sistema lo permite e indica que se guardó la información, pero después no la muestra y no la guarda realmente
+Evitar utilizar espacios en blanco en campos: DNI/NIE - Email - Número SS
 
-haciendo prueba, me guarda asi no haya asignado cuidadores...
-en este caso no voy a permitir que guarde la fecha de activacion hasta que tenga asignado un cuidador.
+NINGÚN campo ha de poder comenzar por espacio en blanco, a excepción de los campos Text Area o similares
 
-3. Al crear un nuevo "Servicio Facturable", añado la fecha de Alta del Servicio, el sistema me permite grabarlo, pero no puedo acceder a la pestaña "Servicios Facturables" hasta que cierro y vuelvo a entrar
-
-imagino que aqui es un servicio contratado, al detectar que ya guardo se habilita
-
-4. Las Observaciones que se introducen no quedan registradas. En las pruebas que he realizado, solo las graba una vez el Servicio Contratado está Activado
-corregido, se quito la condicion que debia estar activo, inicialmente era asi.
-
-5. Las observaciones no se muestran correctamente. No hay saltos de linea.
-Pestaña "Preselección de cuidadores"
-corregido, se tuvo que hacer otra funcion ya que la forma inicial como estaba las observaciones cambiaron, ya que se guardaban las observaciones en el momento de darle guardar al general en la pantalla modal.
-
-1. No aparece icono para ver las observaciones
-listo
-2. No se puede acceder a la modificación de las observaciones
-corregido
-3. Prefijo telefónico del país no es correcto
-
-revisar la tabla de codigo y cuidadores para ver los codigo de los telefono que se cargan desed la bd
-
-Pestaña "Servicios Facturables"
-1. Si doy de baja un servicio facturable, después ya no me deja volverlo a asignar.  Debería mostrar el "Servicio facturable" que se corresponde con el actual.
-
-enviar capture de este paso 
-
-2. El sistema no deja modificar el importe total del servicio facturable, solo permite el %
-listo
-3. El texto que muestra al modificar un "Servicio facturable" no es correcto: Texto actual: "Esta seguro que desea procesar la factura?" --> "¿Desea aceptar los cambios?"
-
-4. El sistema permite modificar las fechas de alta del "Servicio Facturable", pero no debería mostrarlo en verde ("Activo") hasta que el "Servicio Contratado" no haya sido "Activado".  Las reglas de negocio en este caso deberían ser:
-4.1. Si añado "Fecha de activación" al Servicio Facturable, al Activar el "Servicio Contratado", se respectará la fecha previa introducida
-
-diseño de este proceso?
-
-4.2. Si no se añade "Fecha de activación" al Servicio Facturable, al Activar el "Servicio Contratado", se pondrá la Fecha del "Alta de Servicio" y Fecha de Próximo Pago"
-
-diseño de este proceso?
-
-
-en el punto 4.1 y 4.2 deberia de mostrar captura paso 1, paso 2 del proceso que deberia seguir, ya que esto lo entiendo que deberia funcionar de alguna manera distinta al actual ya que estan vinculados ahora dentro de una misma pantalla.
-
-
-
-Diseño:
-5. Hay que hacer más ancha toda la ventana para que se muestren todos los campos de la lista de "Servicios Facturables"
-Listado "Servicios Contratados"
-listo esta un poco mas ancho
-
-
-
-
-Punto 4.  Es una cuestión de facilitar la introducción de las fechas y hacer que el sistema aplique cierto "criterio" y de forma automática.  Te explico la lógica con los dos puntos siguientes:
-Punto 4.1: Cuando se crea un nuevo "Servicio Contratado", el sistema crea automáticamente los "Servicios Facturables" asociados, concretamente: Alta del Servicio y Quota Mensual.  Hasta ahí todo correcto.  El tema es con las fechas.  En este caso, en el momento de la creación de los "Servicios Contratados" se debería asignar automáticamente lo siguiente:
-4.1.1. Alta de Servicio: "Fecha Alta Servicio"ha de ser igual a la "Fecha Alta Servicio" del "Servicio Contratado".  De hecho, no debería ni mostrarse en esa ventana, pues ya no tiene sentido modificarlo desde ahí.  En todo caso, yo pondría que ese campo no sea modificable para el Alta de Servicio, pues siempre coincidirá con la fecha del Alta del Contrato
-4.1.2. Alta de Servicio:  "Fecha Próximo Pago" ha de coincidir también con la "Fecha del Alta del Contrato", pero sí ha de poderse modificar, pues esta fecha puede ser acordada con el cliente.
-
-
-Punto 4.2: La "Fecha de Alta de Servicio" del Concepto Facturable" ha de coincidir con la "Fecha de Activación" del Servicio Contratado.  Como en el punto 4.1.1, este campo no debería mostrarse, pues en el momento de introducir la Fecha de Activación del Servicio Contratado, esta fecha deberá asignarse automáticamente al campo "Alta de Servicio" del Concepto Facturable.
-Por otro lado estaría el campo "Fecha Próximo Pago", que SÍ debería mostrarse y permitirse modificar, pues también puede ser acordada por el cliente.  El valor por defecto, podrá introducirse la misma fecha que la de la Fecha de Activación del Servicio Contratado
-Esta fecha no podrá modificarse hasta que el Servicio Contratado no se haya Activado (introduciendo la Fecha de Activación del Servicio)
+NINGÚN campo ha de poder tener espacios en blanco al final del texto, a excepción de los campos Text Area o similares

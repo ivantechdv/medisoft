@@ -1,6 +1,6 @@
 import axios from './axios';
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5001/api/v1/';
-const publicUrl = import.meta.env.VITE_API_PUBLIC || 'http://localhost:5001/';
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1/';
+const publicUrl = import.meta.env.VITE_API_PUBLIC || 'http://localhost:3000/';
 import Cookies from 'js-cookie';
 
 export const select = async (endpoint) => {

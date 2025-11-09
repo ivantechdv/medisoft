@@ -40,87 +40,75 @@ async function testDatabaseConnection() {
   }
 }
 
-function leerControladores() {
-  // Ruta de la carpeta de controladores
-  const controllersFolder = path.join(__dirname, "controllers");
-  console.log("ruta ", controllersFolder);
+// function leerControladores() {
+//   const controllersFolder = path.join(__dirname, "controllers");
+//   console.log("ruta ", controllersFolder);
 
-  // Leer los archivos en la carpeta de controladores
-  fs.readdir(controllersFolder, (err, carpetas) => {
-    if (err) {
-      console.error("Error al leer la carpeta de controladores:", err);
-      return;
-    }
-    console.log("carpetas ", carpetas);
+//   fs.readdir(controllersFolder, (err, carpetas) => {
+//     if (err) {
+//       console.error("Error al leer la carpeta de controladores:", err);
+//       return;
+//     }
+//     console.log("carpetas ", carpetas);
 
-    // Iterar sobre cada carpeta
-    carpetas.forEach((carpeta) => {
-      const carpetaPath = path.join(controllersFolder, carpeta);
+//     carpetas.forEach((carpeta) => {
+//       const carpetaPath = path.join(controllersFolder, carpeta);
 
-      // Verificar si es una carpeta
-      fs.stat(carpetaPath, (err, stats) => {
-        if (err) {
-          console.error(
-            `Error al obtener información de la carpeta ${carpeta}:`,
-            err
-          );
-          return;
-        }
+//       fs.stat(carpetaPath, (err, stats) => {
+//         if (err) {
+//           console.error(
+//             `Error al obtener información de la carpeta ${carpeta}:`,
+//             err
+//           );
+//           return;
+//         }
 
-        if (stats.isDirectory()) {
-          // Si es una carpeta, leemos los archivos dentro de ella
-          fs.readdir(carpetaPath, (err, archivos) => {
-            if (err) {
-              console.error(`Error al leer la carpeta ${carpeta}:`, err);
-              return;
-            }
-
-            // Iterar sobre los archivos dentro de la carpeta
-            archivos.forEach((archivo) => {
-              const archivoPath = path.join(carpetaPath, archivo);
-              // Verificar si el archivo es un archivo JavaScript
-              if (
-                fs.statSync(archivoPath).isFile() &&
-                archivo.endsWith(".js")
-              ) {
-                // Si es un archivo JavaScript, leer su contenido
-                fs.readFile(archivoPath, "utf8", (err, contenido) => {
-                  if (err) {
-                    console.error(`Error al leer el archivo ${archivo}:`, err);
-                    return;
-                  }
-                  // Analizar el contenido del controlador para obtener los métodos
-                  const metodos = obtenerMetodos(contenido);
-                  console.log(`Métodos del controlador ${archivo}:`, metodos);
-                  // Aquí puedes guardar los métodos en tu base de datos o realizar otras acciones
-                });
-              }
-            });
-          });
-        }
-      });
-    });
-  });
-}
+//         if (stats.isDirectory()) {
+//           fs.readdir(carpetaPath, (err, archivos) => {
+//             if (err) {
+//               console.error(`Error al leer la carpeta ${carpeta}:`, err);
+//               return;
+//             }
+//             archivos.forEach((archivo) => {
+//               const archivoPath = path.join(carpetaPath, archivo);
+//               if (
+//                 fs.statSync(archivoPath).isFile() &&
+//                 archivo.endsWith(".js")
+//               ) {
+//                 fs.readFile(archivoPath, "utf8", (err, contenido) => {
+//                   if (err) {
+//                     console.error(`Error al leer el archivo ${archivo}:`, err);
+//                     return;
+//                   }
+//                   const metodos = obtenerMetodos(contenido);
+//                   console.log(`Métodos del controlador ${archivo}:`, metodos);
+//                 });
+//               }
+//             });
+//           });
+//         }
+//       });
+//     });
+//   });
+// }
 
 // Función para obtener los métodos de un controlador
-function obtenerMetodos(contenido) {
-  // Expresión regular para buscar los métodos con el prefijo CTRL.
-  const regex = /CTRL\.(\w+)/g;
-  const metodos = [];
-  let match;
-  while ((match = regex.exec(contenido)) !== null) {
-    metodos.push(match[1]);
-  }
-  return metodos;
-}
+// function obtenerMetodos(contenido) {
+//   const regex = /CTRL\.(\w+)/g;
+//   const metodos = [];
+//   let match;
+//   while ((match = regex.exec(contenido)) !== null) {
+//     metodos.push(match[1]);
+//   }
+//   return metodos;
+// }
 
 function main() {
-  testDatabaseConnection();
-  leerControladores();
+  // testDatabaseConnection();
+  // leerControladores();
 
   // Puerto en el que escucha el servidor
-  const PORT = process.env.PORT || 5001;
+  const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Nodejs running on port: ${PORT}`);
   });
@@ -268,6 +256,9 @@ app.use(
   require("./routes/official_qualification/official_qualification")
 );
 app.use("/api/v1/family", trafic, require("./routes/families/families.routes"));
+
+app.use("/auth", trafic, require("./microservices/google/routes/googleRoutes"));
+
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
   next();
