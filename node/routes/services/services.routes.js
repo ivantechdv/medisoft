@@ -8,5 +8,5 @@ router.get("/all", Service.getAll);
 router.get("/:id", Service.getById);
 router.post("/", Service.create);
 router.put("/:id", Service.create);
-
+router.post("/changeStatus", Service.changeStatus);
 module.exports = router;

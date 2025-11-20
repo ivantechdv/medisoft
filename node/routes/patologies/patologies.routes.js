@@ -8,5 +8,6 @@ router.get("/all", Patology.getAll);
 router.get("/:id", Patology.getById);
 router.post("/", Patology.create);
 router.put("/:id", Patology.update);
+router.post("/changeStatus", Patology.changeStatus);
 
 module.exports = router;
