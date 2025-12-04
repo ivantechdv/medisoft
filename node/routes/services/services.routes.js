@@ -7,6 +7,6 @@ router.get("/", Service.get);
 router.get("/all", Service.getAll);
 router.get("/:id", Service.getById);
 router.post("/", Service.create);
-router.put("/:id", Service.create);
+router.put("/:id", Service.update);
 router.post("/changeStatus", Service.changeStatus);
 module.exports = router;

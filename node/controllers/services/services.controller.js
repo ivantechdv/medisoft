@@ -13,6 +13,15 @@ CTRL.create = async (req, res, next) => {
   }
 };
 
+CTRL.update = async (req, res, next) => {
+  try {
+    await Methods.update(req, res, next, Service);
+  } catch (error) {
+    console.log("error", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 CTRL.get = async (req, res, next) => {
   try {
     const condition = {};

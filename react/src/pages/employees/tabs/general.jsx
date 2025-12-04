@@ -1068,24 +1068,28 @@ const Form = ({
   setFormData({ ...formData, alias });
 
   // --- SYNC CONTACT ---
-  try {
-    const datos = { name: alias, phone: onFormData.phone };
-    const sync = await fetch('http://localhost:3000/auth/contacts/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(datos),
-    });
+ try {
+  const API = process.env.REACT_APP_API_URL;
 
-    const res = await sync.json();
-    if (res.error === 'NO_REFRESH_TOKEN') {
-      window.location.href = 'http://localhost:3000/auth/google';
-      return;
-    }
+  const datos = { name: alias, phone: onFormData.phone };
 
-    console.log('Contacto sincronizado:', data);
-  } catch (err) {
-    console.error('Error sincronizando contacto con Google:', err);
+  const sync = await fetch(`${API}/auth/contacts/sync`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(datos),
+  });
+
+  const res = await sync.json();
+
+  if (res.error === 'NO_REFRESH_TOKEN') {
+    window.location.href = `${API}/auth/google`;
+    return;
   }
+
+  console.log('Contacto sincronizado:', res);
+} catch (err) {
+  console.error('Error sincronizando contacto con Google:', err);
+}
 };
 
   return (

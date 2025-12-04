@@ -12,8 +12,6 @@ import {
 } from '../../api';
 import { validarDNI, validarNIE } from '../../utils/customFormat';
 
-// Asume que estas funciones están en '../../utils/validations.js'
-
 const Modal = ({ isOpen, onClose, id, row }) => {
   const initialValues = {
     dni: '',
@@ -24,88 +22,70 @@ const Modal = ({ isOpen, onClose, id, row }) => {
     phone: '',
     address: '',
     avatar: '',
+    profile: '',
+    is_active: true,
   };
+
   const [formData, setFormData] = useState(initialValues);
   const [isLoading, setIsLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState({}); // Estado para errores de validación
+  const [validationErrors, setValidationErrors] = useState({});
 
   const handleChange = (event) => {
     const { id, value } = event.target;
-    setFormData((prevFormData) => ({
-      ...prevFormData,
+    setFormData((prev) => ({
+      ...prev,
       [id]: value,
     }));
-    // Limpiar el error de validación para el campo modificado
+
     if (validationErrors[id]) {
-      setValidationErrors((prevErrors) => ({
-        ...prevErrors,
+      setValidationErrors((prev) => ({
+        ...prev,
         [id]: '',
       }));
     }
   };
 
-  /**
-   * Función para validar el formato de email.
-   * @param {string} email
-   * @returns {boolean}
-   */
   const isValidEmail = (email) => {
-    // Regex simple para email (podría ser más complejo si es necesario)
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(email);
   };
 
-  /**
-   * Función para validar todos los campos del formulario.
-   * @returns {boolean} - true si es válido, false si hay errores.
-   */
   const validateRequiredFields = () => {
     const errors = {};
     let isValid = true;
 
-    // 1. Validar campos requeridos y que no dejen espacios en blanco
-    for (const key in initialValues) {
-      if (key !== 'full_name' && key !== 'avatar' && key !== 'address' && key !== 'phone') { // Campos que considerás requeridos para el envío
-        const value = formData[key] ? String(formData[key]).trim() : '';
+    const requiredFields = ['first_name', 'last_name', 'dni', 'email', 'profile'];
 
-        if (!value) {
-          errors[key] = 'Este campo es requerido.';
+    requiredFields.forEach((key) => {
+      const value = formData[key] ? String(formData[key]).trim() : '';
+
+      if (!value) {
+        errors[key] = 'Este campo es requerido.';
+        isValid = false;
+        return;
+      }
+
+      if (key === 'dni') {
+        if (!validarDNI(value) && !validarNIE(value)) {
+          errors.dni = 'DNI/NIE no válido.';
           isValid = false;
-        } else if (key === 'dni') {
-          // 2. Validar DNI/NIE
-          if (!validarDNI(value) && !validarNIE(value)) {
-            errors[key] = 'DNI/NIE no válido.';
-            isValid = false;
-          }
-        } else if (key === 'email') {
-          // 3. Validar Email
-          if (!isValidEmail(value)) {
-            errors[key] = 'Formato de email no válido.';
-            isValid = false;
-          }
         }
       }
-    }
-    
-    // Validar teléfono y dirección si también los consideras requeridos
-    if (!formData.phone || String(formData.phone).trim() === '') {
-        errors.phone = 'El teléfono es requerido.';
-        isValid = false;
-    }
-    if (!formData.address || String(formData.address).trim() === '') {
-        errors.address = 'La dirección es requerida.';
-        isValid = false;
-    }
 
+      if (key === 'email') {
+        if (!isValidEmail(value)) {
+          errors.email = 'Formato de email no válido.';
+          isValid = false;
+        }
+      }
+    });
 
     setValidationErrors(errors);
     return isValid;
   };
 
   const handleSubmit = async () => {
-    // 1. Validar el formulario
     const isValid = validateRequiredFields();
-
     if (!isValid) {
       ToastNotify({
         message: 'Por favor, corrige los errores del formulario.',
@@ -118,32 +98,33 @@ const Modal = ({ isOpen, onClose, id, row }) => {
     try {
       setIsLoading(true);
 
-      let response = false;
       const dataToSend = {
         ...formData,
-        full_name: formData.first_name.trim() + ' ' + formData.last_name.trim(), // Asegurar que full_name se construye limpio
-        dni: formData.dni.trim().toUpperCase(), // Normalizar DNI/NIE
-        email: formData.email.trim(), // Limpiar email
+        full_name: `${formData.first_name.trim()} ${formData.last_name.trim()}`,
+        dni: formData.dni.trim().toUpperCase(),
+        email: formData.email.trim(),
         first_name: formData.first_name.trim(),
         last_name: formData.last_name.trim(),
         phone: formData.phone.trim(),
         address: formData.address.trim(),
+        profile: formData.profile.trim(),
+        is_active: formData.is_active,
       };
 
-      let message = '';
+      let response;
+      let message;
+
       if (!id) {
-        // Creación
         response = await postData('users', dataToSend);
         message = 'Usuario registrado con éxito';
       } else {
-        // Edición
         response = await putData('users/' + id, dataToSend);
         message = 'Usuario actualizado con éxito';
       }
 
       if (response) {
         ToastNotify({
-          message: message,
+          message,
           position: 'top-left',
           type: 'success',
         });
@@ -158,8 +139,7 @@ const Modal = ({ isOpen, onClose, id, row }) => {
       });
     } finally {
       setIsLoading(false);
-      // Solo resetear si fue una operación exitosa (o decidir si resetear siempre)
-      if (isValid) { 
+      if (isValid) {
         setFormData(initialValues);
         setValidationErrors({});
       }
@@ -169,178 +149,204 @@ const Modal = ({ isOpen, onClose, id, row }) => {
   useEffect(() => {
     if (row) {
       setFormData(row);
-      setValidationErrors({}); // Limpiar errores al cargar datos para edición
     } else {
       setFormData(initialValues);
-      setValidationErrors({}); // Limpiar errores al abrir para creación
     }
-  }, [row, isOpen]); // Asegúrate de reaccionar al cambio de `row` e `isOpen`
+    setValidationErrors({});
+  }, [row, isOpen]);
+
+  const toggleActive = () => {
+    setFormData((prev) => ({
+      ...prev,
+      is_active: !prev.is_active,
+    }));
+  };
 
   return (
     <div
-      className={`fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 ${
+      className={`fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50 flex items-center justify-center ${
         isOpen ? '' : 'hidden'
       }`}
     >
       {isLoading && <Spinner />}
+
       <div
-        className='absolute top-0 right-0 transform bg-white p-6 rounded-md h-full shadow-md overflow-auto'
-        style={{ width: 400 }}
+        className="bg-white p-6 shadow-2xl rounded-lg overflow-auto"
+        style={{ width: 900, maxHeight: '90vh' }}
       >
-        <h2 className='text-lg font-semibold mb-4'>Formulario de Usuarios</h2>
-        {/* ... (Parte del Avatar omitida para brevedad, es la misma que tenías) */}
-        <div className='flex justify-center items-center '>
-          <div className='rounded-full border border-blue-500 overflow-hidden w-32 h-32 flex items-center justify-center'>
-            {formData.avatar != '' ? (
-              <img
-                src={formData.avatar || ''}
-                alt=''
-                className='w-full h-full object-cover'
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold text-orange-500">Gestión de Usuarios</h2>
+
+          <div className="flex items-center space-x-3">
+            <span className="text-blue-600 font-semibold">Activo</span>
+
+            <button
+              type="button"
+              onClick={toggleActive}
+              aria-pressed={formData.is_active}
+              className={`relative inline-flex items-center h-6 w-12 rounded-full transition-colors duration-200 ${
+                formData.is_active ? 'bg-green-500' : 'bg-gray-300'
+              }`}
+            >
+              <span
+                className={`transform transition-transform duration-200 bg-white w-4 h-4 rounded-full shadow-sm ${
+                  formData.is_active ? 'translate-x-6' : 'translate-x-1'
+                }`}
               />
-            ) : (
-              <label
-                htmlFor='file-upload'
-                className='bg-gray-200 text-white rounded-full text-2xl w-32 h-32 flex justify-center items-center'
-              >
-                <input
-                  type='file'
-                  onChange={''}
-                  className='hidden'
-                  id='file-upload'
-                />
-                <FaUserCircle className='' size={102} />
-              </label>
-            )}
+            </button>
           </div>
         </div>
 
-        {/* --- Campos del Formulario --- */}
-        <div className='mb-4'>
-          <label htmlFor='dni' className='block mb-1 font-medium'>
-            DNI/NIE <span className='text-red-500'>*</span>:
-          </label>
-          <input
-            type='text'
-            id='dni'
-            value={formData.dni || ''}
-            onChange={handleChange}
-            className={`border rounded-md px-3 py-2 w-full ${
-              validationErrors.dni ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {validationErrors.dni && (
-            <p className='text-red-500 text-sm mt-1'>{validationErrors.dni}</p>
-          )}
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='first_name' className='block mb-1 font-medium'>
-            Nombre <span className='text-red-500'>*</span>:
-          </label>
-          <input
-            type='text'
-            id='first_name'
-            value={formData.first_name || ''}
-            onChange={handleChange}
-            className={`border rounded-md px-3 py-2 w-full ${
-              validationErrors.first_name ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {validationErrors.first_name && (
-            <p className='text-red-500 text-sm mt-1'>
-              {validationErrors.first_name}
-            </p>
-          )}
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='last_name' className='block mb-1 font-medium'>
-            Apellidos <span className='text-red-500'>*</span>:
-          </label>
-          <input
-            type='text'
-            id='last_name'
-            value={formData.last_name || ''}
-            onChange={handleChange}
-            className={`border rounded-md px-3 py-2 w-full ${
-              validationErrors.last_name ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {validationErrors.last_name && (
-            <p className='text-red-500 text-sm mt-1'>
-              {validationErrors.last_name}
-            </p>
-          )}
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='email' className='block mb-1 font-medium'>
-            Email <span className='text-red-500'>*</span>:
-          </label>
-          <input
-            type='text'
-            id='email'
-            value={formData.email || ''}
-            onChange={handleChange}
-            className={`border rounded-md px-3 py-2 w-full ${
-              validationErrors.email ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {validationErrors.email && (
-            <p className='text-red-500 text-sm mt-1'>{validationErrors.email}</p>
-          )}
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='phone' className='block mb-1 font-medium'>
-            Teléfono <span className='text-red-500'>*</span>:
-          </label>
-          <input
-            type='text'
-            id='phone'
-            value={formData.phone || ''}
-            onChange={handleChange}
-            className={`border rounded-md px-3 py-2 w-full ${
-              validationErrors.phone ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {validationErrors.phone && (
-            <p className='text-red-500 text-sm mt-1'>{validationErrors.phone}</p>
-          )}
-        </div>
-        <div className='mb-4'>
-          <label htmlFor='address' className='block mb-1 font-medium'>
-            Dirección <span className='text-red-500'>*</span>:
-          </label>
-          <input
-            type='text'
-            id='address'
-            value={formData.address || ''}
-            onChange={handleChange}
-            className={`border rounded-md px-3 py-2 w-full ${
-              validationErrors.address ? 'border-red-500' : 'border-gray-300'
-            }`}
-          />
-          {validationErrors.address && (
-            <p className='text-red-500 text-sm mt-1'>{validationErrors.address}</p>
-          )}
-        </div>
-        
-        {/* --- Botones --- */}
-        <div className='flex justify-between'>
-          <button
-            onClick={() => {
-              onClose();
-              setValidationErrors({}); // Limpia errores al cancelar
-              setFormData(initialValues); // Opcional: limpiar el formulario
-            }}
-            className='mr-2 px-4 py-2 text-white bg-red-500 rounded-md'
-          >
-            Cancelar
-          </button>
-          <button
-            onClick={handleSubmit}
-            className='px-4 py-2 bg-blue-500 text-white hover:bg-blue-700 rounded-md disabled:opacity-50'
-            disabled={isLoading}
-          >
-            {isLoading ? 'Guardando...' : 'Guardar'}
-          </button>
+        {/* BODY */}
+        <div className="grid grid-cols-3 gap-6">
+          {/* LEFT */}
+          <div className="col-span-1 flex flex-col items-center">
+            <div className="text-center mb-4">
+              <div className="text-blue-600 font-semibold text-lg">ID Usuario</div>
+              <div className="text-4xl font-bold">{id || '---'}</div>
+            </div>
+
+            <div className="rounded-full border border-gray-300 overflow-hidden w-40 h-40 flex items-center justify-center">
+              {formData.avatar ? (
+                <img src={formData.avatar} className="w-full h-full object-cover" />
+              ) : (
+                <label
+                  htmlFor="file-upload"
+                  className="bg-gray-200 rounded-full w-40 h-40 flex items-center justify-center cursor-pointer"
+                >
+                  <input type="file" id="file-upload" className="hidden" />
+                  <FaUserCircle size={140} className="text-gray-400" />
+                </label>
+              )}
+            </div>
+
+            <button className="mt-6 bg-gray-800 text-white px-4 py-2 rounded">
+              Restablecer Password
+            </button>
+          </div>
+
+          {/* RIGHT */}
+          <div className="col-span-2">
+
+            {/* Nombre */}
+            <div className="mb-3">
+              <label className="font-semibold">Nombre</label>
+              <input
+                type="text"
+                id="first_name"
+                value={formData.first_name || ''}
+                onChange={handleChange}
+                className={`border rounded px-3 py-2 w-full ${
+                  validationErrors.first_name ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {validationErrors.first_name && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.first_name}</p>
+              )}
+            </div>
+
+            {/* Apellidos */}
+            <div className="mb-3">
+              <label className="font-semibold">Apellidos</label>
+              <input
+                type="text"
+                id="last_name"
+                value={formData.last_name || ''}
+                onChange={handleChange}
+                className={`border rounded px-3 py-2 w-full ${
+                  validationErrors.last_name ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {validationErrors.last_name && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.last_name}</p>
+              )}
+            </div>
+
+            {/* DNI y Teléfono */}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <label className="font-semibold">DNI</label>
+                <input
+                  type="text"
+                  id="dni"
+                  value={formData.dni || ''}
+                  onChange={handleChange}
+                  className={`border rounded px-3 py-2 w-full ${
+                    validationErrors.dni ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                />
+                {validationErrors.dni && (
+                  <p className="text-red-500 text-sm mt-1">{validationErrors.dni}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="font-semibold">Teléfono</label>
+                <input
+                  type="text"
+                  id="phone"
+                  value={formData.phone || ''}
+                  onChange={handleChange}
+                  className="border border-gray-300 rounded px-3 py-2 w-full"
+                />
+              </div>
+            </div>
+
+            {/* Email */}
+            <div className="mb-3">
+              <label className="font-semibold">Email</label>
+              <input
+                type="text"
+                id="email"
+                value={formData.email || ''}
+                onChange={handleChange}
+                className={`border rounded px-3 py-2 w-full ${
+                  validationErrors.email ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {validationErrors.email && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.email}</p>
+              )}
+            </div>
+
+            {/* Perfil */}
+            <div className="mb-3">
+              <label className="font-semibold">Perfil</label>
+              <select
+                id="profile"
+                value={formData.profile}
+                onChange={handleChange}
+                className={`border rounded px-3 py-2 w-full ${
+                  validationErrors.profile ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">Seleccione</option>
+                <option>Admin</option>
+                <option>Usuario</option>
+              </select>
+              {validationErrors.profile && (
+                <p className="text-red-500 text-sm mt-1">{validationErrors.profile}</p>
+              )}
+            </div>
+
+            <div className="flex justify-end mt-6 space-x-3">
+              <button
+                onClick={onClose}
+                className="bg-red-500 text-white px-4 py-2 rounded"
+              >
+                Cancelar
+              </button>
+
+              <button
+                onClick={handleSubmit}
+                disabled={isLoading}
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+              >
+                Guardar
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
