@@ -5,7 +5,7 @@ const googleController = require('./../controller/googleController');
 router.get('/google', (req, res) => {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
-    redirect_uri: 'http://localhost:3000/auth/google/callback', // tu callback
+    redirect_uri: process.env.ENV=="dev"?process.env.URL_DEV:process.env.URL_PROD+'auth/google/callback', // tu callback
     response_type: 'code',
     scope: 'https://www.googleapis.com/auth/contacts',
     access_type: 'offline',

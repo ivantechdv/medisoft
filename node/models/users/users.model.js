@@ -44,13 +44,17 @@ const User = sequelize.define("users", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  profile: {
+    type: DataTypes.STRING(45),
+    allowNull: true,
+  },
   rol_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
   is_active: {
     type: DataTypes.BOOLEAN,
-    allowNull: false,
+    defaultValue:true
   },
   createdAt: {
     type: DataTypes.DATE,

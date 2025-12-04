@@ -40,6 +40,10 @@ const Service = sequelize.define("services", {
     allowNull: false,
     defaultValue: sequelize.literal("CURRENT_TIMESTAMP"),
   },
+   is_active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue:true
+  },
 });
 
 module.exports = Service;

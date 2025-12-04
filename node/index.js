@@ -16,6 +16,25 @@ const db = require("./database/sequelize");
 const cookieParser = require("cookie-parser");
 const Permiology = db.permiology;
 ////START SERVER ////
+
+
+  app.use(
+    cors({
+      origin: [ "https://app.sussalut.com",
+      "http://localhost:5002"],
+      // origin: "*" ,
+      credentials: true,
+    })
+  );
+  app.options("*", cors({
+  origin: [
+    "https://app.sussalut.com",
+    "http://localhost:5002",
+  ],
+  credentials: true,
+}));
+
+
 main();
 
 async function testDatabaseConnection() {
@@ -106,25 +125,19 @@ async function testDatabaseConnection() {
 function main() {
   // testDatabaseConnection();
   // leerControladores();
-
+  middlewares();
   // Puerto en el que escucha el servidor
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Nodejs running on port: ${PORT}`);
   });
-  middlewares();
+
 }
 
 function middlewares() {
   //console.log('process.env.IP_PROD_FR => ' , process.env.IP_PROD_FR)
   // Middlewares
-  app.use(
-    cors({
-      origin: ["http://localhost:5002"],
-      // origin: "*" ,
-      credentials: true,
-    })
-  );
+
   app.use(function (req, res, next) {
     // res.header("Access-Control-Allow-Origin", "*");
     // res.header("Access-Control-Allow-Methods", "*");
@@ -257,7 +270,14 @@ app.use(
 );
 app.use("/api/v1/family", trafic, require("./routes/families/families.routes"));
 
-app.use("/auth", trafic, require("./microservices/google/routes/googleRoutes"));
+app.use(
+  "/auth",
+  cors({
+    origin: ["https://app.sussalut.com", "http://localhost:5002"],
+    credentials: true,
+  }),
+  require("./microservices/google/routes/googleRoutes")
+);
 
 function trafic(req, res, next) {
   console.log("Request URL:", req.originalUrl);
