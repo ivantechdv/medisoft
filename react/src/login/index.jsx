@@ -1,40 +1,65 @@
-import React, { useState } from 'react'; // Importa useState
+import React, { useState, useRef } from 'react'; // Añadimos useRef
 import { AiOutlineTwitter } from 'react-icons/ai';
 import { BiLogoFacebook } from 'react-icons/bi';
 import logo from './../../public/logo2.png';
-import backgroundImage from './../../public/background.jpeg'; // Asegúrate de tener la ruta correcta a tu imagen
+import backgroundImage from './../../public/background.jpeg';
 import { postData } from './../api/index';
 import Cookies from 'js-cookie';
 import ToastNotify from '../components/toast/toast';
+// 1. Importar el componente
+import ReCAPTCHA from "react-google-recaptcha";
 
 const Login = () => {
-  const [email, setEmail] = useState(''); // Mueve useState dentro del componente
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // 2. Estado para el token del captcha
+  const [captchaValue, setCaptchaValue] = useState(null);
+  const recaptchaRef = useRef();
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
+    // 3. Validar si el usuario marcó el captcha
+    if (!captchaValue) {
+      ToastNotify({
+        message: "Por favor, verifica que no eres un robot",
+        position: 'top-center',
+        type: 'error',
+      });
+      return;
+    }
+
     try {
-      // Llamada al backend para autenticar al usuario
-      const response = await postData('users/login', { email, password });
+      // 4. Enviamos el captchaValue al backend para que ellos lo validen con la Clave Secreta
+      const response = await postData('users/login', { 
+        email, 
+        password,
+        captchaToken: captchaValue // Enviarlo al backend
+      });
+
       if (response.statusCode == 500) {
         ToastNotify({
           message: response.message,
           position: 'top-center',
           type: 'error',
         });
+        // Opcional: Reiniciar captcha si el login falla
+        recaptchaRef.current.reset();
+        setCaptchaValue(null);
       } else {
         if (response.token) {
-          // Guardar el token en una cookie
           Cookies.set('authToken', response.token, { expires: 1 });
           Cookies.set('user', JSON.stringify(response.user), { expires: 1 });
-          // Redirigir al usuario a la página principal o a otra página
           window.location.href = '/';
         }
       }
     } catch (error) {
       console.error('Error login:', error.message);
     }
+  };
+
+  const onCaptchaChange = (value) => {
+    setCaptchaValue(value);
   };
 
   return (
@@ -60,25 +85,28 @@ const Login = () => {
             className='text-sm w-full px-4 py-2 border border-solid border-gray-300 rounded'
             type='text'
             placeholder='Correo electrónico'
-            name='email'
-            id='email'
-            value={email} // Establece el valor del input a partir del estado
-            onChange={(e) => setEmail(e.target.value)} // Maneja el cambio de estado
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
           <input
             className='text-sm w-full px-4 py-2 border border-solid border-gray-300 rounded mt-4'
             type='password'
             placeholder='Contraseña'
-            name='password'
-            id='password'
-            value={password} // Establece el valor del input a partir del estado
-            onChange={(e) => setPassword(e.target.value)} // Maneja el cambio de estado
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
+
+          {/* 5. Insertar el componente reCAPTCHA */}
+          <div className='mt-4 flex justify-center'>
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
+              onChange={onCaptchaChange}
+            />
+          </div>
+
           <div className='mt-4 flex justify-between font-semibold text-sm'>
-            <a
-              className='text-blue-600 hover:text-blue-700 hover:underline hover:underline-offset-4'
-              href='#'
-            >
+            <a className='text-blue-600 hover:text-blue-700 hover:underline' href='#'>
               Olvidé mi contraseña?
             </a>
           </div>

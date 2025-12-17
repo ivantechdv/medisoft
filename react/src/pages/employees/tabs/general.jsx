@@ -1068,28 +1068,25 @@ const Form = ({
   setFormData({ ...formData, alias });
 
   // --- SYNC CONTACT ---
- try {
-  const API = process.env.REACT_APP_API_URL;
+  try {
+      const API = "https://api.sussalut.com";
+    const datos = { name: alias, phone: onFormData.phone };
+    const sync = await fetch(API+'/auth/contacts/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos),
+    });
 
-  const datos = { name: alias, phone: onFormData.phone };
+    const res = await sync.json();
+    if (res.error === 'NO_REFRESH_TOKEN') {
+      window.location.href = API+'/auth/google';
+      return;
+    }
 
-  const sync = await fetch(`${API}/auth/contacts/sync`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(datos),
-  });
-
-  const res = await sync.json();
-
-  if (res.error === 'NO_REFRESH_TOKEN') {
-    window.location.href = `${API}/auth/google`;
-    return;
+    console.log('Contacto sincronizado:', data);
+  } catch (err) {
+    console.error('Error sincronizando contacto con Google:', err);
   }
-
-  console.log('Contacto sincronizado:', res);
-} catch (err) {
-  console.error('Error sincronizando contacto con Google:', err);
-}
 };
 
   return (
