@@ -15,6 +15,12 @@ const Login = () => {
   // 2. Estado para el token del captcha
   const [captchaValue, setCaptchaValue] = useState(null);
   const recaptchaRef = useRef();
+const isLocalhost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+// Asignar la clave correspondiente
+const recaptchaSiteKey = isLocalhost 
+  ? "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" // Clave de prueba de Google para localhost
+  : "6LdRnSIsAAAAAFf__BQZqgY0Pt6afF8knB94g7Yj"; // Tu clave de producción
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -98,11 +104,11 @@ const Login = () => {
 
           {/* 5. Insertar el componente reCAPTCHA */}
           <div className='mt-4 flex justify-center'>
-            <ReCAPTCHA
-              ref={recaptchaRef}
-              sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-              onChange={onCaptchaChange}
-            />
+           <ReCAPTCHA
+  ref={recaptchaRef}
+  sitekey={recaptchaSiteKey}
+  onChange={onCaptchaChange}
+/>
           </div>
 
           <div className='mt-4 flex justify-between font-semibold text-sm'>

@@ -28,8 +28,11 @@ CTRL.login = async (req, res, next) => {
       });
     }
 
-    const secretKey = "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"; // Tu Clave Secreta
-    const googleVerifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captchaToken}`;
+const secretKey = process.env.ENV === 'dev' 
+    ? process.env.GOOGLE_PRIVATE_KEY_CAPTCHA_DEV 
+    : process.env.GOOGLE_PRIVATE_KEY_CAPTCHA_PROD;
+
+const googleVerifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captchaToken}`;
 
     const googleResponse = await axios.post(googleVerifyUrl);
     
