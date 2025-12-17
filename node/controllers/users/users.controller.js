@@ -2,22 +2,50 @@ const CTRL = {};
 const sequelize = require("../../database/sequelize");
 const User = require("../../models/users/users.model");
 const Methods = require("../methods/methods.controller");
-
+const axios = require('axios');
 const jwtService = require("../../services/JWTServices");
 const { Sequelize, Op } = require('sequelize');
 const bcrypt = require("bcrypt");
 
 CTRL.login = async (req, res, next) => {
-  const { email, password } = req.body;
+  // 1. Extraemos el token del captcha enviado desde el frontend
+  const { email, password, captchaToken } = req.body;
 
   try {
-    // Find user by email using Sequelize
+    // 2. Validaciones básicas de entrada
     if (!email || !password) {
       return res.json({
         statusCode: 500,
         message: "Email y contraseña son requeridos",
       });
     }
+
+    // 3. Validar reCAPTCHA con Google
+    if (!captchaToken) {
+      return res.json({
+        statusCode: 500,
+        message: "La verificación del captcha es obligatoria",
+      });
+    }
+
+const secretKey = process.env.ENV === 'dev' 
+    ? process.env.GOOGLE_PRIVATE_KEY_CAPTCHA_DEV 
+    : process.env.GOOGLE_PRIVATE_KEY_CAPTCHA_PROD;
+
+const googleVerifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${captchaToken}`;
+
+    const googleResponse = await axios.post(googleVerifyUrl);
+    
+    if (!googleResponse.data.success) {
+      return res.json({
+        statusCode: 500,
+        message: "Error en la validación del reCAPTCHA. Inténtalo de nuevo.",
+      });
+    }
+
+    // --- A partir de aquí sigue tu lógica original ---
+
+    // Find user by email using Sequelize
     const user = await User.findOne({ where: { email } });
 
     if (!user) {
@@ -53,7 +81,7 @@ CTRL.login = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error en el login:", error);
-    res.send({ statusCode: 500, message: "Error interno del servidor" });
+    res.json({ statusCode: 500, message: "Error interno del servidor" });
   }
 };
 
