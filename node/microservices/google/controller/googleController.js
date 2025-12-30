@@ -19,14 +19,17 @@ exports.authRedirect = async (req, res) => {
 
 exports.syncContact = async (req, res) => {
   try {
-    const { name, phone } = req.body;
-
+   const { name, phone, email, website } = req.body;
     if (!name || !phone) {
       return res.status(400).json({ error: 'Se requiere name y phone' });
     }
 
     const accessToken = await googleService.getValidAccessToken();
-    const contact = await googleService.upsertContact(accessToken, { name, phone });
+    const contact = await googleService.upsertContact(accessToken, {
+      name, 
+      phone, 
+      email, 
+      website });
 
     res.json({ success: true, contact });
   } catch (err) {
