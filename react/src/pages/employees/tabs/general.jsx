@@ -1070,7 +1070,7 @@ const Form = ({
   // --- SYNC CONTACT ---
   try {
       const API = "https://api.sussalut.com";
-    const datos = { name: alias, phone: onFormData.phone };
+    const datos = { name: alias, phone: onFormData.phone,email: onFormData.email, website:"https://app.sussalut.com/employee/"+ onFormData.id  };
     const sync = await fetch(API+'/auth/contacts/sync', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

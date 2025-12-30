@@ -52,53 +52,68 @@ exports.getValidAccessToken = async () => {
 };
 
 // === Contactos ===
-exports.upsertContact = async (accessToken, { name, phone }) => {
+exports.upsertContact = async (accessToken, { name, phone, email, website }) => {
   const auth = new google.auth.OAuth2();
   auth.setCredentials({ access_token: accessToken });
 
   const service = google.people({ version: 'v1', auth });
 
-  // 1️⃣ Buscar contacto por teléfono
+  // --- FUNCIÓN DE LIMPIEZA ---
+  // Elimina todo lo que no sea un número (espacios, guiones, paréntesis, etc.)
+  const cleanPhone = (num) => (num ? num.toString().replace(/\D/g, '') : '');
+
+  const phoneToSearch = cleanPhone(phone);
+
+  // 1️⃣ Buscar contacto por teléfono (Normalizado)
   let existingContact = null;
   try {
     const res = await service.people.connections.list({
       resourceName: 'people/me',
-      personFields: 'names,phoneNumbers',
+      personFields: 'names,phoneNumbers,emailAddresses,urls',
       pageSize: 2000,
     });
 
     existingContact = res.data.connections?.find(person => {
       const phones = person.phoneNumbers || [];
-      return phones.some(p => p.value === phone);
+      // Limpiamos cada teléfono de Google antes de comparar
+      return phones.some(p => cleanPhone(p.value) === phoneToSearch);
     });
   } catch (err) {
     console.error('Error buscando contacto existente:', err.message);
   }
 
-  // 2️⃣ Si existe, actualizar
-  const phoneValue = phone ? phone.toString().replace(/\D/g,'') : '';
+  // 2️⃣ Preparar el cuerpo del contacto
+  const contactBody = {
+    names: [{ givenName: name }],
+    phoneNumbers: [{ value: phoneToSearch }], // Guardamos el número limpio
+  };
+
+  if (email) contactBody.emailAddresses = [{ value: email }];
+  if (website) contactBody.urls = [{ value: website }];
+
+  // 3️⃣ Si existe, actualizar
   if (existingContact) {
-    
-     const resourceName = existingContact.resourceName;
-  const etag = existingContact.etag; 
+    const resourceName = existingContact.resourceName;
+    const etag = existingContact.etag;
+
     const updateRes = await service.people.updateContact({
-    resourceName,
-    updatePersonFields: 'names,phoneNumbers',
-    requestBody: {
-      etag, // agrega esto
-      names: [{ givenName: name }],
-      phoneNumbers: [{ value: phoneValue }],
-    },
-  });
+      resourceName,
+      updatePersonFields: 'names,phoneNumbers,emailAddresses,urls',
+      requestBody: {
+        ...contactBody,
+        etag,
+      },
+    });
     return updateRes.data;
   }
 
-  // 3️⃣ Si no existe, crear nuevo contacto
+  // 4️⃣ Si no existe, crear nuevo contacto
   const createRes = await service.people.createContact({
     requestBody: {
-      names: [{ givenName: name }],
-      phoneNumbers: [{ value: phoneValue }],
-      memberships: [{ contactGroupMembership: { contactGroupResourceName: 'contactGroups/myContacts' } }]  
+      ...contactBody,
+      memberships: [{ 
+        contactGroupMembership: { contactGroupResourceName: 'contactGroups/myContacts' } 
+      }]
     },
   });
 
