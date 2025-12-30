@@ -1,8 +1,8 @@
 import Navigation from './../components/navigation/navigation';
-
 import React, { useState, useEffect } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/outline';
+import { FaChevronRight, FaChevronLeft } from 'react-icons/fa'
 import icono from '/icono.png';
 
 const SidebarItem = ({
@@ -64,7 +64,7 @@ const SidebarItem = ({
   );
 };
 
-const Sidebar = ({ isSidebarOpen, isSidebarExpanded }) => {
+const Sidebar = ({ isSidebarOpen, isSidebarExpanded, setIsSidebarExpanded }) => {
   const [expandedMenus, setExpandedMenus] = useState({});
   const location = useLocation();
   const navigationItems = Navigation();
@@ -99,8 +99,17 @@ const Sidebar = ({ isSidebarOpen, isSidebarExpanded }) => {
         isSidebarExpanded ? 'w-48' : 'w-16'
       } ${isSidebarOpen ? 'block' : 'hidden'} lg:block`}
     >
+
       <div className='flex flex-col pt-1 overflow-y-auto'>
-        <div className='flex justify-center items-center mb-2'>
+        <div className='flex justify-center items-center mb-2 relative'>
+         <button
+  onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
+  className="absolute -top-1 right-[0px] bg-white border border-gray-300 rounded-full p-1 shadow z-50 text-black text-xl"
+>
+  {isSidebarExpanded ? <FaChevronLeft /> : <FaChevronRight />}
+</button>
+
+
           <div className='bg-content rounded-full p-2'>
             <img
               src={icono}
@@ -109,8 +118,13 @@ const Sidebar = ({ isSidebarOpen, isSidebarExpanded }) => {
               }`}
             />
           </div>
+
+          {/* BOTÓN PARA EXPANDIR EL SIDEBAR */}
+          
         </div>
+
         <div className='border-2 border-gray-100 w-full mb-4 mt-2'></div>
+
         {navigationItems.map((item, index) => (
           <SidebarItem
             key={index}

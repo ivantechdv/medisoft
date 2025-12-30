@@ -24,9 +24,10 @@ function Layaout() {
               <div className='flex h-screen bg-body'>
                 {/* Sidebar */}
                 <Sidebar
-                  isSidebarOpen={isSidebarOpen}
-                  isSidebarExpanded={isSidebarExpanded}
-                />
+  isSidebarOpen={isSidebarOpen}
+  isSidebarExpanded={isSidebarExpanded}
+  setIsSidebarExpanded={setIsSidebarExpanded}
+/>
                 {/* Main Content */}
                 <main className='flex flex-col flex-1 overflow-y-auto'>
                   <nav className='bg-topNav p-4 text-black'>

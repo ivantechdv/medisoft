@@ -155,8 +155,12 @@ const MyDataTable = ({
   pageSize,
   onHandleViewClient = () => {},
   onSelectedRows,
+  tableContainerRef,
+  initialSelectedId
 }) => {
-  const [selectedRowId, setSelectedRowId] = useState(null);
+  console.log("initialselectedid", sessionStorage.getItem('clients_selected_id'));
+  const [selectedRowId, setSelectedRowId] = useState(sessionStorage.getItem('clients_selected_id') || null);
+  const [selectedRowSesion, setSelectedRowSesion] = useState(sessionStorage.getItem('clients_selected_row') || null);
   const [sorting, setSorting] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]); // Nuevo estado para los checkboxes
   const [columnSizing, setColumnSizing] = useState(() => {
@@ -185,6 +189,13 @@ const MyDataTable = ({
     }
   }, [columnOrder]);
 
+    useEffect(() => {
+    if (selectedRowId) {
+    onRowInteraction(selectedRowId);
+     onRowClicked(sessionStorage.getItem('clients_selected_row'));
+    }
+  }, [selectedRowId]);
+
   const clickTimer = useRef(null);
 
   const onRowInteraction = (row) => {
@@ -199,6 +210,7 @@ const MyDataTable = ({
       clickTimer.current = setTimeout(() => {
         clickTimer.current = null;
         onRowClicked(row);
+          sessionStorage.setItem('clients_selected_row', row);
       }, 250);
     }
   };
@@ -275,7 +287,8 @@ const MyDataTable = ({
         enableResizing: false,
         enableColumnDragging: false,
         cell: ({ row }) => {
-          const isSelected = selectedRows.includes(row.original.id);
+           const isSelected = selectedRows.includes(row.original.id);
+          // const isSelected = row.original.id == selectedRowId;
           return (
             <input
               type='checkbox'
@@ -399,11 +412,25 @@ const MyDataTable = ({
           return String(valueA).localeCompare(String(valueB));
         },
         cell: ({ row, getValue, column }) => {
-          const isSelected = row.original.id === selectedRowId;
+          const isSelected = row.original.id == selectedRowId;
           const bgColor = isSelected
             ? '#d3d3d3'
             : getRowBackgroundColor(row.original);
-          const isAlias = column.id === 'alias'; // 👈 detectar columna alias
+            const originalValue = String(getValue() || "");
+  const isAlias = column.id === 'alias'; 
+  
+  let displayedValue = originalValue;
+
+  // Solo recortamos si es la columna Alias
+  if (isAlias) {
+    const columnWidth = column.getSize();
+    // Estimación: ancho de columna dividido por ~9px por carácter
+    const maxChars = Math.floor(columnWidth / 8); 
+    
+    if (originalValue.length > maxChars) {
+      displayedValue = originalValue.substring(0, Math.max(0, maxChars - 3)) + "...";
+    }
+  }
           return (
             <div
               style={{
@@ -420,7 +447,7 @@ const MyDataTable = ({
                 wordBreak: isAlias ? 'break-word' : 'normal',
               }}
             >
-              {getValue()}
+             {displayedValue}
             </div>
           );
         },
@@ -480,6 +507,7 @@ const MyDataTable = ({
   return (
     <>
       <div
+        ref={tableContainerRef}
         style={{
           overflowX: 'auto',
           maxHeight: 'calc(100vh - 130px)',
@@ -592,25 +620,39 @@ const MyDataTable = ({
 };
 
 const Clients = () => {
+  
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(() => {
     return localStorage.getItem('pageSize') || '10'; // Carga desde localStorage o usa 10 por defecto
   });
 
-  const [currentPage, setCurrentPage] = useState(1);
+ const [currentPage, setCurrentPage] = useState(() => {
+    const savedPage = sessionStorage.getItem('clients_last_page');
+    return savedPage ? parseInt(savedPage) : 1;
+  });
+
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
   const [totalPages, setTotalPages] = useState(1);
   const [title, setTitle] = useState('');
   const id = useRef('');
+
+  
+  // 2. AGREGA ESTA REFERENCIA (debajo de tus otros useRef):
+  const tableContainerRef = useRef(null);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null); //seleccion del registro unico
+  const [selectedRow, setSelectedRow] = useState(() => {
+  return sessionStorage.getItem('clients_selected_row') || null;
+}); //seleccion del registro unico
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [photo, setPhoto] = useState('');
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [isFilter, setIsFilter] = useState(false);
-  const [selectedRowId, setSelectedRowId] = useState(null);
+  const [selectedRowId, setSelectedRowId] = useState(() => {
+  return sessionStorage.getItem('clients_selected_id') || null;
+});
 
   const [dictionaries, setDictionaries] = useState({
     patologies: {},
@@ -633,6 +675,7 @@ const Clients = () => {
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+
   const [niveles, setNiveles] = useState([]);
   const [situaciones, setSituaciones] = useState([]);
 
@@ -645,6 +688,8 @@ const Clients = () => {
     icon: 'question',
   });
 
+
+  
   useEffect(() => {
     const table = document.querySelector('.table-container'); // Clase de contenedor de la tabla
     if (table) {
@@ -725,8 +770,21 @@ const Clients = () => {
       console.log(response);
       const { data, meta } = response;
 
+
+
       setRows(data);
       setTotalPages(meta.totalPages);
+
+      const savedScroll = sessionStorage.getItem('clients_last_scroll');
+    if (savedScroll && tableContainerRef.current) {
+      // Usamos requestAnimationFrame o un timeout corto para asegurar 
+      // que el DOM ya tiene las filas renderizadas
+      setTimeout(() => {
+        if (tableContainerRef.current) {
+          tableContainerRef.current.scrollTop = parseInt(savedScroll);
+        }
+      }, 100);
+    }
     } catch (error) {
       console.error('Error ', error);
     } finally {
@@ -740,6 +798,12 @@ const Clients = () => {
     } catch (error) {
       console.log('error =>', error);
     } finally {
+      setTimeout(() => {
+  const savedScroll = sessionStorage.getItem('clients_last_scroll');
+  if (savedScroll && tableContainerRef.current) {
+    tableContainerRef.current.scrollTop = parseInt(savedScroll);
+  }
+}, 100);
     }
   }, [currentPage, pageSize, searchTerm]);
 
@@ -818,6 +882,7 @@ const Clients = () => {
     console.log('row', row);
     setSelectedRow(row);
     setSelectedRowId(row.id);
+    sessionStorage.setItem('clients_selected_id', row.id);
     const preselection = await getData(
       `client-service-preselection/all?employee_id=${row.id}&status=Pendiente`,
     );
@@ -880,6 +945,14 @@ const Clients = () => {
     setSelectedRow(false);
   };
 const handleViewClient = (clientId, color) => {
+  if (tableContainerRef.current) {
+    sessionStorage.setItem('clients_last_scroll', tableContainerRef.current.scrollTop);
+  }
+  // 2. Guardar página actual
+  sessionStorage.setItem('clients_last_page', currentPage);
+  
+  // 3. Guardar el ID para que siga marcado al volver
+  sessionStorage.setItem('clients_selected_id', clientId);
   navigateTo(`/employee/${clientId}`, {
     state: { color },
   });
@@ -1231,6 +1304,8 @@ const handleViewClient = (clientId, color) => {
               currentPage={currentPage}
               pageSize={pageSize}
               onSelectedRows={setSelectedRows}
+              tableContainerRef={tableContainerRef}
+              initialSelectedId={sessionStorage.getItem('clients_selected_id')}
             />
           </div>
         </div>
