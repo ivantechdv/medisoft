@@ -7,11 +7,14 @@ import Client from './../pages/clients/client';
 import Employees from './../pages/employees';
 import Employee from './../pages/employees/employee';
 import Services from '../pages/services';
+import SetPassword from './../pages/users/SetPassword';
 
 function RoutesApp() {
   return (
     <Routes>
       <Route path='/users' element={<Users />} />
+      <Route path='/set-password' element={<SetPassword />} />
+      <Route path='/set-password/:token' element={<SetPassword />} />
       {/* Clientes */}
       <Route path='/clients' element={<Clients />} />
       <Route path='/client' element={<Client />} />

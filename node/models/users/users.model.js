@@ -44,6 +44,15 @@ const User = sequelize.define("users", {
     type: DataTypes.TEXT,
     allowNull: true,
   },
+  // Token de invitación para establecimiento de contraseña y su expiración
+  invite_token: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  invite_expires: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
   profile: {
     type: DataTypes.STRING(45),
     allowNull: true,

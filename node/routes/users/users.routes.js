@@ -12,5 +12,10 @@ router.post("/", UserController.create);
 router.put("/:id", UserController.update);
 router.post("/login", UserController.login);
 router.post("/changeStatus", UserController.changeStatus);
+// Envío de correo de invitación para establecer contraseña
+router.post("/:id/send-password-email", UserController.sendPasswordEmail);
+// Validación de token y establecimiento de contraseña
+router.post("/validate-invite", UserController.validateInvite);
+router.post("/set-password", UserController.setPassword);
 
 module.exports = router;

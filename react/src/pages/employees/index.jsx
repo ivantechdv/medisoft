@@ -633,6 +633,15 @@ const Clients = () => {
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
+  // Debounced search term to avoid firing requests on every key stroke
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  // Efecto para actualizar debouncedSearchTerm con retraso (debounce)
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500); // Ajusta el tiempo de debounce (ms) según prefieras
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
   const [totalPages, setTotalPages] = useState(1);
   const [title, setTitle] = useState('');
   const id = useRef('');
@@ -751,11 +760,13 @@ const Clients = () => {
 
   const getRows = async () => {
     try {
-      if (!searchTerm) {
+      // Mostrar spinner cuando no hay término de búsqueda activo (o cuando se cargan páginas)
+      if (!debouncedSearchTerm) {
         setIsLoading(true);
       }
       let response;
-      let url = `employees?is_deleted=0&searchTerm=${searchTerm}`;
+      // Usar el término debounced para construir la URL y evitar llamadas por cada pulsación
+      let url = `employees?is_deleted=0&searchTerm=${debouncedSearchTerm}`;
 
       if (filtersT.estado) url += `&is_active=${filtersT.estado}`;
       if (filtersT.tipo) url += `&type=${filtersT.tipo}`;
@@ -805,7 +816,7 @@ const Clients = () => {
   }
 }, 100);
     }
-  }, [currentPage, pageSize, searchTerm]);
+  }, [currentPage, pageSize, debouncedSearchTerm]);
 
   const handleSearchTermChange = (event) => {
     setSearchTerm(event.target.value);
