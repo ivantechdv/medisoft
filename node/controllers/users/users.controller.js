@@ -6,6 +6,7 @@ const axios = require('axios');
 const jwtService = require("../../services/JWTServices");
 const { Sequelize, Op } = require('sequelize');
 const bcrypt = require("bcrypt");
+const emailConfig = require("../../config/email.config");
 
 CTRL.login = async (req, res, next) => {
   // 1. Extraemos el token del captcha enviado desde el frontend
@@ -157,6 +158,109 @@ CTRL.changeStatus = async (req, res, next) => {
     console.error("Error en bulkDeactivate:", error);
     res.status(500).json({ error: "Error interno del servidor al desactivar usuarios." });
   }
+};
+
+/**
+ * Enviar correo de invitación para que el usuario establezca su contraseña.
+ * POST /api/v1/users/:id/send-password-email
+ * Body: { email, redirect_url }
+ */
+CTRL.sendPasswordEmail = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { email, redirect_url } = req.body;
+
+    const user = await User.findByPk(id);
+    if (!user) return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+
+    // Generar token de invitación (1 día)
+    const token = jwtService.generateInviteToken({ id: user.id }, "1d");
+
+    const url = `${redirect_url}?token=${token}`;
+
+    const subject = "Invitación: establecer contraseña";
+    const template = `<p>Hola ${user.full_name || user.email},</p>
+      <p>Has sido registrado en la plataforma. Haz clic en el siguiente enlace para establecer tu contraseña:</p>
+      <p><a href="${url}">${url}</a></p>
+      <p>El enlace expirará en 24 horas.</p>`;
+
+    // Guardar token y fecha de expiración en la BD (para control adicional)
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
+    await User.update({ invite_token: token, invite_expires: expiresAt }, { where: { id: user.id } });
+
+    // Enviar correo usando config (si no se pasan credenciales, email.config tomará de env)
+    await emailConfig.enviarCorreo(process.env.EMAIL_USER, process.env.EMAIL_PASS, [email], subject, template);
+
+    return res.json({ success: true, message: "Correo de invitación enviado", url });
+  } catch (error) {
+    console.error("Error enviando correo de invitación:", error);
+    return res.status(500).json({ success: false, message: "Error al enviar correo de invitación" });
+  }
+};
+
+/**
+ * Validar token de invitación.
+ * POST /api/v1/users/validate-invite
+ * Body: { token }
+ */
+CTRL.validateInvite = async (req, res, next) => {
+  try {
+    const { token } = req.body;
+    if (!token) return res.status(400).json({ valid: false, message: "Token requerido" });
+
+    const decoded = jwtService.verifyToken(token);
+    if (!decoded) return res.status(400).json({ valid: false, message: "Token inválido o expirado" });
+
+    const user = await User.findByPk(decoded.id);
+    if (!user) return res.status(404).json({ valid: false, message: "Usuario no encontrado" });
+
+    // Comprobar que el token coincida con el token almacenado y que no haya expirado
+    if (!user.invite_token || user.invite_token !== token) {
+      return res.status(400).json({ valid: false, message: "Token no coincide" });
+    }
+    if (!user.invite_expires || new Date(user.invite_expires) < new Date()) {
+      return res.status(400).json({ valid: false, message: "Token expirado" });
+    }
+
+    return res.json({ valid: true, userId: user.id });
+  } catch (error) {
+    console.error("Error validando token:", error);
+    return res.status(500).json({ valid: false, message: "Error al validar token" });
+  }
+};
+
+/**
+ * Establecer contraseña a partir del token.
+ * POST /api/v1/users/set-password
+ * Body: { token, password }
+ */
+CTRL.setPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ success: false, message: "Token y password son requeridos" });
+
+    const decoded = jwtService.verifyToken(token);
+    if (!decoded) return res.status(400).json({ success: false, message: "Token inválido o expirado" });
+
+    const user = await User.findByPk(decoded.id);
+    if (!user) return res.status(404).json({ success: false, message: "Usuario no encontrado" });
+
+    // Comprobar token almacenado y expiración
+    if (!user.invite_token || user.invite_token !== token) {
+      return res.status(400).json({ success: false, message: "Token no coincide" });
+    }
+    if (!user.invite_expires || new Date(user.invite_expires) < new Date()) {
+      return res.status(400).json({ success: false, message: "Token expirado" });
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    await User.update({ password: hashed, is_active: true, invite_token: null, invite_expires: null }, { where: { id: user.id } });
+
+    return res.json({ success: true, message: "Contraseña establecida correctamente" });
+  } catch (error) {
+    console.error("Error estableciendo contraseña:", error);
+    return res.status(500).json({ success: false, message: "Error al establecer contraseña" });
+  }
 };
 
 

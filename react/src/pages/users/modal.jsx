@@ -117,6 +117,23 @@ const Modal = ({ isOpen, onClose, id, row }) => {
       if (!id) {
         response = await postData('users', dataToSend);
         message = 'Usuario registrado con éxito';
+        // Enviar correo de invitación para establecer contraseña la primera vez.
+        // Se envía el redirect_url para que el backend genere una URL con token completa.
+        try {
+          const emailPayload = {
+            email: response.email || dataToSend.email,
+            redirect_url: `${window.location.origin}/set-password`,
+          };
+          // Endpoint esperado en el backend: POST /users/:id/send-password-email
+          await postData(`users/${response.id}/send-password-email`, emailPayload);
+        } catch (err) {
+          console.error('Error al enviar correo de invitación:', err);
+          ToastNotify({
+            message: 'Usuario creado, pero no se pudo enviar el correo de invitación.',
+            position: 'top-left',
+            type: 'warning',
+          });
+        }
       } else {
         response = await putData('users/' + id, dataToSend);
         message = 'Usuario actualizado con éxito';

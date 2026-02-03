@@ -26,4 +26,23 @@ function decodeToken(token) {
   }
 }
 
-module.exports = { generateToken, decodeToken };
+// Generar token de invitación con tiempo de expiración personalizable
+function generateInviteToken(payload, expiresIn = "1d") {
+  try {
+    return jwt.sign(payload, secret, { expiresIn });
+  } catch (error) {
+    console.error("Error al generar invite token:", error);
+    throw new Error("No se pudo generar el invite token");
+  }
+}
+
+// Verificar token (misma lógica que decodeToken pero devuelve null en caso de expirado/inválido)
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, secret);
+  } catch (error) {
+    return null;
+  }
+}
+
+module.exports = { generateToken, decodeToken, generateInviteToken, verifyToken };
