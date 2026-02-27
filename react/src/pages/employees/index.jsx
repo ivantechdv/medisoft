@@ -623,8 +623,10 @@ const Clients = () => {
   
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(() => {
-    return localStorage.getItem('pageSize') || '10'; // Carga desde localStorage o usa 10 por defecto
-  });
+  const saved = localStorage.getItem('pageSize');
+  // Si no hay nada guardado o es 'todos', usar 10 por defecto
+  return (!saved || saved === 'todos') ? '10' : saved;
+});
 
  const [currentPage, setCurrentPage] = useState(() => {
     const savedPage = sessionStorage.getItem('clients_last_page');
@@ -774,8 +776,11 @@ const Clients = () => {
       if (filtersT.situacion) url += `&statu_id=${filtersT.situacion}`;
       if (filtersT.alias) url += `&statu_id=${filtersT.alias}`;
 
-      if (localStorage.getItem('pageSize') !== 'todos') {
+      if (pageSize !== 'todos') {
         url += `&page=${currentPage}&pageSize=${pageSize}`;
+      } else {
+        // Cuando pageSize es 'todos', usar un número grande para obtener todos los registros
+        url += `&page=1&pageSize=1000`;
       }
       response = await getData(url);
       console.log(response);

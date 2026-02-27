@@ -118,8 +118,14 @@ CTRL.get = async (
     if (pageSize) {
       parsedPage = parseInt(page);
       parsedPageSize = parseInt(pageSize);
-
-      offset = (parsedPage - 1) * parsedPageSize;
+      
+      // Si pageSize es 0, obtener todos los registros
+      if (parsedPageSize === 0) {
+        offset = 0;
+        parsedPageSize = 0; // 0 significa sin límite
+      } else {
+        offset = (parsedPage - 1) * parsedPageSize;
+      }
     }
     const searchWhere = {
       ...(searchTerm && {
@@ -160,7 +166,7 @@ CTRL.get = async (
       },
       distinct: true,
       include: include,
-      ...(pageSize && {
+      ...(parsedPageSize > 0 && {
         limit: parsedPageSize,
         offset: offset,
       }),
@@ -175,7 +181,7 @@ CTRL.get = async (
     //   order: [["id", "ASC"]],
     // });
 
-    const totalPages = Math.ceil(count / parsedPageSize);
+    const totalPages = parsedPageSize > 0 ? Math.ceil(count / parsedPageSize) : 1;
 
     res.json({
       data: rows,

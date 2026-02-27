@@ -1,9 +1,23 @@
 // src/utils/formatUtils.js
 
-// Formatea un número de teléfono (Ej: "1234567890" → "123 456 7890")
+// Formatea un número de teléfono (Ej: "123456789" → "123 45 67 89")
 export const formatPhoneNumber = (phone) => {
   if (!phone) return '';
-  return phone.replace(/(\d{3})(?=\d)/g, '$1 ');
+  const cleanNumber = phone.replace(/\D/g, '');
+  if (cleanNumber.length <= 9) {
+    let formattedValue = cleanNumber;
+    if (cleanNumber.length > 3) {
+      formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
+    }
+    if (cleanNumber.length > 5) {
+      formattedValue = formattedValue.slice(0, 6) + ' ' + cleanNumber.slice(5);
+    }
+    if (cleanNumber.length > 7) {
+      formattedValue = formattedValue.slice(0, 9) + ' ' + cleanNumber.slice(7);
+    }
+    return formattedValue;
+  }
+  return phone;
 };
 
 export const formatISOToDate = (isoString) => {

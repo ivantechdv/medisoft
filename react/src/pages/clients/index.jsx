@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
 import { getData, postData, putData } from '../../api';
@@ -13,197 +13,380 @@ import {
   InfoSweetAlert,
 } from '../../components/SweetAlert/SweetAlert';
 import ToastNotify from '../../components/toast/toast';
-import DataTable from 'react-data-table-component';
-import { Resizable } from 'react-resizable';
-import 'react-resizable/css/styles.css'; // Importa los estilos de la librería
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  flexRender,
+} from '@tanstack/react-table';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const DraggableHeader = ({ header, index }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({ id: header.column.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    width: `${header.getSize()}px`,
+    padding: '8px',
+    borderBottom: '1px solid #ccc',
+    textAlign: 'center',
+    fontSize: '13px',
+    position: 'relative',
+    backgroundColor: '#f9f9f9',
+    userSelect: 'none',
+    boxSizing: 'border-box',
+    overflow: 'hidden',
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+  };
+
+  return (
+    <th ref={setNodeRef} style={style}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: header.column.getCanSort() ? 'pointer' : 'default',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            padding: '0 4px',
+          }}
+          onClick={header.column.getToggleSortingHandler()}
+        >
+          {flexRender(header.column.columnDef.header, header.getContext())}
+        </div>
+        <div
+          {...attributes}
+          {...listeners}
+          style={{
+            cursor: 'grab',
+            padding: '0 4px',
+            display: 'flex',
+            alignItems: 'center',
+            opacity: 0.5,
+          }}
+        >
+          <span style={{ fontSize: 12 }}>☰</span>
+        </div>
+      </div>
+      {header.column.getCanResize() && (
+        <div
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            height: '100%',
+            width: '4px',
+            cursor: 'col-resize',
+            zIndex: 1,
+            userSelect: 'none',
+            backgroundColor: '#ddd',
+            borderLeft: '2px solid #aaa',
+          }}
+        />
+      )}
+    </th>
+  );
+};
+
 const MyDataTable = ({
-  rows,
-  onHandleRowClick,
+  rows = [],
+  onHandleRowClick = () => {},
   onRenderPagination,
   currentPage,
   pageSize,
-  onHandleViewClient,
+  onHandleViewClient = () => {},
+  onSelectedRows,
+  tableContainerRef,
 }) => {
-  const [isResizing, setIsResizing] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]);
-  const [selectedRowId, setSelectedRowId] = useState(null);
-  useEffect(() => {
-    const savedSelectedRows =
-      JSON.parse(localStorage.getItem('selectedRows')) || [];
-    setSelectedRows(savedSelectedRows);
-  }, []);
+  const [selectedRowId, setSelectedRowId] = useState(
+    sessionStorage.getItem('clients_selected_id') || null,
+  );
+  const [sorting, setSorting] = useState([]);
 
-  const dataTableKey = `${currentPage}-${selectedRowId}`;
-
-  // Añadir efecto para sincronizar selección con paginación
-  useEffect(() => {
-    if (selectedRowId && !rows.some((row) => row.id === selectedRowId)) {
-      setSelectedRowId(null);
-    }
-  }, [currentPage, rows, selectedRowId]);
-
-  // Modificar los estilos condicionales
-  const conditionalRowStyles = [
-    {
-      when: (row) => row.id === selectedRowId,
-      style: {
-        backgroundColor: '#dee0e2 !important',
-        '&:hover': {
-          backgroundColor: '#dee0e2 !important',
-        },
-      },
-    },
-    {
-      when: (row) => row.id !== selectedRowId,
-      style: {
-        '&:hover': {
-          backgroundColor: '#f3f4f6 !important',
-        },
-      },
-    },
-  ];
-
-  useEffect(() => {
-    localStorage.setItem('selectedRows', JSON.stringify(selectedRows));
-  }, [selectedRows]);
-
-  const handleRowSelected = ({ selectedRows }) => {
-    setSelectedRows(selectedRows);
-  };
-
-  const getColumnWidths = () => {
-    const savedWidths = JSON.parse(localStorage.getItem('columnWidths')) || {};
-    return {
-      id: savedWidths.id || 80,
-      dni: savedWidths.dni || 120,
-      full_name: savedWidths.full_name || 200,
-      family1: savedWidths.family1 || 180,
-      family1_phone: savedWidths.family1_phone || 150,
-      email: savedWidths.email || 250,
-      phone: savedWidths.phone || 150,
-      family2: savedWidths.family2 || 180,
-      family2_phone: savedWidths.family2_phone || 150,
-    };
-  };
-
-  const [columnWidths, setColumnWidths] = useState(getColumnWidths);
-
-  useEffect(() => {
-    localStorage.setItem('columnWidths', JSON.stringify(columnWidths));
-  }, [columnWidths]);
-
-  const handleResizeStart = () => setIsResizing(true);
-  const handleResizeStop = () => setIsResizing(false);
-
-  const handleResize =
-    (columnKey) =>
-    (e, { size }) => {
-      setColumnWidths((prev) => {
-        const newWidths = { ...prev, [columnKey]: size.width };
-        localStorage.setItem('columnWidths', JSON.stringify(newWidths));
-        return newWidths;
-      });
-    };
-
-  const resizableColumn = (name, key, selector) => ({
-    name: (
-      <Resizable
-        width={columnWidths[key]}
-        height={0}
-        onResize={handleResize(key)}
-        onResizeStart={handleResizeStart}
-        onResizeStop={handleResizeStop}
-        draggableOpts={{ enableUserSelectHack: false }}
-      >
-        <div>{name}</div>
-      </Resizable>
-    ),
-    selector,
-    sortable: !isResizing,
-    width: `${columnWidths[key]}px`,
+  const [columnSizing, setColumnSizing] = useState(() => {
+    const saved = localStorage.getItem('clientsTableColumnWidths');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [columnOrder, setColumnOrder] = useState(() => {
+    const saved = localStorage.getItem('clientsTableColumnOrder');
+    return saved ? JSON.parse(saved) : null;
   });
 
-  const columns = [
-    resizableColumn('ID', 'id', (row) => row.id),
-    resizableColumn('DNI', 'dni', (row) => row.dni),
-    resizableColumn(
-      'Familiar-1',
-      'family1',
-      (row) => row.families[0]?.name || '-',
-    ),
-    resizableColumn(
-      'Teléfono',
-      'family1_phone',
-      (row) => row.families[0]?.phone || '-',
-    ),
-    resizableColumn(
-      'Familiar-2',
-      'family2',
-      (row) => row.families[1]?.name || '-',
-    ),
-    resizableColumn(
-      'Teléfono',
-      'family2_phone',
-      (row) => row.families[1]?.phone || '-',
-    ),
-    resizableColumn('Nombre completo', 'full_name', (row) => row.full_name),
-    resizableColumn('Teléfono', 'phone', (row) => row.phone),
-    resizableColumn('Correo electrónico', 'email', (row) => row.email),
-  ];
+  useEffect(() => {
+    localStorage.setItem('clientsTableColumnWidths', JSON.stringify(columnSizing));
+  }, [columnSizing]);
 
-  const handleRowClick = (row) => {
-    console.log('row.', row.id);
+  useEffect(() => {
+    if (columnOrder) {
+      localStorage.setItem('clientsTableColumnOrder', JSON.stringify(columnOrder));
+    }
+  }, [columnOrder]);
+
+  useEffect(() => {
+    if (selectedRowId) {
+      sessionStorage.setItem('clients_selected_id', selectedRowId);
+    }
+  }, [selectedRowId]);
+
+  const clickTimer = useRef(null);
+  const onRowInteraction = (row) => {
+    if (!row?.id) return;
+
+    if (clickTimer.current) {
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      onHandleViewClient(row.id);
+    } else {
+      clickTimer.current = setTimeout(() => {
+        clickTimer.current = null;
+        onHandleRowClick(row);
+        sessionStorage.setItem('clients_selected_row', JSON.stringify(row));
+      }, 250);
+    }
+  };
+
+  const columnDefs = useMemo(
+    () => [
+      {
+        header: () => (
+          <input
+            type="checkbox"
+            checked={false}
+            onChange={() => {}}
+            style={{ cursor: 'pointer' }}
+          />
+        ),
+        id: 'selection',
+        size: 40,
+        minSize: 40,
+        maxSize: 40,
+        enableSorting: false,
+        enableResizing: false,
+        enableColumnDragging: false,
+        cell: ({ row }) => {
+          return (
+            <input
+              type="checkbox"
+              onClick={(e) => e.stopPropagation()}
+              style={{ cursor: 'pointer', marginLeft: '10px' }}
+            />
+          );
+        },
+      },
+      ...[
+        { key: 'id', label: 'ID' },
+        { key: 'dni', label: 'DNI' },
+        { key: 'full_name', label: 'Nombre' },
+        { key: 'email', label: 'Correo Electrónico' },
+        { key: 'phone', label: 'Teléfono' },
+        { key: 'family1', label: 'Familiar 1' },
+        { key: 'family1_phone', label: 'Teléfono 1' },
+        { key: 'family2', label: 'Familiar 2' },
+        { key: 'family2_phone', label: 'Teléfono 2' },
+      ].map(({ key, label }) => ({
+        header: label,
+        accessorKey: key,
+        id: key,
+        size: columnSizing[key] ?? (['full_name', 'email'].includes(key) ? 240 : 120),
+        minSize: ['full_name', 'email'].includes(key) ? 150 : 80,
+        maxSize: ['full_name', 'email'].includes(key) ? 600 : 250,
+        enableSorting: true,
+        enableResizing: true,
+        cell: ({ row, getValue, column }) => {
+          const value = getValue();
+          const isSelected = row.original.id == selectedRowId;
+          const bgColor = isSelected ? '#d3d3d3' : '#fff';
+
+          // Manejo específico para campos de familia
+          if (key.startsWith('family')) {
+            const original = row.original || {};
+            const idx = key.includes('1') ? 0 : 1;
+            const isPhone = key.endsWith('_phone');
+            const family = original.families ? original.families[idx] : null;
+            const text = family ? (isPhone ? family.phone || '-' : family.name || '-') : '-';
+            return (
+              <div
+                style={{
+                  backgroundColor: bgColor,
+                  width: '100%',
+                  height: '100%',
+                  padding: '4px 8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '13px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {text}
+              </div>
+            );
+          }
+
+          return (
+            <div
+              style={{
+                backgroundColor: bgColor,
+                width: '100%',
+                height: '100%',
+                padding: '4px 8px',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '13px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {value ?? '-'}
+            </div>
+          );
+        },
+      })),
+    ],
+    [selectedRowId, columnSizing],
+  );
+
+  const defaultColumnOrder = columnDefs.map((col) => col.id);
+
+  const table = useReactTable({
+    data: rows,
+    columns: columnDefs,
+    state: {
+      sorting,
+      columnSizing,
+      columnOrder: columnOrder || defaultColumnOrder,
+    },
+    onSortingChange: setSorting,
+    onColumnSizingChange: setColumnSizing,
+    onColumnOrderChange: setColumnOrder,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    columnResizeMode: 'onEnd',
+    enableColumnResizing: true,
+  });
+
+  const sensors = useSensors(useSensor(PointerSensor));
+
+  const onDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over?.id) {
+      const oldIndex = table.getState().columnOrder.indexOf(active.id);
+      const newIndex = table.getState().columnOrder.indexOf(over.id);
+      const newOrder = arrayMove(table.getState().columnOrder, oldIndex, newIndex);
+      setColumnOrder(newOrder);
+    }
+  };
+
+  const onRowClicked = (row) => {
+    if (!row?.id) return;
+    setSelectedRowId(row.id);
     onHandleRowClick(row);
-    setSelectedRowId((prev) => (prev === row.id ? null : row.id));
   };
 
-  // Función para ver detalles del cliente
-  const handleViewClient = (id) => {
-    onHandleViewClient(id);
-    console.log(`Ver detalles del cliente con ID: ${id}`);
-    // Aquí puedes agregar la navegación o modal para ver detalles
-  };
   return (
-    <div>
-      <DataTable
-        key={currentPage}
-        columns={columns}
-        data={rows}
-        fixedHeader
-        keyField='id'
-        fixedHeaderScrollHeight='calc(100vh - 130px)'
-        selectableRows={true}
-        onSelectedRowsChange={handleRowSelected}
-        pagination={false}
-        conditionalRowStyles={conditionalRowStyles}
-        customStyles={{
-          rows: {
-            style: {
-              minHeight: '32px',
-              height: '32px',
-              fontSize: '14px',
-              padding: '4px 8px',
-              cursor: 'pointer', // 🔥 Cambia el cursor a pointer
-            },
-          },
-          headCells: {
-            style: {
-              position: 'sticky', // 🔥 Hace que los títulos queden fijos
-              top: 0,
-              backgroundColor: '#f8f9fa', // Color de fondo para diferenciarlos
-              zIndex: 2, // Asegura que estén por encima del contenido
-              fontSize: '14px',
-              fontWeight: 'bold',
-              padding: '6px 8px',
-            },
-          },
+    <>
+      <div
+        ref={tableContainerRef}
+        style={{
+          overflowX: 'auto',
+          maxHeight: 'calc(100vh - 130px)',
+          width: '100%',
+          display: 'block',
         }}
-        onRowClicked={(row) => handleRowClick(row)}
-        onRowDoubleClicked={(row) => handleViewClient(row.id)}
-      />
-
-      {onRenderPagination()}
-    </div>
+      >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <div style={{ width: 'max-content', minWidth: '100%' }}>
+            <table style={{ width: 'auto', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <SortableContext key={headerGroup.id} items={headerGroup.headers.map((h) => h.column.id)} strategy={verticalListSortingStrategy}>
+                    <tr>
+                      {headerGroup.headers.map((header, index) =>
+                        index < 1 ? (
+                          <th
+                            key={header.id}
+                            style={{
+                              width: `${header.getSize()}px`,
+                              padding: '4px',
+                              borderBottom: '1px solid #ccc',
+                              textAlign: 'center',
+                              fontSize: '13px',
+                              backgroundColor: '#f9f9f9',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }}
+                          >
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                          </th>
+                        ) : (
+                          <DraggableHeader key={header.id} header={header} index={index} />
+                        ),
+                      )}
+                    </tr>
+                  </SortableContext>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map((row) => {
+                  return (
+                    <tr key={row.id} onClick={() => onRowInteraction(row.original)} style={{ cursor: 'pointer' }}>
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          style={{
+                            fontSize: '12px',
+                            width: `${cell.column.getSize()}px`,
+                            boxSizing: 'border-box',
+                            overflow: 'hidden',
+                            padding: '0px',
+                            borderBottom: '1px solid #ccc',
+                          }}
+                        >
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </DndContext>
+      </div>
+      {pageSize !== 'todos' && onRenderPagination?.()}
+    </>
   );
 };
 

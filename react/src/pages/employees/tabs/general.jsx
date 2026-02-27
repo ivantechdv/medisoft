@@ -415,12 +415,24 @@ const Form = ({
     }));
   }
 
-  if (id === 'phone') {
+  if (id === 'phone' || id === 'phone2') {
     const newValue = cleanValue.replace(/\D/g, '');
     if (newValue.length <= 9) {
+      // Aplicar máscara 999 99 99 99
+      let formattedValue = newValue;
+      if (newValue.length > 3) {
+        formattedValue = newValue.slice(0, 3) + ' ' + newValue.slice(3);
+      }
+      if (newValue.length > 5) {
+        formattedValue = formattedValue.slice(0, 6) + ' ' + newValue.slice(5);
+      }
+      if (newValue.length > 7) {
+        formattedValue = formattedValue.slice(0, 9) + ' ' + newValue.slice(7);
+      }
+      
       setFormData((prevFormData) => ({
         ...prevFormData,
-        [id]: newValue,
+        [id]: formattedValue,
       }));
     }
   } else {
@@ -683,6 +695,16 @@ const Form = ({
         }
       }
       const dataToSend = { ...formData };
+      
+      // Limpiar formato de teléfono antes de enviar
+      const cleanPhone = (phone) => {
+        if (!phone || typeof phone !== 'string') return phone;
+        return phone.replace(/\D/g, '');
+      };
+      
+      dataToSend.phone = cleanPhone(dataToSend.phone);
+      dataToSend.phone2 = cleanPhone(dataToSend.phone2);
+      
       console.log('data enviada', dataToSend);
 
       let message = '';

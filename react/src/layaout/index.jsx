@@ -5,6 +5,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
 import Login from './../login/index';
 import ProtectedRoute from './../components/ProtectedRoute';
+import SetPassword from './../pages/users/SetPassword';
 
 function Layaout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -13,8 +14,10 @@ function Layaout() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Ruta pública para el inicio de sesión */}
+        {/* Rutas públicas */}
         <Route path='/login' element={<Login />} />
+        <Route path='/set-password' element={<SetPassword />} />
+        <Route path='/set-password/:token' element={<SetPassword />} />
 
         {/* Ruta protegida */}
         <Route element={<ProtectedRoute />}>

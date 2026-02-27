@@ -28,8 +28,8 @@ const SetPassword = () => {
       setLoading(true);
       try {
         // Intentamos validar el token en el backend.
-        // Endpoint asumido: POST /auth/validate-invite  { token }
-        const res = await postData('auth/validate-invite', { token });
+        // Endpoint: POST /users/validate-invite  { token }
+        const res = await postData('users/validate-invite', { token });
         setValidToken(!!res?.valid);
       } catch (err) {
         console.error('Error validando token', err);
@@ -53,8 +53,8 @@ const SetPassword = () => {
 
     setLoading(true);
     try {
-      // Endpoint asumido: POST /auth/set-password { token, password }
-      const res = await postData('auth/set-password', { token, password });
+      // Endpoint: POST /users/set-password { token, password }
+      const res = await postData('users/set-password', { token, password });
       if (res) {
         ToastNotify({ message: 'Contraseña establecida. Inicia sesión.', type: 'success', position: 'top-left' });
         navigate('/login');
