@@ -12,6 +12,12 @@ const bodyParserURLEncoded = bodyParser.urlencoded({ extended: true });
 
 const sequelize = require("./database/sequelize");
 
+// Importar modelos para que Sequelize los registre
+require("./models/configs/configs.model");
+
+// Importar middleware global de formato de teléfono
+const globalPhoneFormat = require("./middleware/globalPhoneFormat.middleware");
+
 const db = require("./database/sequelize");
 const cookieParser = require("cookie-parser");
 const Permiology = db.permiology;
@@ -151,7 +157,12 @@ function middlewares() {
   app.use(bodyParserJSON);
   app.use(bodyParserURLEncoded);
   app.use(cookieParser()); // instaciamos  ayudas de cookes como req.cookie
+  
   routes();
+  
+  // Middleware global para formato de teléfono en todas las respuestas
+  // Se coloca después de las rutas para asegurar que se aplique a todas
+  // app.use(globalPhoneFormat); // DESACTIVADO temporalmente
   // update
 }
 
@@ -168,7 +179,7 @@ function routes() {
     trafic,
     require("./routes/families/relations.routes")
   );
-  app.use("/api/v1/clients", trafic, require("./routes/client/client.routes"));
+  app.use("/api/v1/clients", require("./routes/client/client.routes"));
   app.use(
     "/api/v1/cod_posts",
     trafic,
@@ -269,6 +280,7 @@ app.use(
   require("./routes/official_qualification/official_qualification")
 );
 app.use("/api/v1/family", trafic, require("./routes/families/families.routes"));
+app.use("/api/v1/configs", trafic, require("./routes/configs/configs.routes"));
 
 app.use(
   "/auth",

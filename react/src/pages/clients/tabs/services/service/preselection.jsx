@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { FaCheckCircle, FaEdit, FaEye } from 'react-icons/fa';
 import { Tooltip } from 'react-tooltip';
+import { formatPhoneNumber } from '../../../../../utils/customFormat';
 const Preselection = ({
   allEmployees,
   employeesSearch,
@@ -264,7 +265,7 @@ const Preselection = ({
                     {row.name}
                   </td>
                   <td className='text-xs border border-gray-300 divide-y'>
-                    {row.phone}
+                    {formatPhoneNumber(row.phone)}
                   </td>
                   <td className='border border-gray-300 divide-y'>
                     <select

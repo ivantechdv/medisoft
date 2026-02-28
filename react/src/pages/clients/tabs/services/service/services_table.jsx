@@ -19,6 +19,7 @@ import {
   FaMinusCircle,
   FaEye,
 } from 'react-icons/fa';
+import { formatPhoneNumber } from '../../../../../utils/customFormat';
 import {
   ConfirmSweetAlert,
   InfoSweetAlert,
@@ -678,7 +679,7 @@ const ServicesTable = forwardRef(
           client_id: item.client_id,
           service_id: item.service_id,
           name: item.employee.full_name,
-          phone: item.employee?.code_phone + ' ' + item.employee?.phone,
+          phone: item.employee?.code_phone + ' ' + formatPhoneNumber(item.employee?.phone),
           status: item.status, // Puedes ajustar esto según tus necesidades
           observation: item.observation,
         }));
@@ -708,7 +709,7 @@ const ServicesTable = forwardRef(
           {
             employee_id: employe.id,
             name: employe.full_name,
-            phone: employe.phone,
+            phone: formatPhoneNumber(employe.phone),
             status: 'Pendiente',
             observation: '',
           },
@@ -758,7 +759,7 @@ const ServicesTable = forwardRef(
             client_id: item.client_id,
             service_id: item.service_id,
             name: item.employee.full_name,
-            phone: item.employee?.code_phone + ' ' + item.employee?.phone,
+            phone: item.employee?.code_phone + ' ' + formatPhoneNumber(item.employee?.phone),
             status: item.status, // Puedes ajustar esto según tus necesidades
             observation: item.observation,
           }));
@@ -801,7 +802,7 @@ const ServicesTable = forwardRef(
         ...row,
         name: row.employee?.full_name,
         phone: row.employee
-          ? row.employee?.code_phone + ' ' + row.employee?.phone
+          ? row.employee?.code_phone + ' ' + formatPhoneNumber(row.employee?.phone)
           : '',
       });
       setFormDataAux(row);
@@ -838,7 +839,7 @@ const ServicesTable = forwardRef(
           ...prevFormData,
           employee_id: employeeId,
           name: employee.full_name,
-          phone: employee.code_phone + ' ' + employee.phone,
+          phone: employee.code_phone + ' ' + formatPhoneNumber(employee.phone),
         }));
 
         console.log('fecha', new Date().toISOString());
@@ -1637,7 +1638,7 @@ const ServicesTable = forwardRef(
                               />
                             </td>
                             <td>{row.full_name}</td>
-                            <td>{row.phone}</td>
+                            <td>{formatPhoneNumber(row.phone)}</td>
                           </tr>
                         ))}
                     </tbody>

@@ -11,6 +11,7 @@ import {
   ConfirmSweetAlert,
   InfoSweetAlert,
 } from '../../../components/SweetAlert/SweetAlert';
+import { formatPhoneNumber } from '../../../utils/customFormat';
 const Form = ({ id, onFormData, onGetRecordById }) => {
   const initialValues = {
     id: '',
@@ -877,7 +878,7 @@ const Form = ({ id, onFormData, onGetRecordById }) => {
                             preselection.map((row) => (
                               <tr>
                                 <td>{row.name}</td>
-                                <td>{row.phone}</td>
+                                <td>{formatPhoneNumber(row.phone)}</td>
                                 <td>
                                   <select
                                     value={row.status}

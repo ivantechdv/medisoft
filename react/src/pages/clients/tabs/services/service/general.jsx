@@ -1,5 +1,6 @@
 import React from 'react';
 import Select from '../../../../../components/Select';
+import { formatPhoneNumber } from '../../../../../utils/customFormat';
 
 const ServiceGeneral = ({
   modalExpanded,
@@ -62,7 +63,7 @@ const ServiceGeneral = ({
               <input
                 type='text'
                 placeholder='Teléfono'
-                value={formData.phone ? formData.phone : ''}
+                value={formData.phone ? formatPhoneNumber(formData.phone) : ''}
                 disabled
                 className='w-full px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
               />

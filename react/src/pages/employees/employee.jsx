@@ -92,8 +92,24 @@ const Employees = () => {
       console.log('response', response);
 
       if (response) {
-        setFormData(response);
-        setCardData(response);
+        // Formatear teléfonos al cargar los datos
+        const formatPhone = (phone) => {
+          if (!phone || typeof phone !== 'string') return phone;
+          const cleanNumber = phone.replace(/\D/g, '');
+          if (cleanNumber.length === 9) {
+            return cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
+          }
+          return phone;
+        };
+
+        const formattedResponse = {
+          ...response,
+          phone: formatPhone(response.phone),
+          phone2: formatPhone(response.phone2),
+        };
+
+        setFormData(formattedResponse);
+        setCardData(formattedResponse);
 
          const hasClientServices = response.clients_services?.length > 0;
        setColorLateral(color);

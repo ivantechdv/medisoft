@@ -581,6 +581,14 @@ const Form = ({
         ...formData,
         born_date: formData.born_date ? new Date(formData.born_date) : null,
       };
+      
+      // Limpiar formato de teléfono antes de enviar
+      const cleanPhone = (phone) => {
+        if (!phone || typeof phone !== 'string') return phone;
+        return phone.replace(/\D/g, '');
+      };
+      
+      dataToSend.phone = cleanPhone(dataToSend.phone);
 
       const languageIds = selectedLanguages.map((language) => language.value);
       dataToSend.language_id = languageIds.join(',');

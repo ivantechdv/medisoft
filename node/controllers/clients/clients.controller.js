@@ -14,6 +14,7 @@ const Methods = require("../methods/methods.controller");
 const Family = require("../../models/families/families.mode");
 const { Sequelize, Op } = require("sequelize");
 const validationField = require("../../utils/validators");
+const { applyPhoneMask, validatePhoneNumber } = require("../../utils/phoneMask.utils");
 CTRL.create = async (req, res, next) => {
   try {
     // const duplicated = await validationField(

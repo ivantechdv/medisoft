@@ -6,6 +6,7 @@ import Layaout from './layaout';
 import toast, { Toaster } from 'react-hot-toast';
 import 'react-tooltip/dist/react-tooltip.css';
 import Cookies from 'js-cookie';
+import { loadPhoneMask } from './utils/customFormat';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -15,6 +16,9 @@ function App() {
     const authToken = Cookies.get('jwt');
 
     setIsAuthenticated(!!authToken); // Actualiza el estado de autenticación
+    
+    // Cargar la máscara de teléfono configurada
+    loadPhoneMask();
   }, []);
 
   return (
