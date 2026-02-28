@@ -18,6 +18,7 @@ import {
   InfoSweetAlert,
 } from '../../components/SweetAlert/SweetAlert';
 import ToastNotify from '../../components/toast/toast';
+import { normalizePhoneForSearch } from '../../utils/customFormat';
 import {
   useReactTable,
   getCoreRowModel,
@@ -640,7 +641,9 @@ const Clients = () => {
   // Efecto para actualizar debouncedSearchTerm con retraso (debounce)
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
+      // Normalizar el término de búsqueda para teléfonos
+      const normalizedSearchTerm = normalizePhoneForSearch(searchTerm);
+      setDebouncedSearchTerm(normalizedSearchTerm);
     }, 500); // Ajusta el tiempo de debounce (ms) según prefieras
     return () => clearTimeout(handler);
   }, [searchTerm]);

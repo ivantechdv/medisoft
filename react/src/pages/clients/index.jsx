@@ -13,6 +13,7 @@ import {
   InfoSweetAlert,
 } from '../../components/SweetAlert/SweetAlert';
 import ToastNotify from '../../components/toast/toast';
+import { normalizePhoneForSearch } from '../../utils/customFormat';
 import {
   useReactTable,
   getCoreRowModel,
@@ -472,7 +473,9 @@ const Clients = () => {
   }, [currentPage, pageSize, searchTerm]);
 
   const handleSearchTermChange = (event) => {
-    setSearchTerm(event.target.value);
+    // Normalizar el término de búsqueda para teléfonos
+    const normalizedSearchTerm = normalizePhoneForSearch(event.target.value);
+    setSearchTerm(normalizedSearchTerm);
     setCurrentPage(1); // Reiniciar a la primera página al cambiar el término de búsqueda
   };
 

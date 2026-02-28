@@ -7,6 +7,7 @@ import {
   FaMinusCircle,
   FaCheckCircle,
 } from 'react-icons/fa';
+import { formatPhoneNumber } from '../../../../../utils/customFormat';
 
 const ServicesModal = ({
   closeModalServices,
@@ -513,7 +514,7 @@ const ServicesModal = ({
                               {row.name}
                             </td>
                             <td className='text-xs border border-gray-300 divide-y'>
-                              {row.phone}
+                              {formatPhoneNumber(row.phone)}
                             </td>
                             <td className='border border-gray-300 divide-y'>
                               <select

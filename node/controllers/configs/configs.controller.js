@@ -167,4 +167,51 @@ CTRL.getLevels = async (req, res, next) => {
   }
 };
 
+CTRL.getMask = async (req, res, next) => {
+  try {
+    // Primero buscar configuración activa
+    let config = await Config.findOne({
+      where: { is_active: true },
+      attributes: ['phone_mask']
+    });
+    
+    // Si no hay configuración activa, buscar cualquier configuración
+    if (!config) {
+      config = await Config.findOne({
+        attributes: ['phone_mask']
+      });
+    }
+    
+    // Si todavía no hay configuración, crear una por defecto
+    if (!config) {
+      console.log('No se encontró configuración, creando una por defecto...');
+      
+      // Buscar un país por defecto (España o el primero que encuentre)
+      const Country = require("../../models/countries/countries.model");
+      let defaultCountry = await Country.findOne({ where: { name: 'España' } });
+      
+      if (!defaultCountry) {
+        defaultCountry = await Country.findOne();
+      }
+      
+      if (!defaultCountry) {
+        console.error('No se encontró ningún país para usar como default_country_id');
+        return res.json({ phoneMask: '999 99 99 99' });
+      }
+      
+      const defaultConfig = await Config.create({
+        phone_mask: '999 99 99 99',
+        default_country_id: defaultCountry.id,
+        is_active: true
+      });
+      return res.json({ phoneMask: defaultConfig.phone_mask });
+    }
+    
+    res.json({ phoneMask: config.phone_mask || '999 99 99 99' });
+  } catch (error) {
+    console.error('Error al obtener máscara de teléfono:', error);
+    res.json({ phoneMask: '999 99 99 99' }); // Máscara por defecto en caso de error
+  }
+};
+
 module.exports = CTRL;

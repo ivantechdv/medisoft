@@ -1,23 +1,111 @@
 // src/utils/formatUtils.js
 
-// Formatea un número de teléfono (Ej: "123456789" → "123 45 67 89")
+// Formatea un número de teléfono usando la máscara configurada dinámicamente
 export const formatPhoneNumber = (phone) => {
   if (!phone) return '';
   const cleanNumber = phone.replace(/\D/g, '');
-  if (cleanNumber.length <= 9) {
-    let formattedValue = cleanNumber;
-    if (cleanNumber.length > 3) {
-      formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
-    }
-    if (cleanNumber.length > 5) {
-      formattedValue = formattedValue.slice(0, 6) + ' ' + cleanNumber.slice(5);
-    }
-    if (cleanNumber.length > 7) {
-      formattedValue = formattedValue.slice(0, 9) + ' ' + cleanNumber.slice(7);
-    }
-    return formattedValue;
+  
+  // Obtener la máscara desde localStorage o usar la por defecto
+  const phoneMask = localStorage.getItem('phoneMask') || '999 99 99 99';
+  
+  // Aplicar máscara según el formato configurado
+  switch (phoneMask) {
+    case '999 99 99 99':
+      if (cleanNumber.length <= 9) {
+        let formattedValue = cleanNumber;
+        if (cleanNumber.length > 3) {
+          formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
+        }
+        if (cleanNumber.length > 5) {
+          formattedValue = formattedValue.slice(0, 6) + ' ' + cleanNumber.slice(5);
+        }
+        if (cleanNumber.length > 7) {
+          formattedValue = formattedValue.slice(0, 9) + ' ' + cleanNumber.slice(7);
+        }
+        return formattedValue;
+      }
+      return phone;
+      
+    case '999 999 999':
+      if (cleanNumber.length <= 9) {
+        let formattedValue = cleanNumber;
+        if (cleanNumber.length > 3) {
+          formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
+        }
+        if (cleanNumber.length > 6) {
+          formattedValue = formattedValue.slice(0, 7) + ' ' + cleanNumber.slice(6);
+        }
+        return formattedValue;
+      }
+      return phone;
+      
+    case '999999999':
+      return cleanNumber;
+      
+    default:
+      // Formato por defecto si no coincide con ningún caso
+      if (cleanNumber.length <= 9) {
+        let formattedValue = cleanNumber;
+        if (cleanNumber.length > 3) {
+          formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
+        }
+        if (cleanNumber.length > 5) {
+          formattedValue = formattedValue.slice(0, 6) + ' ' + cleanNumber.slice(5);
+        }
+        if (cleanNumber.length > 7) {
+          formattedValue = formattedValue.slice(0, 9) + ' ' + cleanNumber.slice(7);
+        }
+        return formattedValue;
+      }
+      return phone;
   }
-  return phone;
+};
+
+// Función para normalizar teléfono para búsquedas
+// Convierte "609 70 70 70" → "609707070" para búsqueda en BD
+export const normalizePhoneForSearch = (searchTerm) => {
+  if (!searchTerm) return searchTerm;
+  
+  // Si parece un teléfono (contiene números y espacios), normalizarlo
+  const hasDigits = /\d/.test(searchTerm);
+  const hasSpaces = /\s/.test(searchTerm);
+  
+  if (hasDigits && (hasSpaces || searchTerm.length <= 12)) {
+    // Es probablemente un teléfono, limpiar espacios y otros caracteres
+    return searchTerm.replace(/\D/g, '');
+  }
+  
+  return searchTerm;
+};
+
+// Función para cargar la máscara de teléfono desde el backend
+export const loadPhoneMask = async () => {
+  // Primero verificar si ya hay una máscara guardada
+  const savedMask = localStorage.getItem('phoneMask');
+  if (savedMask) {
+    console.log('Usando máscara guardada en localStorage:', savedMask);
+    return savedMask;
+  }
+  
+  try {
+    // Importar getData dinámicamente para evitar circular dependencies
+    const { getData } = await import('../api');
+    
+    const response = await getData('configs/phone-mask');
+    
+    if (response && response.phoneMask) {
+      localStorage.setItem('phoneMask', response.phoneMask);
+      console.log('Máscara de teléfono cargada desde backend:', response.phoneMask);
+      return response.phoneMask;
+    }
+  } catch (error) {
+    console.warn('Error al cargar máscara desde backend, usando máscara por defecto:', error.message);
+  }
+  
+  // Si todo falla, usar y guardar la máscara por defecto
+  const defaultMask = '999 99 99 99';
+  localStorage.setItem('phoneMask', defaultMask);
+  return defaultMask;
 };
 
 export const formatISOToDate = (isoString) => {
