@@ -3,6 +3,7 @@ const sequelize = require("../../database/sequelize");
 const Client = require("../../models/clients/clients.model");
 const ClientPatology = require("../../models/clients_patologies/clients_patologies.model");
 const ClientTask = require("../../models/clients_tasks/clients_tasks.model");
+const ClientService = require("../../models/clients_services/clients_services.model");
 
 const CodPost = require("../../models/cod_posts/cod_posts.model");
 const Country = require("../../models/countries/countries.model");
@@ -81,6 +82,12 @@ CTRL.get = async (req, res, next) => {
         { "$families.phone$": { [Op.like]: `%${req.query.searchTerm}%` } },
       ];
     }
+
+    // Filtro por tipo
+    if (req.query.type) {
+      additionalSearchConditions.push({ type: req.query.type });
+    }
+
     const condition = {};
     const include = [
       {
@@ -121,7 +128,78 @@ CTRL.get = async (req, res, next) => {
         separate: false, // <--- Run separate query
         limit: 2,
       },
+      {
+        model: ClientService,
+        required: false, // LEFT JOIN para incluir clientes sin servicios
+        // where: { is_deleted: 0 }, // Movido a condiciones adicionales
+      },
     ];
+
+    // Filtro por tipo
+    if (req.query.type) {
+      additionalSearchConditions.push({ type: req.query.type });
+    }
+
+    // Filtro por estado
+    if (req.query.estado) {
+      console.log('🔍 Filtro por estado:', req.query.estado);
+      
+      if (req.query.estado === 'activo') {
+        // Cliente tiene al menos un servicio activo
+        console.log('✅ Aplicando filtro ACTIVO');
+        
+        // Para activo, necesitamos INNER JOIN para solo incluir clientes con servicios activos
+        // Cambiamos el include para que sea requerido cuando el filtro es activo
+        const clientServiceInclude = {
+          model: ClientService,
+          required: true, // INNER JOIN - solo clientes con servicios
+          where: {
+            statu: true,
+            is_deleted: 0
+          }
+        };
+        
+        // Reemplazamos el include de ClientService en el array
+        const originalInclude = include;
+        const clientServiceIndex = originalInclude.findIndex(item => item.model === ClientService);
+        if (clientServiceIndex !== -1) {
+          originalInclude[clientServiceIndex] = clientServiceInclude;
+        }
+        
+        console.log('✅ Include modificado para ACTIVO:', JSON.stringify(clientServiceInclude, null, 2));
+      } else if (req.query.estado === 'inactivo') {
+        // Cliente tiene servicios pero ninguno activo
+        console.log('✅ Aplicando filtro INACTIVO');
+        // Usamos una subconsulta o NOT EXISTS para clientes que tienen servicios pero no activos
+        condition[Op.and] = [
+          {
+            '$clients_services.id$': { [Op.not]: null }
+          },
+          {
+            '$clients_services.is_deleted$': 0
+          },
+          {
+            id: {
+              [Op.notIn]: sequelize.literal(`
+                (SELECT DISTINCT client_id 
+                 FROM clients_services 
+                 WHERE statu = true AND is_deleted = 0)
+              `)
+            }
+          }
+        ];
+      } else if (req.query.estado === 'resto') {
+        // Cliente no tiene servicios (sin registros activos en clients_services)
+        condition.id = {
+          [Op.notIn]: sequelize.literal(`
+            (SELECT DISTINCT client_id FROM clients_services WHERE is_deleted = 0)
+          `),
+        };
+      }
+      
+      console.log('🔍 Condiciones adicionales:', JSON.stringify(additionalSearchConditions, null, 2));
+      console.log('🔍 Condition principal:', JSON.stringify(condition, null, 2));
+    }
     await Methods.get(
       req,
       res,

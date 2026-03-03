@@ -12,14 +12,13 @@ const getPhoneMask = async () => {
     });
     
     if (!config) {
-      // Si no hay configuración, devuelve la máscara por defecto
       return '999 99 99 99';
     }
     
     return config.phone_mask;
   } catch (error) {
     console.error('Error al obtener máscara de teléfono:', error);
-    return '999 99 99 99'; // Máscara por defecto en caso de error
+    return '999 99 99 99'; 
   }
 };
 

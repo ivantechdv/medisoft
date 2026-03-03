@@ -18,7 +18,6 @@ const phoneFormatMiddleware = (req, res, next) => {
           const cleanNumber = obj.phone.replace(/\D/g, '');
           if (cleanNumber.length === 9) {
             obj.phone = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-            console.log(`📞 Formatted phone: ${cleanNumber} → ${obj.phone}`);
           }
         }
         
@@ -28,7 +27,6 @@ const phoneFormatMiddleware = (req, res, next) => {
             const cleanNumber = obj.familiar_1.phone.replace(/\D/g, '');
             if (cleanNumber.length === 9) {
               obj.familiar_1.phone = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-              console.log(`📞 Formatted familiar_1 phone: ${cleanNumber} → ${obj.familiar_1.phone}`);
             }
           }
         }
@@ -39,7 +37,6 @@ const phoneFormatMiddleware = (req, res, next) => {
             const cleanNumber = obj.familiar_2.phone.replace(/\D/g, '');
             if (cleanNumber.length === 9) {
               obj.familiar_2.phone = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-              console.log(`📞 Formatted familiar_2 phone: ${cleanNumber} → ${obj.familiar_2.phone}`);
             }
           }
         }
@@ -51,14 +48,12 @@ const phoneFormatMiddleware = (req, res, next) => {
               const cleanNumber = family.phone.replace(/\D/g, '');
               if (cleanNumber.length === 9) {
                 family.phone = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-                console.log(`📞 Formatted family phone: ${cleanNumber} → ${family.phone}`);
               }
             }
             if (family.phone2 && typeof family.phone2 === 'string') {
               const cleanNumber = family.phone2.replace(/\D/g, '');
               if (cleanNumber.length === 9) {
                 family.phone2 = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-                console.log(`📞 Formatted family phone2: ${cleanNumber} → ${family.phone2}`);
               }
             }
             return family;

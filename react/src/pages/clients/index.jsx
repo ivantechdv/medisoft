@@ -14,6 +14,29 @@ import {
 } from '../../components/SweetAlert/SweetAlert';
 import ToastNotify from '../../components/toast/toast';
 import { normalizePhoneForSearch } from '../../utils/customFormat';
+import { client_estado_config, client_tipo_config } from '../../utils/config';
+
+// Función para determinar el color de fondo de las filas según el estado del cliente
+const getRowBackgroundColor = (row) => {
+  if (!client_estado_config) return '#ffffff';
+
+  const services = row.clients_services?.filter((service) => service.is_deleted === 0) || [];
+  const hasActiveServices = services.some((service) => service.statu === true);
+  const hasPreviousServices = services.some((service) => service.statu === false);
+
+  if (hasActiveServices) {
+    return client_estado_config[1].color; // Verde Intenso - cliente con contrato vigente
+  }
+  if (hasPreviousServices) {
+    return client_estado_config[2].color; // Verde oscuro - cliente que tuvo contrato anterior
+  }
+
+  return client_estado_config[0].color; // Gris claro - sin contrato activo
+};
+
+const getClientTypeColor = (row) => {
+  return client_tipo_config[row.type]?.color || 'gray';
+};
 import {
   useReactTable,
   getCoreRowModel,
@@ -162,6 +185,8 @@ const MyDataTable = ({
   const onRowInteraction = (row) => {
     if (!row?.id) return;
 
+    setSelectedRowId(row.id);
+
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
@@ -203,6 +228,33 @@ const MyDataTable = ({
           );
         },
       },
+      // Columna de indicador de tipo (T)
+      {
+        header: 'T',
+        id: 'indicator_t',
+        size: 25,
+        minSize: 25,
+        maxSize: 25,
+        enableSorting: false,
+        enableResizing: false,
+        enableColumnDragging: false,
+        cell: ({ row }) => {
+          const data = row.original;
+          const title = client_tipo_config[data.type]?.label;
+          return (
+            <div
+              title={title}
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 2,
+                margin: '0 auto',
+                backgroundColor: getClientTypeColor(data),
+              }}
+            />
+          );
+        },
+      },
       ...[
         { key: 'id', label: 'ID' },
         { key: 'dni', label: 'DNI' },
@@ -225,7 +277,7 @@ const MyDataTable = ({
         cell: ({ row, getValue, column }) => {
           const value = getValue();
           const isSelected = row.original.id == selectedRowId;
-          const bgColor = isSelected ? '#d3d3d3' : '#fff';
+          const bgColor = isSelected ? '#d3d3d3' : getRowBackgroundColor(row.original);
 
           // Manejo específico para campos de familia
           if (key.startsWith('family')) {
@@ -334,7 +386,7 @@ const MyDataTable = ({
                   <SortableContext key={headerGroup.id} items={headerGroup.headers.map((h) => h.column.id)} strategy={verticalListSortingStrategy}>
                     <tr>
                       {headerGroup.headers.map((header, index) =>
-                        index < 1 ? (
+                        index < 2 ? (
                           <th
                             key={header.id}
                             style={{
@@ -361,8 +413,15 @@ const MyDataTable = ({
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row) => {
+                  const rowBackgroundColor = getRowBackgroundColor(row.original);
                   return (
-                    <tr key={row.id} onClick={() => onRowInteraction(row.original)} style={{ cursor: 'pointer' }}>
+                    <tr 
+                      key={row.id} 
+                      onClick={() => onRowInteraction(row.original)} 
+                      style={{ 
+                        cursor: 'pointer',
+                      }}
+                    >
                       {row.getVisibleCells().map((cell) => (
                         <td
                           key={cell.id}
@@ -400,23 +459,38 @@ const Clients = () => {
 
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(() => {
-    return Number(localStorage.getItem('pageSize')) || 10; // Carga desde localStorage o usa 10 por defecto
-  });
+  const saved = localStorage.getItem('clients_pageSize');
+  if (saved === 'todos') {
+    return 'todos';
+  }
+  // Si no hay nada guardado o no es un número válido, usar 'todos' por defecto
+  return saved && !isNaN(saved) ? Number(saved) : 'todos';
+});
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [filterEstado, setFilterEstado] = useState(''); // Filtro de estado aplicado
+  const [filterTipo, setFilterTipo] = useState(''); // Filtro de tipo aplicado
+  const [filtersT, setFiltersT] = useState({ // Filtros temporales (selects)
+    estado: '',
+    tipo: '',
+  });
+  const [showFilterModal, setShowFilterModal] = useState(false); // Modal de filtros
   const [totalPages, setTotalPages] = useState(1);
   const [title, setTitle] = useState('');
   const id = useRef('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null); //seleccion del registro unico
+  const [selectedRowId, setSelectedRowId] = useState(null);
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [photo, setPhoto] = useState('');
+
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [servicesActive, setServicesActive] = useState([]);
-  const [selectedRowId, setSelectedRowId] = useState(null);
   const navigateTo = useNavigate();
+  const hasRestoredSelection = useRef(false);
 
   useEffect(() => {
     const table = document.querySelector('.table-container'); // Clase de contenedor de la tabla
@@ -428,19 +502,29 @@ const Clients = () => {
 
   const getRows = async () => {
     try {
-      if (!searchTerm) {
+      if (!debouncedSearchTerm) {
         setIsLoading(true);
       }
 
+      const normalizedSearchTerm = debouncedSearchTerm;
+
+      // Construir URL con filtros
+      let url = `clients?is_deleted=0`;
+      if (normalizedSearchTerm) {
+        url += `&searchTerm=${normalizedSearchTerm}`;
+      }
+      if (filterEstado) {
+        url += `&estado=${filterEstado}`;
+      }
+      if (filterTipo) {
+        url += `&type=${filterTipo}`;
+      }
+
       let response;
-      if (pageSize == 0) {
-        response = await getData(
-          `clients?is_deleted=0&searchTerm=${searchTerm}`,
-        );
+      if (pageSize == 'todos') {
+        response = await getData(url);
       } else {
-        response = await getData(
-          `clients?page=${currentPage}&pageSize=${pageSize}&is_deleted=0&searchTerm=${searchTerm}`,
-        );
+        response = await getData(`${url}&page=${currentPage}&pageSize=${pageSize}`);
       }
 
       console.log(response);
@@ -464,19 +548,55 @@ const Clients = () => {
   };
 
   useEffect(() => {
-    try {
-      getRows();
-    } catch (error) {
-      console.log('error =>', error);
-    } finally {
-    }
-  }, [currentPage, pageSize, searchTerm]);
+    const handler = setTimeout(() => {
+      const trimmed = searchTerm.trim();
+      const isNumericInput = trimmed !== '' && /^[0-9\s]+$/.test(trimmed);
+      const normalized = isNumericInput
+        ? normalizePhoneForSearch(searchTerm)
+        : searchTerm;
+      setDebouncedSearchTerm(normalized);
+    }, 400);
 
-  const handleSearchTermChange = (event) => {
-    // Normalizar el término de búsqueda para teléfonos
-    const normalizedSearchTerm = normalizePhoneForSearch(event.target.value);
-    setSearchTerm(normalizedSearchTerm);
-    setCurrentPage(1); // Reiniciar a la primera página al cambiar el término de búsqueda
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    getRows();
+  }, [currentPage, pageSize, filterEstado, filterTipo, debouncedSearchTerm]);
+
+  useEffect(() => {
+    if (hasRestoredSelection.current) return;
+    const storedRow = sessionStorage.getItem('clients_selected_row');
+    if (!storedRow) return;
+
+    const parsedRow = JSON.parse(storedRow);
+    if (!parsedRow?.id) return;
+
+    const match = rows.find((row) => row.id === parsedRow.id);
+    if (match) {
+      hasRestoredSelection.current = true;
+      setSelectedRow(match);
+      setSelectedRowId(match.id);
+      fetchClientServices(match.id);
+    }
+  }, [rows]);
+
+  const handleAplyFilter = () => {
+    setFilterEstado(filtersT.estado);
+    setFilterTipo(filtersT.tipo);
+    setCurrentPage(1);
+    setShowFilterModal(false);
+  };
+
+  const handleResetFilter = () => {
+    setFiltersT({
+      estado: '',
+      tipo: '',
+    });
+    setFilterEstado('');
+    setFilterTipo('');
+    setCurrentPage(1);
+    setShowFilterModal(false);
   };
 
   const handleChange = (event) => {
@@ -550,21 +670,41 @@ const Clients = () => {
     setCurrentPage(newPage);
   };
 
-  const handleRowClick = async (rowData, event) => {
-    setSelectedRow(rowData);
-    setSelectedRowId(rowData.id);
+  const fetchClientServices = async (clientId) => {
     const queryParameters = new URLSearchParams();
     queryParameters.append('statu', 1);
     const order = 'service_alta-desc';
-    const services = await getData(
-      `client-service/all?client_id=${rowData.id}&${queryParameters}&order=${order}`,
-    );
-    if (services) {
-      console.log('services', services);
-      setServicesActive(services);
-    } else {
+
+    try {
+      const services = await getData(
+        `client-service/all?client_id=${clientId}&${queryParameters}&order=${order}`,
+      );
+      setServicesActive(services || []);
+    } catch (error) {
+      console.error('Error al obtener servicios del cliente:', error);
       setServicesActive([]);
     }
+  };
+
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFiltersT((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSearchTermChange = (e) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleRowClick = async (rowData, event) => {
+    if (!rowData?.id) return;
+    setSelectedRow(rowData);
+    setSelectedRowId(rowData.id);
+    sessionStorage.setItem('clients_selected_row', JSON.stringify(rowData));
+    await fetchClientServices(rowData.id);
   };
 
   const handleClosePanel = () => {
@@ -588,12 +728,14 @@ const Clients = () => {
     });
   };
   const handlePageSizeChange = (event) => {
-    if (event.target.value == 'todos') {
-      setPageSize(0);
-      localStorage.setItem('pageSize', 0); // Guardar en cache
+    const value = event.target.value;
+    if (value == 'todos') {
+      setPageSize('todos');
+      localStorage.setItem('clients_pageSize', 'todos'); // Guardar con clave específica
     } else {
-      setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
-      localStorage.setItem('pageSize', Number(event.target.value)); // Guardar en cache
+      const numValue = Number(value);
+      setPageSize(numValue); // Guardar como número
+      localStorage.setItem('clients_pageSize', numValue); // Guardar con clave específica
     }
     setCurrentPage(1); // Reinicia a la primera página
   };
@@ -665,9 +807,76 @@ const Clients = () => {
 
         <div className='flex space-x-2'>
           <div className='relative'>
+            <button
+              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-4 pt-2'
+              onClick={() => setShowFilterModal(!showFilterModal)}
+            >
+              <FaFilter className='text-lg' />
+            </button>
+            
+            {showFilterModal && (
+              <div className='absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2 w-48'>
+                {/* Estado */}
+                <div className='flex items-center space-x-2'>
+                  <label htmlFor='estado' className='text-xs w-16'>
+                    Estado:
+                  </label>
+                  <select
+                    name='estado'
+                    id='estado'
+                    value={filtersT.estado}
+                    onChange={handleFilterChange}
+                    className='border border-gray-400 rounded w-full text-xs p-1'
+                  >
+                    <option value=''>Estado</option>
+                    <option value='activo'>Activo</option>
+                    <option value='inactivo'>Inactivo</option>
+                    <option value='resto'>Resto</option>
+                  </select>
+                </div>
+                
+                {/* Tipo */}
+                <div className='flex items-center space-x-2'>
+                  <label htmlFor='tipo' className='text-xs w-16'>
+                    Tipo:
+                  </label>
+                  <select
+                    name='tipo'
+                    id='tipo'
+                    value={filtersT.tipo}
+                    onChange={handleFilterChange}
+                    className='border border-gray-400 rounded w-full text-xs p-1'
+                  >
+                    <option value=''>Tipo</option>
+                    <option value='Cliente'>Cliente</option>
+                    <option value='Posible Cliente'>Posible Cliente</option>
+                  </select>
+                </div>
+                
+                {/* Botones */}
+                <div className='flex flex-row justify-between gap-2 pt-2'>
+                  <button
+                    type='button'
+                    className='px-1 py-1 bg-gray-600 text-white rounded text-sm'
+                    onClick={handleResetFilter}
+                  >
+                    Borrar Filtro
+                  </button>
+                  <button
+                    type='button'
+                    className='px-2 py-1 bg-green-600 text-white rounded text-sm'
+                    onClick={handleAplyFilter}
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className='relative'>
             <input
               type='text'
-              className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
+              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7' // Aumentado a text-base (16px)
               placeholder='Campo de busqueda'
               value={searchTerm}
               onChange={handleSearchTermChange}
@@ -698,14 +907,14 @@ const Clients = () => {
           </div>
           <select
             className='border border-gray-600 rounded h-8 px-2'
-            value={pageSize}
+            value={pageSize === 'todos' ? 'todos' : pageSize}
             onChange={handlePageSizeChange}
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
-            <option value={0}>Todos</option>
+            <option value={'todos'}>Todos</option>
           </select>
           <button
             className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
