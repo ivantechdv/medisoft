@@ -32,7 +32,6 @@ const globalPhoneFormat = (req, res, next) => {
             const cleanNumber = value.replace(/\D/g, '');
             if (cleanNumber.length === 9) {
               formattedObj[key] = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-              console.log(`📞 Formatted phone: ${value} → ${formattedObj[key]}`);
             } else {
               formattedObj[key] = value;
             }

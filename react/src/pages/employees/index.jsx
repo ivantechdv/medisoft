@@ -157,11 +157,12 @@ const MyDataTable = ({
   onHandleViewClient = () => {},
   onSelectedRows,
   tableContainerRef,
-  initialSelectedId
+  initialSelectedId,
 }) => {
-  console.log("initialselectedid", sessionStorage.getItem('clients_selected_id'));
-  const [selectedRowId, setSelectedRowId] = useState(sessionStorage.getItem('clients_selected_id') || null);
-  const [selectedRowSesion, setSelectedRowSesion] = useState(sessionStorage.getItem('clients_selected_row') || null);
+  const [selectedRowId, setSelectedRowId] = useState(() => {
+    const stored = sessionStorage.getItem('employees_selected_id');
+    return stored ? Number(stored) : null;
+  });
   const [sorting, setSorting] = useState([]);
   const [selectedRows, setSelectedRows] = useState([]); // Nuevo estado para los checkboxes
   const [columnSizing, setColumnSizing] = useState(() => {
@@ -190,28 +191,30 @@ const MyDataTable = ({
     }
   }, [columnOrder]);
 
-    useEffect(() => {
-    if (selectedRowId) {
-    onRowInteraction(selectedRowId);
-     onRowClicked(sessionStorage.getItem('clients_selected_row'));
+  useEffect(() => {
+    if (!initialSelectedId) return;
+    const normalized = Number(initialSelectedId);
+    if (!Number.isNaN(normalized) && normalized !== selectedRowId) {
+      setSelectedRowId(normalized);
     }
-  }, [selectedRowId]);
+  }, [initialSelectedId, selectedRowId]);
 
   const clickTimer = useRef(null);
 
   const onRowInteraction = (row) => {
     if (!row?.id) return;
+    setSelectedRowId(row.id);
 
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
-      const color=getRowBackgroundColor(row);
+      const color = getRowBackgroundColor(row);
       onHandleViewClient(row.id, color);
     } else {
       clickTimer.current = setTimeout(() => {
         clickTimer.current = null;
         onRowClicked(row);
-          sessionStorage.setItem('clients_selected_row', row);
+        sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
       }, 250);
     }
   };
@@ -503,6 +506,7 @@ const MyDataTable = ({
     if (!row?.id) return;
     setSelectedRowId(row.id);
     onHandleRowClick(row);
+    sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
   };
 
   return (
@@ -620,17 +624,20 @@ const MyDataTable = ({
   );
 };
 
-const Clients = () => {
+const Employees = () => {
   
   const [rows, setRows] = useState([]);
   const [pageSize, setPageSize] = useState(() => {
-  const saved = localStorage.getItem('pageSize');
-  // Si no hay nada guardado o es 'todos', usar 10 por defecto
-  return (!saved || saved === 'todos') ? '10' : saved;
+  const saved = localStorage.getItem('employees_pageSize');
+  if (saved === 'todos') {
+    return 'todos';
+  }
+  // Si no hay nada guardado o no es un número válido, usar 'todos' por defecto
+  return saved && !isNaN(saved) ? Number(saved) : 'todos';
 });
 
  const [currentPage, setCurrentPage] = useState(() => {
-    const savedPage = sessionStorage.getItem('clients_last_page');
+    const savedPage = sessionStorage.getItem('employees_last_page');
     return savedPage ? parseInt(savedPage) : 1;
   });
 
@@ -641,8 +648,11 @@ const Clients = () => {
   // Efecto para actualizar debouncedSearchTerm con retraso (debounce)
   useEffect(() => {
     const handler = setTimeout(() => {
-      // Normalizar el término de búsqueda para teléfonos
-      const normalizedSearchTerm = normalizePhoneForSearch(searchTerm);
+      const trimmed = searchTerm.trim();
+      const isNumericInput = trimmed !== '' && /^[0-9\s]+$/.test(trimmed);
+      const normalizedSearchTerm = isNumericInput
+        ? normalizePhoneForSearch(searchTerm)
+        : searchTerm;
       setDebouncedSearchTerm(normalizedSearchTerm);
     }, 500); // Ajusta el tiempo de debounce (ms) según prefieras
     return () => clearTimeout(handler);
@@ -657,16 +667,17 @@ const Clients = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRow, setSelectedRow] = useState(() => {
-  return sessionStorage.getItem('clients_selected_row') || null;
-}); //seleccion del registro unico
+    const stored = sessionStorage.getItem('employees_selected_row');
+    return stored ? JSON.parse(stored) : null;
+  }); // seleccion del registro unico
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [photo, setPhoto] = useState('');
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [isFilter, setIsFilter] = useState(false);
   const [selectedRowId, setSelectedRowId] = useState(() => {
-  return sessionStorage.getItem('clients_selected_id') || null;
-});
+    return sessionStorage.getItem('employees_selected_id') || null;
+  });
 
   const [dictionaries, setDictionaries] = useState({
     patologies: {},
@@ -794,7 +805,7 @@ const Clients = () => {
       setRows(data);
       setTotalPages(meta.totalPages);
 
-      const savedScroll = sessionStorage.getItem('clients_last_scroll');
+      const savedScroll = sessionStorage.getItem('employees_last_scroll');
     if (savedScroll && tableContainerRef.current) {
       // Usamos requestAnimationFrame o un timeout corto para asegurar 
       // que el DOM ya tiene las filas renderizadas
@@ -898,10 +909,11 @@ const Clients = () => {
   };
 
   const handleRowClick = async (row, event) => {
-    console.log('row', row);
+    if (!row?.id) return;
     setSelectedRow(row);
     setSelectedRowId(row.id);
-    sessionStorage.setItem('clients_selected_id', row.id);
+    sessionStorage.setItem('employees_selected_id', row.id);
+    sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
     const preselection = await getData(
       `client-service-preselection/all?employee_id=${row.id}&status=Pendiente`,
     );
@@ -965,13 +977,13 @@ const Clients = () => {
   };
 const handleViewClient = (clientId, color) => {
   if (tableContainerRef.current) {
-    sessionStorage.setItem('clients_last_scroll', tableContainerRef.current.scrollTop);
+    sessionStorage.setItem('employees_last_scroll', tableContainerRef.current.scrollTop);
   }
   // 2. Guardar página actual
-  sessionStorage.setItem('clients_last_page', currentPage);
+  sessionStorage.setItem('employees_last_page', currentPage);
   
   // 3. Guardar el ID para que siga marcado al volver
-  sessionStorage.setItem('clients_selected_id', clientId);
+  sessionStorage.setItem('employees_selected_id', clientId);
   navigateTo(`/employee/${clientId}`, {
     state: { color },
   });
@@ -991,12 +1003,14 @@ const handleViewClient = (clientId, color) => {
     });
   };
   const handlePageSizeChange = (event) => {
-    if (event.target.value == 'todos') {
+    const value = event.target.value;
+    if (value == 'todos') {
       setPageSize('todos');
-      localStorage.setItem('pageSize', 'todos'); // Guardar en cache
+      localStorage.setItem('employees_pageSize', 'todos'); // Guardar con clave específica
     } else {
-      setPageSize(Number(event.target.value)); // Actualiza el tamaño de la página
-      localStorage.setItem('pageSize', Number(event.target.value)); // Guardar en cache
+      const numValue = Number(value);
+      setPageSize(numValue); // Guardar como número
+      localStorage.setItem('employees_pageSize', numValue); // Guardar con clave específica
     }
     setCurrentPage(1); // Reinicia a la primera página
   };
@@ -1245,7 +1259,7 @@ const handleViewClient = (clientId, color) => {
             )}
             <input
               type='text'
-              className='w-[250px] border border-gray-600 h-8 px-2 rounded text-xs pr-7' // Añadido pr-7 para padding derecho
+              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7' // Aumentado a text-base (16px)
               placeholder='Búsqueda Rápida'
               value={searchTerm}
               onChange={handleSearchTermChange}
@@ -1324,7 +1338,7 @@ const handleViewClient = (clientId, color) => {
               pageSize={pageSize}
               onSelectedRows={setSelectedRows}
               tableContainerRef={tableContainerRef}
-              initialSelectedId={sessionStorage.getItem('clients_selected_id')}
+              initialSelectedId={sessionStorage.getItem('employees_selected_id')}
             />
           </div>
         </div>
@@ -1499,4 +1513,4 @@ const handleViewClient = (clientId, color) => {
   );
 };
 
-export default Clients;
+export default Employees;
