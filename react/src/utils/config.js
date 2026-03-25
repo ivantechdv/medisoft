@@ -5,7 +5,7 @@ export const tipo_config = {
 
 export const estado_config = {
   1: { label: "Activo", color: "rgb(128, 255, 0)" },
-  0: { label: "Inactivo", color: "rgb(245, 245, 245) !important" },
+  0: { label: "Inactivo", color: "rgb(245, 245, 245)" },
   2: { label: "activo 2", color: "rgb(19, 213, 34)" },
 };
 
@@ -18,7 +18,7 @@ export const client_estado_config = {
   },
   0: { 
     label: "Inactivo", 
-    color: "rgb(245, 245, 245) !important", // Gris claro - sin contrato activo (visible)
+    color: "rgb(255, 255, 255)", // Gris claro - sin contrato activo (visible)
     description: "Cliente sin contrato activo (client_service.status = 0)"
   },
   2: { 

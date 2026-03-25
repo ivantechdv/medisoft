@@ -34,6 +34,59 @@ const getRowBackgroundColor = (row) => {
   return client_estado_config[0].color; // Gris claro - sin contrato activo
 };
 
+const ResizableHeaderCell = ({ header }) => {
+  const { getResizeHandler, column } = header;
+  return (
+    <th
+      style={{
+        width: `${column.getSize()}px`,
+        padding: '4px',
+        borderBottom: '1px solid #ccc',
+        textAlign: 'center',
+        fontSize: '13px',
+        backgroundColor: '#ffffff',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        position: 'relative',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+        }}
+      >
+        {flexRender(header.column.columnDef.header, header.getContext())}
+      </div>
+
+      {column.getCanResize() && (
+        <div
+          onMouseDown={getResizeHandler()}
+          onTouchStart={getResizeHandler()}
+          style={{
+            position: 'absolute',
+            right: 0,
+            top: 0,
+            height: '100%',
+            width: '4px',
+            cursor: 'col-resize',
+            zIndex: 1,
+            userSelect: 'none',
+            backgroundColor: '#fff',
+            borderLeft: '2px solid #aaa',
+          }}
+        />
+      )}
+    </th>
+  );
+};
+
 const getClientTypeColor = (row) => {
   return client_tipo_config[row.type]?.color || 'gray';
 };
@@ -212,11 +265,11 @@ const MyDataTable = ({
           />
         ),
         id: 'selection',
-        size: 40,
-        minSize: 40,
-        maxSize: 40,
+        size: columnSizing.selection ?? 55,
+        minSize: 35,
+        maxSize: 80,
         enableSorting: false,
-        enableResizing: false,
+        enableResizing: true,
         enableColumnDragging: false,
         cell: ({ row }) => {
           return (
@@ -232,11 +285,11 @@ const MyDataTable = ({
       {
         header: 'T',
         id: 'indicator_t',
-        size: 25,
+        size: columnSizing.indicator_t ?? 28,
         minSize: 25,
-        maxSize: 25,
+        maxSize: 60,
         enableSorting: false,
-        enableResizing: false,
+        enableResizing: true,
         enableColumnDragging: false,
         cell: ({ row }) => {
           const data = row.original;
@@ -296,12 +349,22 @@ const MyDataTable = ({
                   display: 'flex',
                   alignItems: 'center',
                   fontSize: '13px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
+                  minWidth: 0,
+                  maxWidth: '100%',
                 }}
+                title={text}
               >
-                {text}
+                <span
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {text}
+                </span>
               </div>
             );
           }
@@ -316,12 +379,22 @@ const MyDataTable = ({
                 display: 'flex',
                 alignItems: 'center',
                 fontSize: '13px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
+                minWidth: 0,
+                maxWidth: '100%',
               }}
+              title={value ?? '-'}
             >
-              {value ?? '-'}
+              <span
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {value ?? '-'}
+              </span>
             </div>
           );
         },
@@ -381,28 +454,23 @@ const MyDataTable = ({
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
           <div style={{ width: 'max-content', minWidth: '100%' }}>
             <table style={{ width: 'auto', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <colgroup>
+                {table.getAllLeafColumns().map((column) => (
+                  <col
+                    key={column.id}
+                    style={{
+                      width: `${column.getSize()}px`,
+                    }}
+                  />
+                ))}
+              </colgroup>
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <SortableContext key={headerGroup.id} items={headerGroup.headers.map((h) => h.column.id)} strategy={verticalListSortingStrategy}>
                     <tr>
                       {headerGroup.headers.map((header, index) =>
                         index < 2 ? (
-                          <th
-                            key={header.id}
-                            style={{
-                              width: `${header.getSize()}px`,
-                              padding: '4px',
-                              borderBottom: '1px solid #ccc',
-                              textAlign: 'center',
-                              fontSize: '13px',
-                              backgroundColor: '#f9f9f9',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                            }}
-                          >
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                          </th>
+                          <ResizableHeaderCell key={header.id} header={header} />
                         ) : (
                           <DraggableHeader key={header.id} header={header} index={index} />
                         ),
@@ -428,6 +496,8 @@ const MyDataTable = ({
                           style={{
                             fontSize: '12px',
                             width: `${cell.column.getSize()}px`,
+                            maxWidth: `${cell.column.getSize()}px`,
+                            minWidth: 0,
                             boxSizing: 'border-box',
                             overflow: 'hidden',
                             padding: '0px',

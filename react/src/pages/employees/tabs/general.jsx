@@ -162,6 +162,11 @@ const Form = ({
   const [selectedState, setSelectedState] = useState(null);
   const [postalCodes, setPostalCodes] = useState([]);
 
+  const configDefaultsRef = useRef({ type: null, level_id: null, languages: [] });
+  const hasLoadedEmployeeDefaults = useRef(false);
+  const hasAppliedLanguageDefaults = useRef(false);
+  const userModifiedLanguageSelection = useRef(false);
+
   const [isFullScreen, setIsFullScreen] = useState(false);
   const updateImages = async (onFormData) => {
     console.log('onformdata', onFormData);
@@ -279,6 +284,48 @@ const Form = ({
   }, [onFormData]);
 
   useEffect(() => {
+    const loadEmployeeDefaults = async () => {
+      if (id || hasLoadedEmployeeDefaults.current) return;
+
+      try {
+        const configResponse = await getData('configs/active');
+        const employeeConfig = configResponse?.employee_config || {};
+
+        const defaultType = employeeConfig.default_type || null;
+        const defaultLevelId = employeeConfig.default_level_id || null;
+        const defaultLanguages = Array.isArray(employeeConfig.default_languages)
+          ? employeeConfig.default_languages
+          : [];
+
+        configDefaultsRef.current = {
+          type: defaultType,
+          level_id: defaultLevelId,
+          languages: defaultLanguages,
+        };
+
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          type: defaultType ?? prevFormData.type,
+          level_id: defaultLevelId ?? prevFormData.level_id,
+        }));
+
+        if (!defaultLanguages.length) {
+          hasAppliedLanguageDefaults.current = true;
+        }
+
+        hasLoadedEmployeeDefaults.current = true;
+      } catch (error) {
+        console.error(
+          'Error cargando configuración por defecto de cuidadores:',
+          error,
+        );
+      }
+    };
+
+    loadEmployeeDefaults();
+  }, [id]);
+
+  useEffect(() => {
     if (onFormData.cod_post?.state?.country) {
       const country = countries.find(
         (c) => c.id === parseInt(onFormData.cod_post.state.country_id),
@@ -336,6 +383,18 @@ const Form = ({
         const responseGenders = await getData('genders/all');
         setGenders(responseGenders);
 
+        const responseLanguages = await getData('languages/all');
+
+        if (responseLanguages) {
+          const options = responseLanguages.map((item, index) => ({
+            value: item.id,
+            label: item.name,
+            key: item.id ?? `default-key-${index}`,
+          }));
+
+          setLanguages(options);
+        }
+
         const responseCountries = await getData('countries/all');
         setCountries(responseCountries);
 
@@ -361,6 +420,35 @@ const Form = ({
       setLoadingFetch(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (id) return;
+    if (!hasLoadedEmployeeDefaults.current) return;
+    if (hasAppliedLanguageDefaults.current) return;
+
+    const defaultLanguages = configDefaultsRef.current.languages;
+
+    if (!Array.isArray(defaultLanguages) || !defaultLanguages.length) return;
+    if (!languages || !languages.length) return;
+    if (userModifiedLanguageSelection.current) return;
+
+    const selected = languages.filter((language) =>
+      defaultLanguages.includes(language.value),
+    );
+
+    if (!selected.length) {
+      hasAppliedLanguageDefaults.current = true;
+      return;
+    }
+
+    setSelectedLanguages(selected);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      language_id: selected.map((language) => language.value).join(','),
+    }));
+
+    hasAppliedLanguageDefaults.current = true;
+  }, [languages, id]);
 
   useEffect(() => {
     const fetchSelect = async () => {
@@ -827,7 +915,14 @@ const Form = ({
   };
 
   const handleSelectChange = (selected) => {
+    userModifiedLanguageSelection.current = true;
     setSelectedLanguages(selected);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      language_id: (selected || [])
+        .map((language) => language.value)
+        .join(','),
+    }));
   };
   const validateEmails = (emails) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
