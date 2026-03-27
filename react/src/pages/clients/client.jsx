@@ -8,6 +8,8 @@ import {
   FaFileAlt,
   FaClipboardList,
   FaPlusCircle,
+  FaChevronLeft,
+  FaChevronRight,
 } from 'react-icons/fa'; // Asegúrate de tener react-icons instalado
 import { getData, postData, putData, getStorage } from '../../api';
 import Spinner from '../../components/Spinner/Spinner';
@@ -83,6 +85,7 @@ const Clients = () => {
   const [unsavedChanges, setUnsavedChanges] = useState(false);
 
   const [isFamiliesModalOpen, setIsFamiliesModalOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   const getRecordById = async (id) => {
     try {
@@ -314,119 +317,133 @@ const Clients = () => {
         ]}
       />
       <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-80px)]'>
-        <div className='grid grid-cols-1 md:grid-cols-5'>
-          <div className='col-span-1  border-r-2 border-gray-200 '>
+        <div className='grid grid-cols-[auto_1fr] md:grid-cols-[auto_280px_1fr_1fr]'>
+          <div
+            className={`relative border-r-2 border-gray-200 h-full transition-all duration-300 ease-in-out ${
+              collapsed ? 'w-[50px]' : 'w-[280px]'
+            }`}
+          >
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className='absolute -right-3 top-4 bg-white border border-gray-300 rounded-full p-1 shadow z-10'
+            >
+              {collapsed ? <FaChevronRight /> : <FaChevronLeft />}
+            </button>
             <div className='w-full border-r-2 border-gray-200'>
               {/* Contenido del lado izquierdo */}
-              <div className='flex relative bg-white border-b-2 border-gray-200 h-40 '>
-                <div className='w-10 bg-blue-300 '></div>
-                <div className='absolute top-12 left-2 bg-white border-2 border-gray-300 rounded-full'>
-                  {cardData.photo ? (
-                    <img
-                      src={cardData.photo}
-                      alt=''
-                      className='h-12 w-12 rounded-full'
-                      style={{ objectFit: 'contain' }}
-                    />
-                  ) : (
-                    <>
-                      <FaUser className='text-gray-300 text-5xl p-2' />
-                    </>
-                  )}
-                </div>
-                <div className='mt-4 ml-8'>
-                  <label className='font-semibold text-md block uppercase'>
-                    {cardData.full_name}
-                  </label>
-                  <label className='font-light text-sm block mt-2'>
-                    {cardData.dni}
-                  </label>
-                  <label className='font-light text-sm block '>
-                    {cardData.fecha}
-                  </label>
-                  {cardData.id && ( // Verifica si cardData.id existe
-                    <div className='flex items-center'>
-                      <label className='font-light text-sm block'>
-                        ID CLIENTE
-                      </label>
-                      {'  '}
-                      <div className='ml-4 w-10 h-10 bg-blue-300  rounded-full flex items-center justify-center mr-2'>
-                        <span className='text-lg font-bold'>{cardData.id}</span>{' '}
-                        {/* Aplica estilos para hacerlo negrita y grande */}
-                      </div>
+              {!collapsed ? (
+                <>
+                  <div className='flex relative bg-white border-b-2 border-gray-200 h-40 '>
+                    <div className='w-10 bg-blue-300 '></div>
+                    <div className='absolute top-12 left-2 bg-white border-2 border-gray-300 rounded-full'>
+                      {cardData.photo ? (
+                        <img
+                          src={cardData.photo}
+                          alt=''
+                          className='h-12 w-12 rounded-full'
+                          style={{ objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <FaUser className='text-gray-300 text-5xl p-2' />
+                      )}
                     </div>
-                  )}
-                  {/* <button type='button' onClick={handleLogs}>
-                    <FaFileAlt size={32} />
-                  </button> */}
-                </div>
-              </div>
-              <div className='col-span-1 mt-4 pr-4 text-xs'>
-                <div className='w-full ml-2 flex'>
-                  <label className='text-primary mt-4 mb-4  text-base'>
-                    Datos de contacto
-                  </label>
-                </div>
+                    <div className='mt-4 ml-8'>
+                      <label className='font-semibold text-md block uppercase'>
+                        {cardData.full_name}
+                      </label>
+                      <label className='font-light text-sm block mt-2'>
+                        {cardData.dni}
+                      </label>
+                      <label className='font-light text-sm block '>
+                        {cardData.fecha}
+                      </label>
+                      {cardData.id && (
+                        <div className='flex items-center'>
+                          <label className='font-light text-sm block'>
+                            ID CLIENTE
+                          </label>
+                          <div className='ml-4 w-10 h-10 bg-blue-300  rounded-full flex items-center justify-center mr-2'>
+                            <span className='text-lg font-bold'>{cardData.id}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className='col-span-1 mt-4 pr-4 text-xs'>
+                    <div className='w-full ml-2 flex'>
+                      <label className='text-primary mt-4 mb-4  text-base'>
+                        Datos de contacto
+                      </label>
+                    </div>
 
-                <div className='w-full ml-2 flex items-center '>
-                  <FaMapMarkerAlt className='mr-2' />
-                  <label className='flex truncate text-wrap'>
-                    {cardData.address || 'Dirección'}
-                  </label>
-                </div>
-                <div className='w-full ml-2 flex items-center'>
-                  <FaMapMarkerAlt className='mr-2' />
-                  <label className='flex truncate text-wrap'>
-                    {cardData.cod_post}
-                  </label>
-                </div>
-                <EmailList emails={cardData.email} />
+                    <div className='w-full ml-2 flex items-center '>
+                      <FaMapMarkerAlt className='mr-2' />
+                      <label className='flex truncate text-wrap'>
+                        {cardData.address || 'Dirección'}
+                      </label>
+                    </div>
+                    <div className='w-full ml-2 flex items-center'>
+                      <FaMapMarkerAlt className='mr-2' />
+                      <label className='flex truncate text-wrap'>
+                        {cardData.cod_post}
+                      </label>
+                    </div>
+                    <EmailList emails={cardData.email} />
 
-                <div className='w-full ml-2 flex items-center'>
-                  <FaPhoneSquareAlt className='mr-2' />
-                  <a
-                    href={`tel:${cardData.code_phone}${cardData.phone}`}
-                    className='truncate max-w-xs hover:text-blue-600 transition-colors'
-                    title={`${cardData.code_phone} ${cardData.phone}`} // Mostrar el teléfono completo en un tooltip
-                  >
-                    {`${cardData.code_phone} ${formatPhoneNumber(
-                      cardData.phone,
-                    )}`}
-                  </a>
+                    <div className='w-full ml-2 flex items-center'>
+                      <FaPhoneSquareAlt className='mr-2' />
+                      <a
+                        href={`tel:${cardData.code_phone}${cardData.phone}`}
+                        className='truncate max-w-xs hover:text-blue-600 transition-colors'
+                        title={`${cardData.code_phone} ${cardData.phone}`}
+                      >
+                        {`${cardData.code_phone} ${formatPhoneNumber(
+                          cardData.phone,
+                        )}`}
+                      </a>
+                    </div>
+                  </div>
+                  <div className='col-span-1 mt-8 pr-4 text-xs'>
+                    <div className='w-full ml-2 flex justify-between'>
+                      <label className='text-primary mt-2  text-base'>
+                        Datos Familiar
+                      </label>
+                      <label>
+                        {' '}
+                        <button type='button' onClick={() => openModalFamilies([])}>
+                          <FaPlusCircle className='mt-2 flex-start text-lg' />
+                        </button>
+                      </label>
+                    </div>
+                  </div>
+                  <div className='w-full p-2 mb-2 overflow-y-auto h-[250px]'>
+                    {families.map((family, index) => (
+                      <FamiliarCard
+                        key={index}
+                        family={family}
+                        openModalFamily={openModalFamilies}
+                      />
+                    ))}
+                  </div>
+                  <Families
+                    isOpen={isFamiliesModalOpen}
+                    onClose={closeModalFamilies}
+                    client_id={cardData.id}
+                    formDataFamily={formDataFamily}
+                    getFamilies={getFamilies}
+                  ></Families>
+                </>
+              ) : (
+                <div className='flex flex-col items-center justify-center h-full text-xs font-semibold'>
+                  <FaUser className='text-gray-400 text-3xl mb-2' />
+                  <span className='rotate-180 [writing-mode:vertical-rl]'>
+                    {cardData.full_name}
+                  </span>
                 </div>
-              </div>
-              <div className='col-span-1 mt-8 pr-4 text-xs'>
-                <div className='w-full ml-2 flex justify-between'>
-                  <label className='text-primary mt-2  text-base'>
-                    Datos Familiar
-                  </label>
-                  <label>
-                    {' '}
-                    <button type='button' onClick={() => openModalFamilies([])}>
-                      <FaPlusCircle className='mt-2 flex-start text-lg' />
-                    </button>
-                  </label>
-                </div>
-              </div>
-              <div className='w-full p-2 mb-2 overflow-y-auto h-[250px]'>
-                {families.map((family, index) => (
-                  <FamiliarCard
-                    key={index}
-                    family={family}
-                    openModalFamily={openModalFamilies}
-                  />
-                ))}
-              </div>
-              <Families
-                isOpen={isFamiliesModalOpen}
-                onClose={closeModalFamilies}
-                client_id={cardData.id}
-                formDataFamily={formDataFamily}
-                getFamilies={getFamilies}
-              ></Families>
+              )}
             </div>
           </div>
-          <div className='col-span-4 '>
+          <div className='md:col-span-3'>
             {/* Contenido del lado derecho */}
             <div className='mb-4 border-b-2 border-gray-400 p-2'>
               <button

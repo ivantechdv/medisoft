@@ -17,6 +17,8 @@ import {
   formatPhoneNumber,
   formatISOToDate,
 } from '../../../utils/customFormat';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 const Form = ({
   onHandleChangeCard,
   id,
@@ -121,10 +123,16 @@ const Form = ({
   const emailRef = useRef(null);
   const dni = useRef(null);
   const ref = useRef(null);
+  const [isObservationsFullScreen, setIsObservationsFullScreen] = useState(false);
 
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [postalCodes, setPostalCodes] = useState([]);
+
+  const configDefaultsRef = useRef({ type: null, languages: [] });
+  const hasLoadedClientDefaults = useRef(false);
+  const hasAppliedLanguageDefaults = useRef(false);
+  const userModifiedLanguageSelection = useRef(false);
 
   const navigateTo = useNavigate();
 
@@ -210,6 +218,86 @@ const Form = ({
     };
     initForm();
   }, [onFormData]);
+
+  useEffect(() => {
+    const loadClientDefaults = async () => {
+      if (id || hasLoadedClientDefaults.current) return;
+
+      try {
+        const configResponse = await getData('configs/active');
+        const clientConfig = configResponse?.client_config || {};
+
+        const resolveDefaultType = () => {
+          const rawType =
+            clientConfig.type || clientConfig.default_type || clientConfig?.defaultType;
+
+          if (typeof rawType !== 'string') return null;
+
+          const trimmed = rawType.trim();
+          if (!trimmed) return null;
+
+          const knownTypes = ['Cliente', 'Posible Cliente'];
+          const normalized = knownTypes.find(
+            (type) => type.toLowerCase() === trimmed.toLowerCase(),
+          );
+
+          return normalized || trimmed;
+        };
+
+        const resolveDefaultLanguages = () => {
+          if (Array.isArray(clientConfig.default_languages)) {
+            return clientConfig.default_languages
+              .map((value) => Number(value))
+              .filter((value) => !Number.isNaN(value));
+          }
+
+          if (Array.isArray(clientConfig.languages)) {
+            return clientConfig.languages
+              .map((value) => Number(value))
+              .filter((value) => !Number.isNaN(value));
+          }
+
+          const languageCSV =
+            clientConfig.language || clientConfig.default_language || clientConfig?.defaultLanguages;
+
+          if (typeof languageCSV !== 'string') return [];
+
+          return languageCSV
+            .split(',')
+            .map((value) => Number(value.trim()))
+            .filter((value) => !Number.isNaN(value));
+        };
+
+        const defaultType = resolveDefaultType();
+        const defaultLanguages = resolveDefaultLanguages();
+
+        configDefaultsRef.current = {
+          type: defaultType,
+          languages: defaultLanguages,
+        };
+
+        if (defaultType) {
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            type: defaultType,
+          }));
+        }
+
+        if (!defaultLanguages.length) {
+          hasAppliedLanguageDefaults.current = true;
+        }
+
+        hasLoadedClientDefaults.current = true;
+      } catch (error) {
+        console.error(
+          'Error cargando configuración por defecto de clientes:',
+          error,
+        );
+      }
+    };
+
+    loadClientDefaults();
+  }, [id]);
   useEffect(() => {
     try {
       setLoadingLanguage(true);
@@ -230,6 +318,30 @@ const Form = ({
       setLoadingLanguage(false);
     }
   }, [languages]);
+
+  useEffect(() => {
+    if (id) return;
+    if (!hasLoadedClientDefaults.current) return;
+    if (hasAppliedLanguageDefaults.current) return;
+
+    const defaultLanguages = configDefaultsRef.current.languages;
+
+    if (!Array.isArray(defaultLanguages) || !defaultLanguages.length) return;
+    if (!languages || !languages.length) return;
+    if (userModifiedLanguageSelection.current) return;
+
+    const selected = languages.filter((language) =>
+      defaultLanguages.includes(language.value),
+    );
+
+    setSelectedLanguages(selected);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      language_id: selected.map((language) => language.value).join(','),
+    }));
+
+    hasAppliedLanguageDefaults.current = true;
+  }, [languages, id]);
   useEffect(() => {
     try {
       setLoadingFetch(true);
@@ -702,7 +814,14 @@ const Form = ({
   };
 
   const handleSelectChange = (selected) => {
+    userModifiedLanguageSelection.current = true;
     setSelectedLanguages(selected);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      language_id: (selected || [])
+        .map((language) => language.value)
+        .join(','),
+    }));
   };
   const handleSelect = (selected) => {
     setFormData((prevFormData) => ({
@@ -1468,14 +1587,38 @@ const Form = ({
               >
                 Observaciones
               </label>
-              <textarea
-                id='observations'
-                name='observations'
-                rows={6}
-                value={formData.observations}
-                onChange={handleChange}
-                className='w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
-              />
+              <div
+                className={
+                  isObservationsFullScreen
+                    ? 'fixed inset-0 z-50 bg-white flex flex-col'
+                    : 'relative'
+                }
+              >
+                <button
+                  type='button'
+                  className={`absolute top-2 right-2 ${
+                    isObservationsFullScreen ? 'z-50' : 'z-10'
+                  } bg-gray-200 px-2 py-1 rounded text-xs`}
+                  onClick={() =>
+                    setIsObservationsFullScreen((prev) => !prev)
+                  }
+                >
+                  {isObservationsFullScreen ? '⤢ Minimizar' : '⤢ Maximizar'}
+                </button>
+                <ReactQuill
+                  theme='snow'
+                  value={formData.observations || ''}
+                  placeholder='Escribe observaciones aquí'
+                  className='bg-white'
+                  style={{ height: isObservationsFullScreen ? '100vh' : '200px' }}
+                  onChange={(content) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      observations: content,
+                    }))
+                  }
+                />
+              </div>
             </div>
           </div>
         </div>

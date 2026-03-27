@@ -26,7 +26,7 @@ function Navigation() {
       icon: <FaCogs className='w-5 h-5' />,
       sublinks: [
         {
-          to: '/',
+          to: '/configuration',
           label: 'General',
           icon: <CollectionIcon className='w-5 h-5' />,
         },

@@ -4,6 +4,7 @@ import {
   InfoSweetAlert,
 } from '../../components/SweetAlert/SweetAlert2';
 import { postData, putData, deleteById, getData } from '../../api/index';
+import { formatPhoneNumber } from '../../utils/customFormat';
 
 const Families = ({
   isOpen,
@@ -221,11 +222,11 @@ const Families = ({
       }));
     }
   };
-  const formatPhoneNumber = (phone) => {
-    return phone.replace(/(\d{3})(?=\d)/g, '$1 ');
-  };
   return isOpen ? (
-    <div className='fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-10'>
+    <div
+      className='fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-[9999]'
+      style={{ pointerEvents: 'auto' }}
+    >
       <div className='bg-white rounded-lg w-96 p-6 shadow-lg'>
         <h2 className='text-lg font-bold mb-4 text-[#f88d4a]'>Alta Familiar</h2>
         <form onSubmit={handleSubmit}>
@@ -391,7 +392,7 @@ const Families = ({
           </div>
           <div className='mb-4'>
             <label
-              htmlFor='notas'
+              htmlFor='observations'
               className='block text-sm font-medium text-[#50a0ec] w-28'
             >
               Notas

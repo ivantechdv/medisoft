@@ -10,12 +10,12 @@ const Methods = require("../methods/methods.controller");
 CTRL.create = async (req, res, next) => {
   try {
     const transaction = await sequelize.transaction();
-    
+
     try {
       const config = await Config.create(req.body, { transaction });
       await transaction.commit();
       
-      res.status(201).json(config);
+      res.status(201).json(formatConfigResponse(config));
     } catch (error) {
       await transaction.rollback();
       throw error;
@@ -46,7 +46,7 @@ CTRL.get = async (req, res, next) => {
       return res.status(404).json({ error: "No active configuration found" });
     }
     
-    res.json(config);
+    res.json(formatConfigResponse(config));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -86,10 +86,179 @@ CTRL.getById = async (req, res, next) => {
   }
 };
 
+const NUMERIC_KEY_REGEX = /^\d+$/;
+
+const sanitizeClientConfig = (config) => {
+  if (!config || typeof config !== 'object') return {};
+
+  const sanitized = {};
+  if (Object.prototype.hasOwnProperty.call(config, 'default_type')) {
+    const value = config.default_type;
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      sanitized.default_type = trimmed.length ? trimmed : null;
+    } else if (value === null) {
+      sanitized.default_type = null;
+    }
+  }
+
+  if (Object.prototype.hasOwnProperty.call(config, 'default_languages')) {
+    const value = config.default_languages;
+    let languages = [];
+
+    if (Array.isArray(value)) {
+      languages = value
+        .map((lang) => Number(lang))
+        .filter((lang) => !Number.isNaN(lang));
+    } else if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (trimmed.length) {
+        languages = trimmed
+          .split(',')
+          .map((lang) => Number(lang.trim()))
+          .filter((lang) => !Number.isNaN(lang));
+      }
+    }
+
+    sanitized.default_languages = languages;
+  }
+
+  return sanitized;
+};
+
+const parseConfigSection = (section) => {
+  if (!section) return {};
+
+  if (typeof section === 'string') {
+    const trimmed = section.trim();
+
+    if (!trimmed.length) return {};
+
+    const looksLikeJson =
+      (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+      (trimmed.startsWith('[') && trimmed.endsWith(']'));
+
+    if (!looksLikeJson) {
+      return {};
+    }
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      return parseConfigSection(parsed);
+    } catch (error) {
+      console.warn('No se pudo parsear configuración JSON:', section, error);
+      return {};
+    }
+  }
+
+  if (Array.isArray(section)) {
+    return section;
+  }
+
+  if (typeof section === 'object') {
+    const keys = Object.keys(section);
+    if (keys.length === 0) return {};
+
+    const nonNumericEntries = Object.entries(section).filter(
+      ([key]) => !NUMERIC_KEY_REGEX.test(key),
+    );
+
+    if (nonNumericEntries.length) {
+      return nonNumericEntries.reduce((acc, [key, value]) => {
+        if (value === undefined || value === null) return acc;
+
+        if (typeof value === 'string') {
+          const trimmedValue = value.trim();
+          const looksLikeJsonValue =
+            (trimmedValue.startsWith('{') && trimmedValue.endsWith('}')) ||
+            (trimmedValue.startsWith('[') && trimmedValue.endsWith(']'));
+
+          if (looksLikeJsonValue) {
+            const parsedValue = parseConfigSection(value);
+            if (
+              (Array.isArray(parsedValue) && parsedValue.length) ||
+              (typeof parsedValue === 'object' && Object.keys(parsedValue).length)
+            ) {
+              acc[key] = parsedValue;
+            } else {
+              acc[key] = value;
+            }
+          } else {
+            acc[key] = value;
+          }
+        } else if (Array.isArray(value)) {
+          acc[key] = value;
+        } else if (typeof value === 'object') {
+          const parsedNested = parseConfigSection(value);
+          acc[key] = parsedNested;
+        } else {
+          acc[key] = value;
+        }
+
+        return acc;
+      }, {});
+    }
+
+    try {
+      const sortedKeys = keys.slice().sort((a, b) => Number(a) - Number(b));
+      const reconstructed = sortedKeys.map((key) => section[key]).join('');
+      const trimmedReconstructed = reconstructed.trim();
+
+      if (!trimmedReconstructed.length) {
+        return {};
+      }
+
+      const looksLikeJson =
+        (trimmedReconstructed.startsWith('{') && trimmedReconstructed.endsWith('}')) ||
+        (trimmedReconstructed.startsWith('[') && trimmedReconstructed.endsWith(']'));
+
+      if (!looksLikeJson) {
+        return {};
+      }
+
+      const reparsed = JSON.parse(trimmedReconstructed);
+
+      if (
+        typeof reparsed === 'object' &&
+        reparsed !== null &&
+        !Array.isArray(reparsed)
+      ) {
+        const reparsedKeys = Object.keys(reparsed);
+        const isSameNumericShape =
+          reparsedKeys.length === sortedKeys.length &&
+          reparsedKeys.every((key, index) => key === sortedKeys[index] && NUMERIC_KEY_REGEX.test(key));
+
+        if (isSameNumericShape) {
+          return {};
+        }
+      }
+
+      return parseConfigSection(reparsed);
+    } catch (error) {
+      console.warn('No se pudo reconstruir configuración corrupta:', error);
+      return {};
+    }
+  }
+
+  return {};
+};
+
+const formatConfigResponse = (config) => {
+  if (!config) return config;
+
+  const plainConfig = typeof config.toJSON === 'function' ? config.toJSON() : config;
+
+  return {
+    ...plainConfig,
+    client_config: sanitizeClientConfig(parseConfigSection(plainConfig.client_config)),
+    employee_config: parseConfigSection(plainConfig.employee_config),
+  };
+};
+
 CTRL.update = async (req, res, next) => {
   try {
     const transaction = await sequelize.transaction();
-    
+
     try {
       const config = await Config.findByPk(req.params.id, { transaction });
       
@@ -98,10 +267,36 @@ CTRL.update = async (req, res, next) => {
         return res.status(404).json({ error: "Configuration not found" });
       }
       
-      await config.update(req.body, { transaction });
+      // Merge client_config and employee_config if provided
+      const updateData = { ...req.body };
+
+      if (req.body.client_config) {
+        const storedClientConfig = sanitizeClientConfig(
+          parseConfigSection(config.client_config),
+        );
+        const incomingClientConfig = sanitizeClientConfig(
+          parseConfigSection(req.body.client_config),
+        );
+
+        updateData.client_config = {
+          ...storedClientConfig,
+          ...incomingClientConfig,
+        };
+      }
+      if (req.body.employee_config) {
+        const storedEmployeeConfig = parseConfigSection(config.employee_config);
+        const incomingEmployeeConfig = parseConfigSection(req.body.employee_config);
+
+        updateData.employee_config = {
+          ...storedEmployeeConfig,
+          ...incomingEmployeeConfig,
+        };
+      }
+
+      await config.update(updateData, { transaction });
       await transaction.commit();
-      
-      res.json(config);
+
+      res.json(formatConfigResponse(config));
     } catch (error) {
       await transaction.rollback();
       throw error;
