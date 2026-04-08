@@ -123,6 +123,18 @@ const sanitizeClientConfig = (config) => {
     sanitized.default_languages = languages;
   }
 
+  // Permitir default_state_id
+  if (Object.prototype.hasOwnProperty.call(config, 'default_state_id')) {
+    const value = config.default_state_id;
+    sanitized.default_state_id = value ? Number(value) : null;
+  }
+
+  // Permitir default_country_code
+  if (Object.prototype.hasOwnProperty.call(config, 'default_country_code')) {
+    const value = config.default_country_code;
+    sanitized.default_country_code = typeof value === 'string' ? value.trim() : '';
+  }
+
   return sanitized;
 };
 

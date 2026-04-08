@@ -24,7 +24,7 @@ const phoneFormatMiddleware = (req, res, next) => {
           const cleanNumber = obj.phone.replace(/\D/g, '');
           if (cleanNumber.length === 9) {
             obj.phone = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-            console.log(`📞 Formatted employee phone: ${cleanNumber} → ${obj.phone}`);
+            //console.log(`📞 Formatted employee phone: ${cleanNumber} → ${obj.phone}`);
           }
         }
         
@@ -33,7 +33,7 @@ const phoneFormatMiddleware = (req, res, next) => {
           const cleanNumber = obj.phone2.replace(/\D/g, '');
           if (cleanNumber.length === 9) {
             obj.phone2 = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-            console.log(`📞 Formatted employee phone2: ${cleanNumber} → ${obj.phone2}`);
+            //console.log(`📞 Formatted employee phone2: ${cleanNumber} → ${obj.phone2}`);
           }
         }
         
@@ -42,7 +42,7 @@ const phoneFormatMiddleware = (req, res, next) => {
           const cleanNumber = obj.code_phone.replace(/\D/g, '');
           if (cleanNumber.length === 9) {
             obj.code_phone = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-            console.log(`📞 Formatted employee code_phone: ${cleanNumber} → ${obj.code_phone}`);
+            //console.log(`📞 Formatted employee code_phone: ${cleanNumber} → ${obj.code_phone}`);
           }
         }
         
@@ -51,7 +51,7 @@ const phoneFormatMiddleware = (req, res, next) => {
           const cleanNumber = obj.code_phone2.replace(/\D/g, '');
           if (cleanNumber.length === 9) {
             obj.code_phone2 = cleanNumber.replace(/(\d{3})(\d{2})(\d{2})(\d{2})/, '$1 $2 $3 $4');
-            console.log(`📞 Formatted employee code_phone2: ${cleanNumber} → ${obj.code_phone2}`);
+           // console.log(`📞 Formatted employee code_phone2: ${cleanNumber} → ${obj.code_phone2}`);
           }
         }
         

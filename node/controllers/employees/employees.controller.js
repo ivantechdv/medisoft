@@ -125,7 +125,20 @@ CTRL.get = async (req, res, next) => {
         model: Level,
       },
     ];
-    Methods.get(req, res, next, Employee, condition, include);
+    const { searchTerm } = req.query;
+    const additionalSearchConditions = searchTerm
+      ? [{ start_date: { [Op.like]: `%${searchTerm}%` } }]
+      : [];
+
+    Methods.get(
+      req,
+      res,
+      next,
+      Employee,
+      condition,
+      include,
+      additionalSearchConditions
+    );
   } catch (error) {
     console.error("Error al ejecutar la consulta:", error);
   }

@@ -1,8 +1,8 @@
-const   jwt   = require('jsonwebtoken') ;
-const { secret } = require('../config/auth.config');
+const jwt = require('jsonwebtoken');
 
+const secret = process.env.JWT_SECRET;
 
- const authRequired = (req, res , next ) => {
+const authRequired = (req, res , next ) => {
     const authorizationHeader = req.headers.authorization;
     if (!authorizationHeader) {
       return res.status(401).json({ message: 'No token, authorization denied' });

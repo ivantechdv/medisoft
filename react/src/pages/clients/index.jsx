@@ -15,6 +15,7 @@ import {
 import ToastNotify from '../../components/toast/toast';
 import { normalizePhoneForSearch } from '../../utils/customFormat';
 import { client_estado_config, client_tipo_config } from '../../utils/config';
+import { getUserPreferences, saveUserPreferences } from '../../api/userPreferences';
 
 // Función para determinar el color de fondo de las filas según el estado del cliente
 const getRowBackgroundColor = (row) => {
@@ -204,35 +205,76 @@ const MyDataTable = ({
   onSelectedRows,
   tableContainerRef,
 }) => {
-  const [selectedRowId, setSelectedRowId] = useState(
-    sessionStorage.getItem('clients_selected_id') || null,
-  );
+  const [selectedRowId, setSelectedRowId] = useState(null);
   const [sorting, setSorting] = useState([]);
+  const [initialPreferencesLoaded, setInitialPreferencesLoaded] = useState(false);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
 
-  const [columnSizing, setColumnSizing] = useState(() => {
-    const saved = localStorage.getItem('clientsTableColumnWidths');
-    return saved ? JSON.parse(saved) : {};
-  });
-  const [columnOrder, setColumnOrder] = useState(() => {
-    const saved = localStorage.getItem('clientsTableColumnOrder');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [columnSizing, setColumnSizing] = useState({});
+  const [columnOrder, setColumnOrder] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem('clientsTableColumnWidths', JSON.stringify(columnSizing));
-  }, [columnSizing]);
+    const loadUserPreferences = async () => {
+      try {
+        const preferences = await getUserPreferences('clients');
+        if (preferences.sorting && Array.isArray(preferences.sorting)) {
+          setSorting(preferences.sorting);
+        }
+        if (preferences.columnSizing && typeof preferences.columnSizing === 'object') {
+          setColumnSizing(preferences.columnSizing);
+        }
+        if (preferences.columnOrder && Array.isArray(preferences.columnOrder)) {
+          setColumnOrder(preferences.columnOrder);
+        }
+        if (preferences.selectedRowId) {
+          setSelectedRowId(preferences.selectedRowId);
+        }
+        if (preferences.pageSize) {
+          setPageSize(preferences.pageSize);
+        }
+        setInitialPreferencesLoaded(true);
+      } catch (error) {
+        console.error('Error loading user preferences:', error);
+        setInitialPreferencesLoaded(true);
+      }
+    };
+
+    loadUserPreferences();
+  }, []);
 
   useEffect(() => {
-    if (columnOrder) {
-      localStorage.setItem('clientsTableColumnOrder', JSON.stringify(columnOrder));
+    console.log('Save effect triggered:', { 
+      initialPreferencesLoaded, 
+      userHasInteracted,
+      columnSizing 
+    });
+    
+    if (initialPreferencesLoaded && userHasInteracted) {
+      const savePreferences = async () => {
+        console.log('SAVING preferences to DB:', { 
+          sorting,
+          columnSizing,
+          columnOrder,
+          selectedRowId,
+          pageSize
+        });
+        try {
+          await saveUserPreferences('clients', { 
+            sorting,
+            columnSizing,
+            columnOrder,
+            selectedRowId,
+            pageSize
+          });
+        } catch (error) {
+          console.error('Error saving table preferences:', error);
+        }
+      };
+
+      const timeoutId = setTimeout(savePreferences, 500);
+      return () => clearTimeout(timeoutId);
     }
-  }, [columnOrder]);
-
-  useEffect(() => {
-    if (selectedRowId) {
-      sessionStorage.setItem('clients_selected_id', selectedRowId);
-    }
-  }, [selectedRowId]);
+  }, [sorting, columnSizing, columnOrder, selectedRowId, pageSize, initialPreferencesLoaded, userHasInteracted]);
 
   const clickTimer = useRef(null);
   const onRowInteraction = (row) => {
@@ -248,7 +290,7 @@ const MyDataTable = ({
       clickTimer.current = setTimeout(() => {
         clickTimer.current = null;
         onHandleRowClick(row);
-        sessionStorage.setItem('clients_selected_row', JSON.stringify(row));
+        // sessionStorage.setItem('clients_selected_row', JSON.stringify(row));
       }, 250);
     }
   };
@@ -413,9 +455,18 @@ const MyDataTable = ({
       columnSizing,
       columnOrder: columnOrder || defaultColumnOrder,
     },
-    onSortingChange: setSorting,
-    onColumnSizingChange: setColumnSizing,
-    onColumnOrderChange: setColumnOrder,
+    onSortingChange: (updater) => {
+      setUserHasInteracted(true);
+      setSorting(updater);
+    },
+    onColumnSizingChange: (updater) => {
+      setUserHasInteracted(true);
+      setColumnSizing(updater);
+    },
+    onColumnOrderChange: (updater) => {
+      setUserHasInteracted(true);
+      setColumnOrder(updater);
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     columnResizeMode: 'onEnd',
@@ -430,6 +481,7 @@ const MyDataTable = ({
       const oldIndex = table.getState().columnOrder.indexOf(active.id);
       const newIndex = table.getState().columnOrder.indexOf(over.id);
       const newOrder = arrayMove(table.getState().columnOrder, oldIndex, newIndex);
+      setUserHasInteracted(true);
       setColumnOrder(newOrder);
     }
   };
@@ -528,14 +580,7 @@ const Clients = () => {
   });
 
   const [rows, setRows] = useState([]);
-  const [pageSize, setPageSize] = useState(() => {
-  const saved = localStorage.getItem('clients_pageSize');
-  if (saved === 'todos') {
-    return 'todos';
-  }
-  // Si no hay nada guardado o no es un número válido, usar 'todos' por defecto
-  return saved && !isNaN(saved) ? Number(saved) : 'todos';
-});
+  const [pageSize, setPageSize] = useState('todos');
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -636,19 +681,19 @@ const Clients = () => {
 
   useEffect(() => {
     if (hasRestoredSelection.current) return;
-    const storedRow = sessionStorage.getItem('clients_selected_row');
-    if (!storedRow) return;
+    // const storedRow = sessionStorage.getItem('clients_selected_row');
+    // if (!storedRow) return;
 
-    const parsedRow = JSON.parse(storedRow);
-    if (!parsedRow?.id) return;
+    // const parsedRow = JSON.parse(storedRow);
+    // if (!parsedRow?.id) return;
 
-    const match = rows.find((row) => row.id === parsedRow.id);
-    if (match) {
-      hasRestoredSelection.current = true;
-      setSelectedRow(match);
-      setSelectedRowId(match.id);
-      fetchClientServices(match.id);
-    }
+    // const match = rows.find((row) => row.id === parsedRow.id);
+    // if (match) {
+    //   hasRestoredSelection.current = true;
+    //   setSelectedRow(match);
+    //   setSelectedRowId(match.id);
+    //   fetchClientServices(match.id);
+    // }
   }, [rows]);
 
   const handleAplyFilter = () => {
@@ -773,7 +818,7 @@ const Clients = () => {
     if (!rowData?.id) return;
     setSelectedRow(rowData);
     setSelectedRowId(rowData.id);
-    sessionStorage.setItem('clients_selected_row', JSON.stringify(rowData));
+    // sessionStorage.setItem('clients_selected_row', JSON.stringify(rowData));
     await fetchClientServices(rowData.id);
   };
 
@@ -801,11 +846,11 @@ const Clients = () => {
     const value = event.target.value;
     if (value == 'todos') {
       setPageSize('todos');
-      localStorage.setItem('clients_pageSize', 'todos'); // Guardar con clave específica
+      // localStorage.setItem('clients_pageSize', 'todos'); // Guardar con clave específica
     } else {
       const numValue = Number(value);
       setPageSize(numValue); // Guardar como número
-      localStorage.setItem('clients_pageSize', numValue); // Guardar con clave específica
+      // localStorage.setItem('clients_pageSize', numValue); // Guardar con clave específica
     }
     setCurrentPage(1); // Reinicia a la primera página
   };
