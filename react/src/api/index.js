@@ -27,7 +27,7 @@ export const select = async (endpoint) => {
 };
 
 export const getData = async (endpoint) => {
-  const token = Cookies.get('token');
+  const token = Cookies.get('authToken');
   const fetchData = async () => {
     try {
       const res = await axios.get(apiUrl + endpoint, {
@@ -45,9 +45,17 @@ export const getData = async (endpoint) => {
 };
 
 export const postData = async (endpoint, data) => {
-  //const token = Cookies.get('token');
+  const token = Cookies.get('authToken');
+  const config = {};
+  
+  if (token) {
+    config.headers = {
+      Authorization: `Bearer ${token}`,
+    };
+  }
+  
   try {
-    const res = await axios.post(apiUrl + endpoint, data);
+    const res = await axios.post(apiUrl + endpoint, data, config);
     return res.data;
   } catch (error) {
     console.error(error);
@@ -56,7 +64,7 @@ export const postData = async (endpoint, data) => {
 };
 
 export const putData = async (endpoint, data) => {
-  const token = Cookies.get('token');
+  const token = Cookies.get('authToken');
   try {
     const res = await axios.put(apiUrl + endpoint, data, {
       headers: {
@@ -116,6 +124,25 @@ export const deleteStorage = async (filename, container) => {
       `${apiUrl}storage/delete/${container}/${filename}`,
     );
     return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};
+
+export const verifyToken = async (data) => {
+  // Simplemente verificar que existe el token
+  // La validación real la hace cada endpoint protegido con authRequired middleware
+  if (data && data.token) {
+    return { success: true };
+  }
+  return { success: false };
+};
+
+export const cakeLogout = async () => {
+  try {
+    const res = await axios.post(apiUrl + 'users/logout');
+    return res;
   } catch (error) {
     console.error(error);
     throw error;

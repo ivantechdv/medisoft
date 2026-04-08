@@ -19,6 +19,7 @@ import {
 } from '../../components/SweetAlert/SweetAlert';
 import ToastNotify from '../../components/toast/toast';
 import { normalizePhoneForSearch } from '../../utils/customFormat';
+import { getUserPreferences, saveUserPreferences } from '../../api/userPreferences';
 import {
   useReactTable,
   getCoreRowModel,
@@ -159,37 +160,67 @@ const MyDataTable = ({
   tableContainerRef,
   initialSelectedId,
 }) => {
-  const [selectedRowId, setSelectedRowId] = useState(() => {
-    const stored = sessionStorage.getItem('employees_selected_id');
-    return stored ? Number(stored) : null;
-  });
+  const [selectedRowId, setSelectedRowId] = useState(null);
   const [sorting, setSorting] = useState([]);
+  const [initialPreferencesLoaded, setInitialPreferencesLoaded] = useState(false);
+  const [userHasInteracted, setUserHasInteracted] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]); // Nuevo estado para los checkboxes
-  const [columnSizing, setColumnSizing] = useState(() => {
-    const saved = localStorage.getItem('myDataTableColumnWidths');
-    return saved ? JSON.parse(saved) : {};
-  });
-
-  const [columnOrder, setColumnOrder] = useState(() => {
-    const saved = localStorage.getItem('myDataTableColumnOrder');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [columnSizing, setColumnSizing] = useState({});
+  const [columnOrder, setColumnOrder] = useState(null);
 
   useEffect(() => {
-    localStorage.setItem(
-      'myDataTableColumnWidths',
-      JSON.stringify(columnSizing),
-    );
-  }, [columnSizing]);
+    const loadUserPreferences = async () => {
+      try {
+        const preferences = await getUserPreferences('employees');
+        if (preferences.sorting && Array.isArray(preferences.sorting)) {
+          setSorting(preferences.sorting);
+        }
+        if (preferences.columnSizing && typeof preferences.columnSizing === 'object') {
+          setColumnSizing(preferences.columnSizing);
+        }
+        if (preferences.columnOrder && Array.isArray(preferences.columnOrder)) {
+          setColumnOrder(preferences.columnOrder);
+        }
+        if (preferences.selectedRowId) {
+          setSelectedRowId(preferences.selectedRowId);
+        }
+        if (preferences.pageSize) {
+          setPageSize(preferences.pageSize);
+        }
+        setInitialPreferencesLoaded(true);
+      } catch (error) {
+        console.error('Error loading user preferences:', error);
+        setInitialPreferencesLoaded(true);
+      }
+    };
+
+    loadUserPreferences();
+  }, []);
 
   useEffect(() => {
-    if (columnOrder) {
-      localStorage.setItem(
-        'myDataTableColumnOrder',
-        JSON.stringify(columnOrder),
-      );
+    if (initialPreferencesLoaded && userHasInteracted) {
+      const savePreferences = async () => {
+        try {
+          await saveUserPreferences('employees', { 
+            sorting,
+            columnSizing,
+            columnOrder,
+            selectedRowId,
+            pageSize
+          });
+        } catch (error) {
+          console.error('Error saving table preferences:', error);
+        }
+      };
+
+      const timeoutId = setTimeout(savePreferences, 500);
+      return () => clearTimeout(timeoutId);
     }
-  }, [columnOrder]);
+  }, [sorting, columnSizing, columnOrder, selectedRowId, pageSize, initialPreferencesLoaded, userHasInteracted]);
+
+  useEffect(() => {
+    console.log('columnSizing state changed to:', columnSizing, 'Keys:', Object.keys(columnSizing));
+  }, [columnSizing]);
 
   useEffect(() => {
     if (!initialSelectedId) return;
@@ -214,7 +245,7 @@ const MyDataTable = ({
       clickTimer.current = setTimeout(() => {
         clickTimer.current = null;
         onRowClicked(row);
-        sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
+        // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
       }, 250);
     }
   };
@@ -272,25 +303,27 @@ const MyDataTable = ({
   };
 
   const columnDefs = useMemo(
-    () => [
-      // Columna de selección (checkbox)
-      {
-        header: () => (
-          <input
-            type='checkbox'
-            checked={selectedRows.length === rows.length && rows.length > 0}
-            onChange={toggleAllRowsSelection}
-            style={{ cursor: 'pointer' }}
-          />
-        ),
-        id: 'selection',
-        size: 40,
-        minSize: 40,
-        maxSize: 40,
-        enableSorting: false,
-        enableResizing: false,
-        enableColumnDragging: false,
-        cell: ({ row }) => {
+    () => {
+      console.log('Building columnDefs with columnSizing:', columnSizing);
+      return [
+        // Columna de selección (checkbox)
+        {
+          header: () => (
+            <input
+              type='checkbox'
+              checked={selectedRows.length === rows.length && rows.length > 0}
+              onChange={toggleAllRowsSelection}
+              style={{ cursor: 'pointer' }}
+            />
+          ),
+          id: 'selection',
+          size: 40,
+          minSize: 40,
+          maxSize: 40,
+          enableSorting: false,
+          enableResizing: false,
+          enableColumnDragging: false,
+          cell: ({ row }) => {
            const isSelected = selectedRows.includes(row.original.id);
           // const isSelected = row.original.id == selectedRowId;
           return (
@@ -390,82 +423,93 @@ const MyDataTable = ({
         { key: 'email', label: 'Correo Electrónico' },
         { key: 'phone', label: 'Teléfono' },
         { key: 'alias', label: 'Alias' },
-      ].map(({ key, label }) => ({
-        header: label,
-        accessorKey: key,
-        id: key,
-        size:
-          columnSizing[key] ??
-          (['full_name', 'email', 'alias'].includes(key) ? 300 : 120),
-        minSize: ['full_name', 'email', 'alias'].includes(key) ? 150 : 80,
-        maxSize: ['full_name', 'email', 'alias'].includes(key) ? 600 : 250,
-        enableSorting: true,
-        enableResizing: true,
-        sortingFn: (rowA, rowB, columnId) => {
-          const valueA = rowA.getValue(columnId);
-          const valueB = rowB.getValue(columnId);
+        { key: 'start_date', label: 'Fecha Alta' },
+      ].map(({ key, label }) => {
+        const calculatedSize = columnSizing[key] ?? (['full_name', 'email', 'alias'].includes(key) ? 300 : 120);
+        return {
+          header: label,
+          accessorKey: key,
+          id: key,
+          size: calculatedSize,
+          minSize: ['full_name', 'email', 'alias'].includes(key) ? 150 : 80,
+          maxSize: ['full_name', 'email', 'alias'].includes(key) ? 600 : 250,
+          enableSorting: true,
+          enableResizing: true,
+          sortingFn: (rowA, rowB, columnId) => {
+            const valueA = rowA.getValue(columnId);
+            const valueB = rowB.getValue(columnId);
 
-          if (valueA == null) return 1;
-          if (valueB == null) return -1;
-          if (valueA == null && valueB == null) return 0;
+            if (valueA == null) return 1;
+            if (valueB == null) return -1;
+            if (valueA == null && valueB == null) return 0;
 
-          if (typeof valueA === 'number' && typeof valueB === 'number') {
-            return valueA - valueB;
-          }
+            if (typeof valueA === 'number' && typeof valueB === 'number') {
+              return valueA - valueB;
+            }
 
-          return String(valueA).localeCompare(String(valueB));
-        },
-        cell: ({ row, getValue, column }) => {
-          const isSelected = row.original.id == selectedRowId;
-          const bgColor = isSelected
-            ? '#d3d3d3'
-            : getRowBackgroundColor(row.original);
+            return String(valueA).localeCompare(String(valueB));
+          },
+          cell: ({ row, getValue, column }) => {
+            const isSelected = row.original.id == selectedRowId;
+            const bgColor = isSelected
+              ? '#d3d3d3'
+              : getRowBackgroundColor(row.original);
             const originalValue = String(getValue() || "");
-  const isAlias = column.id === 'alias'; 
-  
-  let displayedValue = originalValue;
+            const isAlias = column.id === 'alias'; 
+            const isStartDate = column.id === 'start_date';
+            
+            let displayedValue = originalValue;
 
-  // Solo recortamos si es la columna Alias
-  if (isAlias) {
-    const columnWidth = column.getSize();
-    // Estimación: ancho de columna dividido por ~9px por carácter
-    const maxChars = Math.floor(columnWidth / 8); 
-    
-    if (originalValue.length > maxChars) {
-      displayedValue = originalValue.substring(0, Math.max(0, maxChars - 3)) + "...";
-    }
-  }
-          return (
-            <div
-              style={{
-                backgroundColor: bgColor,
-                width: '100%',
-                height: '100%',
-                padding: '4px 4px',
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: '13px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: isAlias ? 'normal' : 'nowrap',
-                wordBreak: isAlias ? 'break-word' : 'normal',
-              }}
-            >
-             {displayedValue}
-            </div>
-          );
-        },
-      })),
-    ],
-    [
-      selectedRowId,
-      columnSizing,
-      estado_config,
-      tipo_config,
-      selectedRows,
-      rows,
-    ],
-  );
+            // Solo recortamos si es la columna Alias
+            if (isAlias) {
+              const columnWidth = column.getSize();
+              // Estimación: ancho de columna dividido por ~9px por carácter
+              const maxChars = Math.floor(columnWidth / 8); 
+              
+              if (originalValue.length > maxChars) {
+                displayedValue = originalValue.substring(0, Math.max(0, maxChars - 3)) + "...";
+              }
+            }
+
+            if (isStartDate && originalValue) {
+              const parts = originalValue.split('-');
+              if (parts.length === 3) {
+                displayedValue = `${parts[2]}/${parts[1]}/${parts[0]}`;
+              }
+            }
+            return (
+              <div
+                style={{
+                  backgroundColor: bgColor,
+                  width: '100%',
+                  height: '100%',
+                  padding: '4px 4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  fontSize: '13px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: isAlias ? 'normal' : 'nowrap',
+                  wordBreak: isAlias ? 'break-word' : 'normal',
+                }}
+              >
+               {displayedValue}
+              </div>
+            );
+          },
+        };
+      }),
+    ];
+  },
+  [
+    selectedRowId,
+    columnSizing,
+    estado_config,
+    tipo_config,
+    selectedRows,
+    rows,
+  ],
+);
 
   const defaultColumnOrder = columnDefs.map((col) => col.id);
 
@@ -477,9 +521,18 @@ const MyDataTable = ({
       columnSizing,
       columnOrder: columnOrder || defaultColumnOrder,
     },
-    onSortingChange: setSorting,
-    onColumnSizingChange: setColumnSizing,
-    onColumnOrderChange: setColumnOrder,
+    onSortingChange: (updater) => {
+      setUserHasInteracted(true);
+      setSorting(updater);
+    },
+    onColumnSizingChange: (updater) => {
+      setUserHasInteracted(true);
+      setColumnSizing(updater);
+    },
+    onColumnOrderChange: (updater) => {
+      setUserHasInteracted(true);
+      setColumnOrder(updater);
+    },
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     columnResizeMode: 'onEnd',
@@ -498,6 +551,7 @@ const MyDataTable = ({
         oldIndex,
         newIndex,
       );
+      setUserHasInteracted(true);
       setColumnOrder(newOrder);
     }
   };
@@ -506,8 +560,13 @@ const MyDataTable = ({
     if (!row?.id) return;
     setSelectedRowId(row.id);
     onHandleRowClick(row);
-    sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
+    // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
   };
+
+  // No renderizar hasta que las preferencias se carguen
+  if (!initialPreferencesLoaded) {
+    return null;
+  }
 
   return (
     <>
@@ -627,19 +686,9 @@ const MyDataTable = ({
 const Employees = () => {
   
   const [rows, setRows] = useState([]);
-  const [pageSize, setPageSize] = useState(() => {
-  const saved = localStorage.getItem('employees_pageSize');
-  if (saved === 'todos') {
-    return 'todos';
-  }
-  // Si no hay nada guardado o no es un número válido, usar 'todos' por defecto
-  return saved && !isNaN(saved) ? Number(saved) : 'todos';
-});
+  const [pageSize, setPageSize] = useState('todos');
 
- const [currentPage, setCurrentPage] = useState(() => {
-    const savedPage = sessionStorage.getItem('employees_last_page');
-    return savedPage ? parseInt(savedPage) : 1;
-  });
+ const [currentPage, setCurrentPage] = useState(1);
 
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -666,18 +715,13 @@ const Employees = () => {
   const tableContainerRef = useRef(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(() => {
-    const stored = sessionStorage.getItem('employees_selected_row');
-    return stored ? JSON.parse(stored) : null;
-  }); // seleccion del registro unico
+  const [selectedRow, setSelectedRow] = useState(null); // seleccion del registro unico
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [photo, setPhoto] = useState('');
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [isFilter, setIsFilter] = useState(false);
-  const [selectedRowId, setSelectedRowId] = useState(() => {
-    return sessionStorage.getItem('employees_selected_id') || null;
-  });
+  const [selectedRowId, setSelectedRowId] = useState(null);
 
   const [dictionaries, setDictionaries] = useState({
     patologies: {},
@@ -800,21 +844,18 @@ const Employees = () => {
       console.log(response);
       const { data, meta } = response;
 
-
-
       setRows(data);
       setTotalPages(meta.totalPages);
 
-      const savedScroll = sessionStorage.getItem('employees_last_scroll');
-    if (savedScroll && tableContainerRef.current) {
-      // Usamos requestAnimationFrame o un timeout corto para asegurar 
-      // que el DOM ya tiene las filas renderizadas
+      // const savedScroll = sessionStorage.getItem('employees_last_scroll');
+      // if (savedScroll && tableContainerRef.current) {
+      //   // Usamos requestAnimationFrame o un timeout corto para asegurar 
+      //   // que el DOM ya tiene las filas renderizadas
       setTimeout(() => {
         if (tableContainerRef.current) {
-          tableContainerRef.current.scrollTop = parseInt(savedScroll);
+          tableContainerRef.current.scrollTop = 0;
         }
       }, 100);
-    }
     } catch (error) {
       console.error('Error ', error);
     } finally {
@@ -827,13 +868,6 @@ const Employees = () => {
       getRows();
     } catch (error) {
       console.log('error =>', error);
-    } finally {
-      setTimeout(() => {
-  const savedScroll = sessionStorage.getItem('clients_last_scroll');
-  if (savedScroll && tableContainerRef.current) {
-    tableContainerRef.current.scrollTop = parseInt(savedScroll);
-  }
-}, 100);
     }
   }, [currentPage, pageSize, debouncedSearchTerm]);
 
@@ -912,8 +946,8 @@ const Employees = () => {
     if (!row?.id) return;
     setSelectedRow(row);
     setSelectedRowId(row.id);
-    sessionStorage.setItem('employees_selected_id', row.id);
-    sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
+    // sessionStorage.setItem('employees_selected_id', row.id);
+    // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
     const preselection = await getData(
       `client-service-preselection/all?employee_id=${row.id}&status=Pendiente`,
     );
@@ -976,14 +1010,14 @@ const Employees = () => {
     setSelectedRow(false);
   };
 const handleViewClient = (clientId, color) => {
-  if (tableContainerRef.current) {
-    sessionStorage.setItem('employees_last_scroll', tableContainerRef.current.scrollTop);
-  }
+  // if (tableContainerRef.current) {
+  //   sessionStorage.setItem('employees_last_scroll', tableContainerRef.current.scrollTop);
+  // }
   // 2. Guardar página actual
-  sessionStorage.setItem('employees_last_page', currentPage);
+  // sessionStorage.setItem('employees_last_page', currentPage);
   
   // 3. Guardar el ID para que siga marcado al volver
-  sessionStorage.setItem('employees_selected_id', clientId);
+  // sessionStorage.setItem('employees_selected_id', clientId);
   navigateTo(`/employee/${clientId}`, {
     state: { color },
   });
@@ -1006,11 +1040,11 @@ const handleViewClient = (clientId, color) => {
     const value = event.target.value;
     if (value == 'todos') {
       setPageSize('todos');
-      localStorage.setItem('employees_pageSize', 'todos'); // Guardar con clave específica
+      // localStorage.setItem('employees_pageSize', 'todos'); // Guardar con clave específica
     } else {
       const numValue = Number(value);
       setPageSize(numValue); // Guardar como número
-      localStorage.setItem('employees_pageSize', numValue); // Guardar con clave específica
+      // localStorage.setItem('employees_pageSize', numValue); // Guardar con clave específica
     }
     setCurrentPage(1); // Reinicia a la primera página
   };
@@ -1338,7 +1372,7 @@ const handleViewClient = (clientId, color) => {
               pageSize={pageSize}
               onSelectedRows={setSelectedRows}
               tableContainerRef={tableContainerRef}
-              initialSelectedId={sessionStorage.getItem('employees_selected_id')}
+              initialSelectedId={null}
             />
           </div>
         </div>

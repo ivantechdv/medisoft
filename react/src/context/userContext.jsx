@@ -85,8 +85,8 @@ export const UserProvider = ({ children }) => {
         if (userDataCookie) {
           //ya tenemos el token y el usuario
           // ahora debemos verificar el token que sea valido
-          if (cookies.token) {
-            fetchData(userDataCookie, cookies.token);
+          if (cookies.authToken) {
+            fetchData(userDataCookie, cookies.authToken);
           } else {
             redirect();
           }

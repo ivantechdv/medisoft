@@ -14,6 +14,7 @@ const sequelize = require("./database/sequelize");
 
 // Importar modelos para que Sequelize los registre
 require("./models/configs/configs.model");
+require("./models/users/userPreferences.model");
 
 // Importar middleware global de formato de teléfono
 const globalPhoneFormat = require("./middleware/globalPhoneFormat.middleware");
@@ -129,7 +130,7 @@ async function testDatabaseConnection() {
 // }
 
 function main() {
-  // testDatabaseConnection();
+  testDatabaseConnection();
   // leerControladores();
   middlewares();
   // Puerto en el que escucha el servidor
@@ -173,6 +174,7 @@ app.set("views", path.join(__dirname, "email/provider"));
 app.use(express.static("public"));
 function routes() {
   // app.use("/api/v1/permisologys", trafic, require("./routes/permisologys/permisologys.routes"))
+  app.use("/api/v1/users/preferences", trafic, require("./routes/users/userPreferences.routes"));
   app.use("/api/v1/users", trafic, require("./routes/users/users.routes"));
   app.use(
     "/api/v1/relations",
