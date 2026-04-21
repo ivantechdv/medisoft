@@ -16,6 +16,7 @@ import ChangeLogger from '../../../components/changeLogger';
 import {
   formatPhoneNumber,
   formatISOToDate,
+  validarDocumento,
 } from '../../../utils/customFormat';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
@@ -129,9 +130,10 @@ const Form = ({
   const [selectedState, setSelectedState] = useState(null);
   const [postalCodes, setPostalCodes] = useState([]);
 
-  const configDefaultsRef = useRef({ type: null, languages: [] });
+  const configDefaultsRef = useRef({ type: null, languages: [], country_id: null, state_id: null });
   const hasLoadedClientDefaults = useRef(false);
   const hasAppliedLanguageDefaults = useRef(false);
+  const hasAppliedCountryStateDefaults = useRef(false);
   const userModifiedLanguageSelection = useRef(false);
 
   const navigateTo = useNavigate();
@@ -270,10 +272,14 @@ const Form = ({
 
         const defaultType = resolveDefaultType();
         const defaultLanguages = resolveDefaultLanguages();
+        const defaultCountryId = configResponse?.default_country_id || null;
+        const defaultStateId = clientConfig?.default_state_id || null;
 
         configDefaultsRef.current = {
           type: defaultType,
           languages: defaultLanguages,
+          country_id: defaultCountryId,
+          state_id: defaultStateId,
         };
 
         if (defaultType) {
@@ -342,6 +348,49 @@ const Form = ({
 
     hasAppliedLanguageDefaults.current = true;
   }, [languages, id]);
+
+  useEffect(() => {
+    if (id) return;
+    if (!hasLoadedClientDefaults.current) return;
+    if (hasAppliedCountryStateDefaults.current) return;
+    if (!countries || !countries.length) return;
+
+    const defaultCountryId = configDefaultsRef.current.country_id;
+    const defaultStateId = configDefaultsRef.current.state_id;
+
+    if (defaultCountryId) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        country_current_id: defaultCountryId,
+      }));
+
+      const country = countries.find((c) => c.id === Number(defaultCountryId));
+      if (country) {
+        setSelectedCountry(country);
+        setSelectedState(country.states);
+
+        if (defaultStateId) {
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            state_id: defaultStateId,
+          }));
+
+          const state = country.states.find((s) => s.id === Number(defaultStateId));
+          if (state) {
+            const options = state?.cod_posts.map((item, index) => ({
+              value: item.id,
+              label: item.code + '|' + item.name,
+              key: item.id ?? `default-key-${index}`,
+            }));
+            setPostalCodes(options);
+          }
+        }
+      }
+    }
+
+    hasAppliedCountryStateDefaults.current = true;
+  }, [countries, id]);
+
   useEffect(() => {
     try {
       setLoadingFetch(true);
@@ -848,14 +897,20 @@ const Form = ({
 
   const validateField = async (field, value, ref) => {
     try {
-      if (!value || value === oldData[field]) return;
+      const trimmedValue = value?.trim();
+      console.log(`Validando campo ${field}:`, { value: trimmedValue, oldValue: oldData[field], oldDataId: oldData.id });
+      
+      if (!trimmedValue || trimmedValue === oldData[field]) {
+        console.log(`Validación cancelada - campo vacío o igual al anterior`);
+        return;
+      }
 
       let response = [];
       let invalidValues = [];
 
       // Validación especial para correos (puede separar múltiples con ;)
       if (field === 'email') {
-        const { validEmails, invalidEmails } = validateEmails(value);
+        const { validEmails, invalidEmails } = validateEmails(trimmedValue);
         invalidValues = invalidEmails;
 
         for (let email of validEmails) {
@@ -876,18 +931,45 @@ const Form = ({
         }));
         onHandleChangeCard(field, newValidEmails.join(';'));
       } else {
-        // Para campos únicos simples: dni, phone, full_name, etc.
-        const res = await getData(`clients/all?${field}=${value}`);
-        console.log('res', res);
-        if (res?.length > 0 && res[0].id !== oldData.id) {
-          response.push({ value, id: res[0].id });
+        // Validación especial para DNI: verificar formato antes de consultar duplicados
+        if (field === 'dni') {
+          if (!validarDocumento(trimmedValue)) {
+            ToastNotify({
+              message: "Formato inválido: introduce un DNI o NIE válido",
+              position: 'top-center',
+              type: 'error',
+              ref,
+            });
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              [field]: '',
+            }));
+            onHandleChangeCard(field, '');
+            if (ref?.current) ref.current.focus();
+            return;
+          }
+        }
 
-          // Limpiar campo si está duplicado
-          setFormData((prevFormData) => ({
-            ...prevFormData,
-            [field]: '',
-          }));
-          onHandleChangeCard(field, '');
+        // Para campos únicos simples: dni, phone, full_name, etc.
+        console.log(`Consultando backend: clients/all?${field}=${trimmedValue}`);
+        const res = await getData(`clients/all?${field}=${trimmedValue}`);
+        console.log('Respuesta del backend:', res);
+        
+        if (res?.length > 0) {
+          // Si estamos editando, verificar que no sea el mismo registro
+          const isDuplicate = oldData.id ? res[0].id !== oldData.id : true;
+          console.log('¿Es duplicado?:', isDuplicate, { resId: res[0].id, oldDataId: oldData.id });
+          
+          if (isDuplicate) {
+            response.push({ value: trimmedValue, id: res[0].id });
+
+            // Limpiar campo si está duplicado
+            setFormData((prevFormData) => ({
+              ...prevFormData,
+              [field]: '',
+            }));
+            onHandleChangeCard(field, '');
+          }
         }
       }
 
@@ -899,6 +981,7 @@ const Form = ({
           ...invalidValues.map((v) => `El valor "${v}" no es válido`),
         ].join(', ');
 
+        console.log('Mostrando error:', errorMessage);
         ToastNotify({
           message: errorMessage,
           position: 'top-center',
@@ -907,6 +990,8 @@ const Form = ({
         });
 
         if (ref?.current) ref.current.focus();
+      } else {
+        console.log('Validación OK - no hay duplicados');
       }
     } catch (error) {
       console.error('Error en la validación del campo:', error);
@@ -1638,14 +1723,14 @@ const Form = ({
         </button>
       </div> */}
       {expandImage && (
-        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center'>
-          <div className='bg-white p-2 rounded shadow-lg w-3/4'>
+        <div className='fixed inset-0 bg-gray-500 bg-opacity-85 flex items-center justify-center z-50'>
+          <div className='bg-white p-2 rounded shadow-lg max-w-[90vw] max-h-[90vh] relative'>
             <button
-              className='absolute top-0 right-2 text-white hover:text-blue-500 text-lg bg-gray-800'
+              className='absolute -top-3 -right-3 text-white hover:text-blue-500 text-lg bg-gray-800 rounded-full w-8 h-8 flex items-center justify-center'
               onClick={closeExpandImage}
             >
               <svg
-                className='w-6 h-6'
+                className='w-5 h-5'
                 fill='none'
                 viewBox='0 0 24 24'
                 stroke='currentColor'
@@ -1659,7 +1744,11 @@ const Form = ({
               </svg>
             </button>
 
-            <img alt='imagen' src={dni.current} className='w-full' />
+            <img
+              alt='imagen'
+              src={dni.current}
+              className='max-w-[85vw] max-h-[85vh] object-contain'
+            />
           </div>
         </div>
       )}

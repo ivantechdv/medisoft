@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
 import { getData, postData, putData } from '../../api';
-import { FaFilter, FaPlusCircle, FaMinusCircle } from 'react-icons/fa';
+import { FaFilter, FaPlusCircle, FaMinusCircle, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -133,6 +133,17 @@ const DraggableHeader = ({ header, index }) => {
     textOverflow: 'ellipsis',
   };
 
+  const getSortIcon = () => {
+    if (!header.column.getCanSort()) return null;
+
+    const sortDirection = header.column.getIsSorted();
+    if (sortDirection === 'asc')
+      return <FaSortUp style={{ marginLeft: 4, opacity: 0.8 }} />;
+    if (sortDirection === 'desc')
+      return <FaSortDown style={{ marginLeft: 4, opacity: 0.8 }} />;
+    return <FaSort style={{ marginLeft: 4, opacity: 0.3 }} />;
+  };
+
   return (
     <th ref={setNodeRef} style={style}>
       <div
@@ -158,6 +169,7 @@ const DraggableHeader = ({ header, index }) => {
           onClick={header.column.getToggleSortingHandler()}
         >
           {flexRender(header.column.columnDef.header, header.getContext())}
+          {header.column.getCanSort() && getSortIcon()}
         </div>
         <div
           {...attributes}
