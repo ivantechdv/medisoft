@@ -7,6 +7,7 @@ import toast, { Toaster } from 'react-hot-toast';
 import 'react-tooltip/dist/react-tooltip.css';
 import Cookies from 'js-cookie';
 import { loadPhoneMask } from './utils/customFormat';
+import { UserProvider } from './context/userContext';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true);
@@ -22,10 +23,10 @@ function App() {
   }, []);
 
   return (
-    <>
+    <UserProvider>
       <Layaout />
       <Toaster />
-    </>
+    </UserProvider>
   );
 }
 

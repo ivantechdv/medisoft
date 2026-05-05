@@ -278,8 +278,27 @@ Methods.bulkUpdateStatus = async (Model, ids, updateData) => {
       }
     );
     return { count }; // Sequelize devuelve el número de filas afectadas
-  } catch (error) {
-    throw new Error(error.message);
-  }
+ } catch (error) {
+   throw new Error(error.message);
+ }
 };
+
+CTRL.logout = async (req, res) => {
+  try {
+    // El logout se maneja principalmente en el frontend eliminando las cookies
+    // Aquí podemos registrar el logout o limpiar cualquier sesión del servidor si es necesario
+    res.json({
+      statusCode: 200,
+      message: "Sesión cerrada exitosamente",
+      success: true
+    });
+  } catch (error) {
+    res.json({
+      statusCode: 500,
+      message: "Error al cerrar sesión",
+      error: error.message
+    });
+  }
+};
+
 module.exports = CTRL;

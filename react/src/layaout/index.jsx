@@ -6,6 +6,8 @@ import Cookies from 'js-cookie';
 import Login from './../login/index';
 import ProtectedRoute from './../components/ProtectedRoute';
 import SetPassword from './../pages/users/SetPassword';
+import UserProfile from './../components/UserProfile';
+import { useUser } from './../context/userContext';
 
 function Layaout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -54,45 +56,9 @@ function Layaout() {
                           ></path>
                         </svg>
                       </button>
-                      {/* <h1 className='flex-1 text-lg text-sm text-right'>
-                        Ivantechdv
-                      </h1>
-                      <button
-                        onClick={() => setIsSidebarExpanded(!isSidebarExpanded)}
-                        className='hidden lg:block focus:outline-none'
-                      >
-                        {isSidebarExpanded ? (
-                          <svg
-                            className='w-6 h-6'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                            xmlns='http://www.w3.org/2000/svg'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M6 18L18 6M6 6l12 12'
-                            ></path>
-                          </svg>
-                        ) : (
-                          <svg
-                            className='w-6 h-6'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                            xmlns='http://www.w3.org/2000/svg'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M4 6h16M4 12h16m-7 6h7'
-                            ></path>
-                          </svg>
-                        )}
-                      </button> */}
+                      <div className='flex-1 flex justify-end'>
+                        <UserProfile />
+                      </div>
                     </div>
                   </nav>
                   <div className='p-1'>
