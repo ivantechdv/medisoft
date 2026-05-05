@@ -17,5 +17,6 @@ router.post("/:id/send-password-email", UserController.sendPasswordEmail);
 // Validación de token y establecimiento de contraseña
 router.post("/validate-invite", UserController.validateInvite);
 router.post("/set-password", UserController.setPassword);
+router.post("/logout", UserController.logout);
 
 module.exports = router;

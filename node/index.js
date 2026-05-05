@@ -283,6 +283,7 @@ app.use(
 );
 app.use("/api/v1/family", trafic, require("./routes/families/families.routes"));
 app.use("/api/v1/configs", trafic, require("./routes/configs/configs.routes"));
+app.use("/api/v1/dashboard", trafic, require("./routes/dashboard/dashboard.routes"));
 
 app.use(
   "/auth",

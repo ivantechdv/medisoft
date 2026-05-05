@@ -1,5 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import Dashboard from '../pages/dashboard';
 import Users from './../pages/users';
 import Patologies from './../pages/patologies';
 import Clients from './../pages/clients';
@@ -12,6 +13,10 @@ import Configuration from '../pages/configuration';
 function RoutesApp() {
   return (
     <Routes>
+      {/* Dashboard - Ruta principal */}
+      <Route path='/' element={<Dashboard />} />
+      <Route path='/dashboard' element={<Dashboard />} />
+      
       <Route path='/users' element={<Users />} />
       
       {/* Clientes */}
