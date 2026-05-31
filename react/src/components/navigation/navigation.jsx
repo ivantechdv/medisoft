@@ -17,7 +17,7 @@ function Navigation() {
 
   const commonLinks = [
     {
-      to: '/Home',
+      to: '/',
       label: 'Inicio',
       icon: <HomeIcon className='w-5 h-5' />,
     },

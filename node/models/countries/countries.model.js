@@ -15,6 +15,16 @@ const Country = sequelize.define("countries", {
     type: DataTypes.STRING(100),
     allowNull: true,
   },
+  phone_format: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: 'Formato E.164 del número de teléfono (ej: 999999999)',
+  },
+  phone_mask: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    comment: 'Máscara visual del número de teléfono (ej: 999 99 99 99)',
+  },
   createdAt: {
     type: DataTypes.DATE,
     allowNull: false,

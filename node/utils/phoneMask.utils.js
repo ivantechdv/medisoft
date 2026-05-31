@@ -1,24 +1,38 @@
 const Config = require("../models/configs/configs.model");
+const Country = require("../models/countries/countries.model");
 
 /**
  * Obtiene la máscara de teléfono configurada
+ * @param {number} countryId - ID del país (opcional)
  * @returns {Promise<string>} Máscara de teléfono activa
  */
-const getPhoneMask = async () => {
+const getPhoneMask = async (countryId = null) => {
   try {
+    // Si se proporciona countryId, buscar máscara específica del país
+    if (countryId) {
+      const country = await Country.findByPk(countryId, {
+        attributes: ['phone_mask']
+      });
+
+      if (country && country.phone_mask) {
+        return country.phone_mask;
+      }
+    }
+
+    // Fallback: usar configuración global
     const config = await Config.findOne({
       where: { is_active: true },
       attributes: ['phone_mask']
     });
-    
+
     if (!config) {
       return '999 99 99 99';
     }
-    
+
     return config.phone_mask;
   } catch (error) {
     console.error('Error al obtener máscara de teléfono:', error);
-    return '999 99 99 99'; 
+    return '999 99 99 99';
   }
 };
 

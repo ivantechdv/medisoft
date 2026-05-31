@@ -17,6 +17,11 @@ router.get("/levels/list", CTRL.getLevels);
 // Endpoints para máscara de teléfono
 router.get("/phone-mask", CTRL.getMask);
 
+// Endpoints para configuración de teléfono por país
+router.get("/countries/phone-configs", CTRL.getCountriesPhoneConfigs);
+router.put("/countries/:countryId/phone-config", CTRL.updateCountryPhoneConfig);
+router.delete("/countries/:countryId/phone-config", CTRL.deleteCountryPhoneConfig);
+
 // Ruta paramétrica al final para evitar conflictos
 router.get("/:id", CTRL.getById);
 

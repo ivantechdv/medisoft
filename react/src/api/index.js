@@ -148,3 +148,27 @@ export const cakeLogout = async () => {
     throw error;
   }
 };
+
+// Funciones específicas para configuración de teléfono por país
+export const getCountriesPhoneConfigs = async () => {
+  return await getData('configs/countries/phone-configs');
+};
+
+export const updateCountryPhoneConfig = async (countryId, data) => {
+  return await putData(`configs/countries/${countryId}/phone-config`, data);
+};
+
+export const deleteCountryPhoneConfig = async (countryId) => {
+  const token = Cookies.get('authToken');
+  try {
+    const res = await axios.delete(apiUrl + `configs/countries/${countryId}/phone-config`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+};

@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../../database/sequelize");
 const Country = require("../countries/countries.model");
+const State = require("../states/states.model");
 
 const Config = sequelize.define("configs", {
   id: {
@@ -18,6 +19,14 @@ const Config = sequelize.define("configs", {
     allowNull: false,
     references: {
       model: 'countries',
+      key: 'id'
+    }
+  },
+  default_state_id: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'states',
       key: 'id'
     }
   },
@@ -57,5 +66,8 @@ const Config = sequelize.define("configs", {
 
 Config.belongsTo(Country, { foreignKey: "default_country_id", as: 'defaultCountry' });
 Country.hasMany(Config, { foreignKey: "default_country_id" });
+
+Config.belongsTo(State, { foreignKey: "default_state_id", as: 'defaultState' });
+State.hasMany(Config, { foreignKey: "default_state_id" });
 
 module.exports = Config;

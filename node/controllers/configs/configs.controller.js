@@ -34,18 +34,23 @@ CTRL.get = async (req, res, next) => {
         model: Country,
         as: 'defaultCountry',
         attributes: ['id', 'name', 'code_phone']
+      },
+      {
+        model: State,
+        as: 'defaultState',
+        attributes: ['id', 'name']
       }
     ];
-    
+
     const config = await Config.findOne({
       where: condition,
       include
     });
-    
+
     if (!config) {
       return res.status(404).json({ error: "No active configuration found" });
     }
-    
+
     res.json(formatConfigResponse(config));
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -381,31 +386,31 @@ CTRL.getMask = async (req, res, next) => {
       where: { is_active: true },
       attributes: ['phone_mask']
     });
-    
+
     // Si no hay configuración activa, buscar cualquier configuración
     if (!config) {
       config = await Config.findOne({
         attributes: ['phone_mask']
       });
     }
-    
+
     // Si todavía no hay configuración, crear una por defecto
     if (!config) {
       console.log('No se encontró configuración, creando una por defecto...');
-      
+
       // Buscar un país por defecto (España o el primero que encuentre)
       const Country = require("../../models/countries/countries.model");
       let defaultCountry = await Country.findOne({ where: { name: 'España' } });
-      
+
       if (!defaultCountry) {
         defaultCountry = await Country.findOne();
       }
-      
+
       if (!defaultCountry) {
         console.error('No se encontró ningún país para usar como default_country_id');
         return res.json({ phoneMask: '999 99 99 99' });
       }
-      
+
       const defaultConfig = await Config.create({
         phone_mask: '999 99 99 99',
         default_country_id: defaultCountry.id,
@@ -413,11 +418,68 @@ CTRL.getMask = async (req, res, next) => {
       });
       return res.json({ phoneMask: defaultConfig.phone_mask });
     }
-    
+
     res.json({ phoneMask: config.phone_mask || '999 99 99 99' });
   } catch (error) {
     console.error('Error al obtener máscara de teléfono:', error);
     res.json({ phoneMask: '999 99 99 99' }); // Máscara por defecto en caso de error
+  }
+};
+
+CTRL.getCountriesPhoneConfigs = async (req, res, next) => {
+  try {
+    const countries = await Country.findAll({
+      attributes: ['id', 'name', 'code_phone', 'phone_format', 'phone_mask'],
+      order: [['name', 'ASC']]
+    });
+
+    res.json(countries);
+  } catch (error) {
+    console.error('Error al obtener configuraciones de teléfono por país:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+CTRL.updateCountryPhoneConfig = async (req, res, next) => {
+  try {
+    const { countryId } = req.params;
+    const { phone_format, phone_mask } = req.body;
+
+    const country = await Country.findByPk(countryId);
+    if (!country) {
+      return res.status(404).json({ error: "Country not found" });
+    }
+
+    await country.update({
+      phone_format: phone_format || null,
+      phone_mask: phone_mask || null
+    });
+
+    res.json(country);
+  } catch (error) {
+    console.error('Error al actualizar configuración de teléfono por país:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+CTRL.deleteCountryPhoneConfig = async (req, res, next) => {
+  try {
+    const { countryId } = req.params;
+
+    const country = await Country.findByPk(countryId);
+    if (!country) {
+      return res.status(404).json({ error: "Country not found" });
+    }
+
+    await country.update({
+      phone_format: null,
+      phone_mask: null
+    });
+
+    res.json({ message: "Phone configuration deleted successfully" });
+  } catch (error) {
+    console.error('Error al eliminar configuración de teléfono por país:', error);
+    res.status(500).json({ error: error.message });
   }
 };
 

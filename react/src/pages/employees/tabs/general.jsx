@@ -24,7 +24,7 @@ import { tipo_config, estado_config } from '../../../utils/config';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Estilos por defecto
 import ColorSelect from '../../../components/ColorSelect/colorSelect';
-import { validarDNI, validarDocumento, validarNSS } from '../../../utils/customFormat';
+import { validarDNI, validarDocumento, validarNSS, formatPhoneNumber } from '../../../utils/customFormat';
 
 const Form = ({
   onHandleChangeCard,
@@ -161,13 +161,16 @@ const Form = ({
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [postalCodes, setPostalCodes] = useState([]);
+  const [currentPhoneMask, setCurrentPhoneMask] = useState('999 99 99 99');
 
-  const configDefaultsRef = useRef({ type: null, level_id: null, languages: [] });
+  const configDefaultsRef = useRef({ type: null, level_id: null, languages: [], country_id: null, state_id: null, country_code: null });
   const hasLoadedEmployeeDefaults = useRef(false);
   const hasAppliedLanguageDefaults = useRef(false);
+  const hasAppliedCountryStateDefaults = useRef(false);
   const userModifiedLanguageSelection = useRef(false);
 
   const [isFullScreen, setIsFullScreen] = useState(false);
+
   const updateImages = async (onFormData) => {
     console.log('onformdata', onFormData);
     if (onFormData.photo) {
@@ -213,6 +216,30 @@ const Form = ({
     return `${years} años ${months} meses ${days} días`;
   };
   const navigateTo = useNavigate();
+
+  // Función para obtener máscara de teléfono del país
+  const getPhoneMaskByCountry = async (countryId) => {
+    if (!countryId) {
+      setCurrentPhoneMask('999 99 99 99');
+      return;
+    }
+
+    try {
+      const response = await getData(`configs/countries/phone-configs`);
+      const countryConfig = response?.find(c => c.id === Number(countryId));
+      if (countryConfig && countryConfig.phone_mask) {
+        setCurrentPhoneMask(countryConfig.phone_mask);
+      } else {
+        // Fallback a máscara global
+        const maskResponse = await getData('configs/phone-mask');
+        setCurrentPhoneMask(maskResponse?.phoneMask || '999 99 99 99');
+      }
+    } catch (error) {
+      console.error('Error al obtener máscara del país:', error);
+      setCurrentPhoneMask('999 99 99 99');
+    }
+  };
+
   useEffect(() => {
     const initForm = async () => {
       try {
@@ -289,6 +316,7 @@ const Form = ({
 
       try {
         const configResponse = await getData('configs/active');
+        console.log('EMPLOYEE Config response:', configResponse);
         const employeeConfig = configResponse?.employee_config || {};
 
         const defaultType = employeeConfig.default_type || null;
@@ -296,11 +324,19 @@ const Form = ({
         const defaultLanguages = Array.isArray(employeeConfig.default_languages)
           ? employeeConfig.default_languages
           : [];
+        const defaultCountryId = configResponse?.default_country_id || null;
+        const defaultStateId = configResponse?.default_state_id || null;
+        const defaultCountryCode = configResponse?.default_country_code || configResponse?.defaultCountry?.code_phone || '';
+
+        console.log('EMPLOYEE Loaded defaults - country_id:', defaultCountryId, 'state_id:', defaultStateId, 'country_code:', defaultCountryCode);
 
         configDefaultsRef.current = {
           type: defaultType,
           level_id: defaultLevelId,
           languages: defaultLanguages,
+          country_id: defaultCountryId,
+          state_id: defaultStateId,
+          country_code: defaultCountryCode,
         };
 
         setFormData((prevFormData) => ({
@@ -334,6 +370,9 @@ const Form = ({
       setSelectedCountry(country);
       if (country) {
         setSelectedState(country.states);
+
+        // Obtener máscara de teléfono según el país del empleado
+        getPhoneMaskByCountry(onFormData.cod_post.state.country_id);
 
         const state = country.states.find(
           (c) => c.id === parseInt(onFormData.cod_post.state_id),
@@ -451,6 +490,63 @@ const Form = ({
   }, [languages, id]);
 
   useEffect(() => {
+    console.log('EMPLOYEE Country/State defaults useEffect - id:', id, 'hasLoadedEmployeeDefaults:', hasLoadedEmployeeDefaults.current, 'hasAppliedCountryStateDefaults:', hasAppliedCountryStateDefaults.current, 'countries:', countries?.length);
+    if (id) return;
+    if (!hasLoadedEmployeeDefaults.current) return;
+    if (!countries || !countries.length) return;
+
+    const defaultCountryId = configDefaultsRef.current.country_id;
+    const defaultStateId = configDefaultsRef.current.state_id;
+    const defaultCountryCode = configDefaultsRef.current.country_code;
+
+    console.log('EMPLOYEE Defaults from config - country_id:', defaultCountryId, 'state_id:', defaultStateId, 'country_code:', defaultCountryCode);
+
+    if (defaultCountryId) {
+      const country = countries.find((c) => c.id === Number(defaultCountryId));
+      console.log('EMPLOYEE Country found:', country ? { id: country.id, name: country.name } : 'Not found');
+      if (country) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          country_id: defaultCountryId,
+          country_current_id: defaultCountryId,
+          code_phone: country.code_phone || defaultCountryCode,
+          code_phone2: country.code_phone || defaultCountryCode,
+        }));
+
+        setSelectedCountry(country);
+        setSelectedState(country.states);
+
+        // Actualizar máscara de teléfono según el país por defecto
+        getPhoneMaskByCountry(defaultCountryId);
+
+        console.log('EMPLOYEE After setFormData - country_id and country_current_id set to:', defaultCountryId);
+
+        if (defaultStateId) {
+          setFormData((prevFormData) => ({
+            ...prevFormData,
+            state_id: defaultStateId,
+          }));
+
+          const state = country.states.find((s) => s.id === Number(defaultStateId));
+          console.log('EMPLOYEE State found:', state ? { id: state.id, name: state.name } : 'Not found');
+          if (state) {
+            const options = state?.cod_posts.map((item, index) => ({
+              value: item.id,
+              label: item.code + '|' + item.name,
+              key: item.id ?? `default-key-${index}`,
+            }));
+            setPostalCodes(options);
+          }
+        } else {
+          console.log('EMPLOYEE No default state_id in config');
+        }
+      }
+    }
+
+    hasAppliedCountryStateDefaults.current = true;
+  }, [countries, id]);
+
+  useEffect(() => {
     const fetchSelect = async () => {
       const queryParameters = new URLSearchParams();
       if (codPost) {
@@ -491,7 +587,7 @@ const Form = ({
 
  const handleChange = (event) => {
   const { id, value, type } = event.target;
-  
+
   // Evitar trimming en textarea
   const cleanValue = type === "textarea" ? value : value.trim();
 
@@ -505,24 +601,12 @@ const Form = ({
 
   if (id === 'phone' || id === 'phone2') {
     const newValue = cleanValue.replace(/\D/g, '');
-    if (newValue.length <= 9) {
-      // Aplicar máscara 999 99 99 99
-      let formattedValue = newValue;
-      if (newValue.length > 3) {
-        formattedValue = newValue.slice(0, 3) + ' ' + newValue.slice(3);
-      }
-      if (newValue.length > 5) {
-        formattedValue = formattedValue.slice(0, 6) + ' ' + newValue.slice(5);
-      }
-      if (newValue.length > 7) {
-        formattedValue = formattedValue.slice(0, 9) + ' ' + newValue.slice(7);
-      }
-      
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        [id]: formattedValue,
-      }));
-    }
+    // Usar formatPhoneNumber con currentPhoneMask en lugar de formateo hardcoded
+    const formattedValue = formatPhoneNumber(newValue, currentPhoneMask);
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [id]: formattedValue,
+    }));
   } else {
     setFormData((prevFormData) => {
       const updatedFormData = {
@@ -558,6 +642,15 @@ const Form = ({
       setSelectedCountry(country);
       setSelectedState(null);
       setPostalCodes([]);
+      // NO actualizar código de teléfono cuando cambia el país
+    }
+
+    if (id === 'code_phone' || id === 'code_phone2') {
+      // Cuando cambia el código de teléfono, actualizar la máscara pero NO el país
+      const country = countries.find((c) => c.code_phone === cleanValue);
+      if (country) {
+        getPhoneMaskByCountry(country.id);
+      }
     }
 
     if (id === 'state_id') {
@@ -1888,7 +1981,7 @@ const Form = ({
                         id='phone'
                         name='phone'
                         onChange={handleChange}
-                        value={formData.phone}
+                        value={formatPhoneNumber(formData.phone, currentPhoneMask)}
                         className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
                         placeholder='Número de teléfono'
                       />
@@ -1924,7 +2017,7 @@ const Form = ({
                         id='phone2'
                         name='phone'
                         onChange={handleChange}
-                        value={formData.phone2}
+                        value={formatPhoneNumber(formData.phone2, currentPhoneMask)}
                         className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
                         placeholder='Número de teléfono'
                       />
