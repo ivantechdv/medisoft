@@ -1,64 +1,38 @@
 // src/utils/formatUtils.js
 
 // Formatea un número de teléfono usando la máscara configurada dinámicamente
-export const formatPhoneNumber = (phone) => {
+export const formatPhoneNumber = (phone, customMask = null) => {
   if (!phone) return '';
   const cleanNumber = phone.replace(/\D/g, '');
-  
-  // Obtener la máscara desde localStorage o usar la por defecto
-  const phoneMask = localStorage.getItem('phoneMask') || '999 99 99 99';
-  
-  // Aplicar máscara según el formato configurado
-  switch (phoneMask) {
-    case '999 99 99 99':
-      if (cleanNumber.length <= 9) {
-        let formattedValue = cleanNumber;
-        if (cleanNumber.length > 3) {
-          formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
-        }
-        if (cleanNumber.length > 5) {
-          formattedValue = formattedValue.slice(0, 6) + ' ' + cleanNumber.slice(5);
-        }
-        if (cleanNumber.length > 7) {
-          formattedValue = formattedValue.slice(0, 9) + ' ' + cleanNumber.slice(7);
-        }
-        return formattedValue;
-      }
-      return phone;
-      
-    case '999 999 999':
-      if (cleanNumber.length <= 9) {
-        let formattedValue = cleanNumber;
-        if (cleanNumber.length > 3) {
-          formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
-        }
-        if (cleanNumber.length > 6) {
-          formattedValue = formattedValue.slice(0, 7) + ' ' + cleanNumber.slice(6);
-        }
-        return formattedValue;
-      }
-      return phone;
-      
-    case '999999999':
-      return cleanNumber;
-      
-    default:
-      // Formato por defecto si no coincide con ningún caso
-      if (cleanNumber.length <= 9) {
-        let formattedValue = cleanNumber;
-        if (cleanNumber.length > 3) {
-          formattedValue = cleanNumber.slice(0, 3) + ' ' + cleanNumber.slice(3);
-        }
-        if (cleanNumber.length > 5) {
-          formattedValue = formattedValue.slice(0, 6) + ' ' + cleanNumber.slice(5);
-        }
-        if (cleanNumber.length > 7) {
-          formattedValue = formattedValue.slice(0, 9) + ' ' + cleanNumber.slice(7);
-        }
-        return formattedValue;
-      }
-      return phone;
+
+  // Usar máscara personalizada si se proporciona, sino usar localStorage o por defecto
+  const phoneMask = customMask || localStorage.getItem('phoneMask') || '999 99 99 99';
+
+  // Aplicar máscara dinámicamente
+  return applyMask(cleanNumber, phoneMask);
+};
+
+// Aplica una máscara dinámicamente a un número
+const applyMask = (number, mask) => {
+  // Contar cuántos dígitos (9) hay en la máscara
+  const maskDigits = mask.replace(/[^9]/g, '').length;
+
+  // Limitar el número a la cantidad de dígitos de la máscara
+  const limitedNumber = number.slice(0, maskDigits);
+
+  let result = '';
+  let numberIndex = 0;
+
+  for (let i = 0; i < mask.length && numberIndex < limitedNumber.length; i++) {
+    if (mask[i] === '9') {
+      result += limitedNumber[numberIndex];
+      numberIndex++;
+    } else {
+      result += mask[i];
+    }
   }
+
+  return result;
 };
 
 // Función para normalizar teléfono para búsquedas

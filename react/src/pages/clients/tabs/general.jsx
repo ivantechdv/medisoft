@@ -129,6 +129,7 @@ const Form = ({
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [selectedState, setSelectedState] = useState(null);
   const [postalCodes, setPostalCodes] = useState([]);
+  const [currentPhoneMask, setCurrentPhoneMask] = useState('999 99 99 99');
 
   const configDefaultsRef = useRef({ type: null, languages: [], country_id: null, state_id: null });
   const hasLoadedClientDefaults = useRef(false);
@@ -137,6 +138,29 @@ const Form = ({
   const userModifiedLanguageSelection = useRef(false);
 
   const navigateTo = useNavigate();
+
+  // Función para obtener máscara de teléfono del país
+  const getPhoneMaskByCountry = async (countryId) => {
+    if (!countryId) {
+      setCurrentPhoneMask('999 99 99 99');
+      return;
+    }
+
+    try {
+      const response = await getData(`configs/countries/phone-configs`);
+      const countryConfig = response?.find(c => c.id === Number(countryId));
+      if (countryConfig && countryConfig.phone_mask) {
+        setCurrentPhoneMask(countryConfig.phone_mask);
+      } else {
+        // Fallback a máscara global
+        const maskResponse = await getData('configs/phone-mask');
+        setCurrentPhoneMask(maskResponse?.phoneMask || '999 99 99 99');
+      }
+    } catch (error) {
+      console.error('Error al obtener máscara del país:', error);
+      setCurrentPhoneMask('999 99 99 99');
+    }
+  };
 
   const updateImages = async (onFormData) => {
     console.log('onformdata', onFormData);
@@ -191,6 +215,12 @@ const Form = ({
             name: onFormData.cod_post?.name,
             state: onFormData.cod_post?.state?.name,
           });
+
+          // Obtener máscara de teléfono según el país del cliente
+          if (onFormData.cod_post?.state?.country_id) {
+            getPhoneMaskByCountry(onFormData.cod_post.state.country_id);
+          }
+
           if (onFormData && onFormData.language_id) {
             const languageIds = onFormData.language_id
               .split(',')
@@ -274,12 +304,14 @@ const Form = ({
         const defaultLanguages = resolveDefaultLanguages();
         const defaultCountryId = configResponse?.default_country_id || null;
         const defaultStateId = clientConfig?.default_state_id || null;
+        const defaultCountryCode = clientConfig?.default_country_code || configResponse?.defaultCountry?.code_phone || '';
 
         configDefaultsRef.current = {
           type: defaultType,
           languages: defaultLanguages,
           country_id: defaultCountryId,
           state_id: defaultStateId,
+          country_code: defaultCountryCode,
         };
 
         if (defaultType) {
@@ -357,17 +389,23 @@ const Form = ({
 
     const defaultCountryId = configDefaultsRef.current.country_id;
     const defaultStateId = configDefaultsRef.current.state_id;
+    const defaultCountryCode = configDefaultsRef.current.country_code;
 
     if (defaultCountryId) {
-      setFormData((prevFormData) => ({
-        ...prevFormData,
-        country_current_id: defaultCountryId,
-      }));
-
       const country = countries.find((c) => c.id === Number(defaultCountryId));
       if (country) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          country_current_id: defaultCountryId,
+          code_phone: country.code_phone || defaultCountryCode,
+          code_phone2: country.code_phone || defaultCountryCode,
+        }));
+
         setSelectedCountry(country);
         setSelectedState(country.states);
+
+        // Actualizar máscara de teléfono según el país por defecto
+        getPhoneMaskByCountry(defaultCountryId);
 
         if (defaultStateId) {
           setFormData((prevFormData) => ({
@@ -538,8 +576,8 @@ const Form = ({
     if (id === 'phone') {
       const input = event.target;
       const rawValue = value.replace(/\D/g, ''); // Remueve caracteres no numéricos
-      const prevFormatted = formatPhoneNumber(formData[id] || ''); // Formato anterior
-      const newFormatted = formatPhoneNumber(rawValue); // Nuevo formato
+      const prevFormatted = formatPhoneNumber(formData[id] || '', currentPhoneMask); // Formato anterior con máscara actual
+      const newFormatted = formatPhoneNumber(rawValue, currentPhoneMask); // Nuevo formato con máscara actual
 
       // Obtener la posición previa del cursor antes de actualizar el estado
       let cursorPosition = input.selectionStart;
@@ -590,6 +628,15 @@ const Form = ({
           setSelectedCountry(country);
           setSelectedState(null); // Resetear el estado
           setPostalCodes([]);
+          // NO actualizar código de teléfono cuando cambia el país
+        }
+
+        if (id === 'code_phone' || id === 'code_phone2') {
+          // Cuando cambia el código de teléfono, actualizar la máscara pero NO el país
+          const country = countries.find((c) => c.code_phone === value);
+          if (country) {
+            getPhoneMaskByCountry(country.id);
+          }
         }
         if (id === 'state_id') {
           const state = selectedCountry.states.find(
@@ -1468,7 +1515,7 @@ const Form = ({
                   id='phone'
                   name='phone'
                   onChange={handleChange}
-                  value={formatPhoneNumber(formData.phone)}
+                  value={formatPhoneNumber(formData.phone, currentPhoneMask)}
                   ref={phoneRef}
                   onBlur={() =>
                     validateField('phone', formData.phone, phoneRef)

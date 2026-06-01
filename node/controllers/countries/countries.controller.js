@@ -50,4 +50,45 @@ CTRL.getById = async (req, res, next) => {
   }
 };
 
+CTRL.updatePhoneConfig = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { phone_format, phone_mask } = req.body;
+
+    const country = await Country.findByPk(id);
+    if (!country) {
+      return res.status(404).json({ error: "Country not found" });
+    }
+
+    await country.update({
+      phone_format: phone_format || null,
+      phone_mask: phone_mask || null
+    });
+
+    res.json(country);
+  } catch (error) {
+    console.log("Error updating country phone config:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+CTRL.getPhoneConfigByCountry = async (req, res, next) => {
+  try {
+    const { countryId } = req.params;
+
+    const country = await Country.findByPk(countryId, {
+      attributes: ['id', 'name', 'code_phone', 'phone_format', 'phone_mask']
+    });
+
+    if (!country) {
+      return res.status(404).json({ error: "Country not found" });
+    }
+
+    res.json(country);
+  } catch (error) {
+    console.log("Error getting country phone config:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = CTRL;
