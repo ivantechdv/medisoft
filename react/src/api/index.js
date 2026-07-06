@@ -2,6 +2,7 @@ import axios from './axios';
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1/';
 const publicUrl = import.meta.env.VITE_API_PUBLIC || 'http://localhost:3000/';
 import Cookies from 'js-cookie';
+import { isTokenExpired } from '../utils/auth';
 
 export const select = async (endpoint) => {
   const fetchData = async () => {
@@ -131,12 +132,9 @@ export const deleteStorage = async (filename, container) => {
 };
 
 export const verifyToken = async (data) => {
-  // Simplemente verificar que existe el token
-  // La validación real la hace cada endpoint protegido con authRequired middleware
-  if (data && data.token) {
-    return { success: true };
-  }
-  return { success: false };
+  if (!data?.token) return { success: false };
+  if (isTokenExpired(data.token)) return { success: false };
+  return { success: true };
 };
 
 export const cakeLogout = async () => {

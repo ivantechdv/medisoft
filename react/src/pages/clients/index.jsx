@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
 import { getData, postData, putData } from '../../api';
-import { FaFilter, FaPlusCircle, FaMinusCircle, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { FaFilter, FaPlusCircle, FaMinusCircle, FaSort, FaSortUp, FaSortDown, FaUndo } from 'react-icons/fa';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -215,9 +215,11 @@ const MyDataTable = ({
   pageSize,
   onHandleViewClient = () => {},
   onSelectedRows,
+  selectedRowIds = [],
   tableContainerRef,
 }) => {
   const [selectedRowId, setSelectedRowId] = useState(null);
+  const selectedRows = selectedRowIds;
   const [sorting, setSorting] = useState([]);
   const [initialPreferencesLoaded, setInitialPreferencesLoaded] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
@@ -289,6 +291,25 @@ const MyDataTable = ({
   }, [sorting, columnSizing, columnOrder, selectedRowId, pageSize, initialPreferencesLoaded, userHasInteracted]);
 
   const clickTimer = useRef(null);
+
+  const handleRowSelection = (rowId) => {
+    onSelectedRows?.((prev) => {
+      if (prev.includes(rowId)) {
+        return prev.filter((id) => id !== rowId);
+      }
+      return [...prev, rowId];
+    });
+  };
+
+  const toggleAllRowsSelection = () => {
+    const allIds = rows.map((row) => row.id);
+    if (selectedRows.length === rows.length) {
+      onSelectedRows?.([]);
+    } else {
+      onSelectedRows?.(allIds);
+    }
+  };
+
   const onRowInteraction = (row) => {
     if (!row?.id) return;
 
@@ -313,8 +334,8 @@ const MyDataTable = ({
         header: () => (
           <input
             type="checkbox"
-            checked={false}
-            onChange={() => {}}
+            checked={selectedRows.length === rows.length && rows.length > 0}
+            onChange={toggleAllRowsSelection}
             style={{ cursor: 'pointer' }}
           />
         ),
@@ -326,9 +347,12 @@ const MyDataTable = ({
         enableResizing: true,
         enableColumnDragging: false,
         cell: ({ row }) => {
+          const isSelected = selectedRows.includes(row.original.id);
           return (
             <input
               type="checkbox"
+              checked={isSelected}
+              onChange={() => handleRowSelection(row.original.id)}
               onClick={(e) => e.stopPropagation()}
               style={{ cursor: 'pointer', marginLeft: '10px' }}
             />
@@ -454,7 +478,7 @@ const MyDataTable = ({
         },
       })),
     ],
-    [selectedRowId, columnSizing],
+    [selectedRowId, columnSizing, selectedRows, rows],
   );
 
   const defaultColumnOrder = columnDefs.map((col) => col.id);
@@ -586,8 +610,13 @@ const MyDataTable = ({
 
 const Clients = () => {
   const sweetAlert = ConfirmSweetAlert({
-    title: 'Clientes',
-    text: '¿Desea eliminar los clientes seleccionado?',
+    title: 'Inactivar clientes',
+    text: '¿Desea inactivar los clientes seleccionados? Dejarán de aparecer en el listado principal.',
+    icon: 'warning',
+  });
+  const restoreAlert = ConfirmSweetAlert({
+    title: 'Restaurar clientes',
+    text: '¿Desea restaurar los clientes seleccionados?',
     icon: 'question',
   });
 
@@ -613,6 +642,7 @@ const Clients = () => {
   const [tableTopPosition, setTableTopPosition] = useState(0);
   const [photo, setPhoto] = useState('');
 
+  const [showDeleted, setShowDeleted] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [servicesActive, setServicesActive] = useState([]);
@@ -636,7 +666,7 @@ const Clients = () => {
       const normalizedSearchTerm = debouncedSearchTerm;
 
       // Construir URL con filtros
-      let url = `clients?is_deleted=0`;
+      let url = `clients?is_deleted=${showDeleted ? 1 : 0}`;
       if (normalizedSearchTerm) {
         url += `&searchTerm=${normalizedSearchTerm}`;
       }
@@ -689,7 +719,7 @@ const Clients = () => {
 
   useEffect(() => {
     getRows();
-  }, [currentPage, pageSize, filterEstado, filterTipo, debouncedSearchTerm]);
+  }, [currentPage, pageSize, filterEstado, filterTipo, debouncedSearchTerm, showDeleted]);
 
   useEffect(() => {
     if (hasRestoredSelection.current) return;
@@ -885,7 +915,9 @@ const Clients = () => {
 
   const handleDelete = async () => {
     try {
-      const result = await sweetAlert.showSweetAlert();
+      const result = await (showDeleted
+        ? restoreAlert.showSweetAlert()
+        : sweetAlert.showSweetAlert());
       const isConfirmed = result !== null && result;
 
       if (!isConfirmed) {
@@ -896,31 +928,37 @@ const Clients = () => {
         return;
       }
 
-      for (const row of selectedRows) {
-        const id = row; // Asumiendo que cada fila tiene una propiedad 'id'
-        const dataToSend = {
-          is_deleted: 1,
-        };
+      const payload = showDeleted
+        ? { is_deleted: 0, is_active: true }
+        : { is_deleted: 1, is_active: false };
 
+      for (const row of selectedRows) {
+        const id = row;
         try {
-          await putData(`clients/${id}`, dataToSend);
-          // Manejar la respuesta según sea necesario
+          await putData(`clients/${id}`, payload);
         } catch (error) {
           console.error(`Error al actualizar el cliente con ID ${id}:`, error);
-          // Manejar el error según sea necesario
         }
       }
 
+      setSelectedRows([]);
       getRows();
       ToastNotify({
-        message: 'clientes eliminados correctamente.',
+        message: showDeleted
+          ? 'Clientes restaurados correctamente.'
+          : 'Clientes inactivados correctamente.',
         position: 'top-left',
         type: 'success',
       });
     } catch (error) {
-      console.error('Error al eliminar:', error);
-      // Maneja el error según sea necesario
+      console.error('Error al actualizar registros:', error);
     }
+  };
+
+  const handleToggleDeletedView = () => {
+    setShowDeleted((prev) => !prev);
+    setSelectedRows([]);
+    setCurrentPage(1);
   };
   return (
     <div className='max-w-full mx-auto bg-white'>
@@ -1044,22 +1082,45 @@ const Clients = () => {
             <option value={'todos'}>Todos</option>
           </select>
           <button
-            className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
-            onClick={handleFormClient}
-          >
-            <FaPlusCircle className='text-lg' />
-          </button>
-          <button
-            className={`bg-red-500 hover:bg-red-700 text-sm text-white font-bold py-2 px-2 rounded h-8 ${
-              selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+            className={`text-sm font-bold py-2 px-3 rounded h-8 ${
+              showDeleted
+                ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                : 'bg-gray-500 hover:bg-gray-600 text-white'
             }`}
-            disabled={selectedRows.length === 0}
+            onClick={handleToggleDeletedView}
+            title={showDeleted ? 'Volver al listado activo' : 'Ver registros inactivados'}
           >
-            <FaMinusCircle className='text-lg' onClick={handleDelete} />
+            {showDeleted ? 'Ver activos' : 'Ver borrados'}
           </button>
-          <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-2 rounded h-8'>
-            <FaFilter className='text-lg' />
+          {!showDeleted && (
+            <button
+              className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
+              onClick={handleFormClient}
+            >
+              <FaPlusCircle className='text-lg' />
+            </button>
+          )}
+          <button
+            className={`text-sm text-white font-bold py-2 px-2 rounded h-8 ${
+              showDeleted
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-red-500 hover:bg-red-700'
+            } ${selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={selectedRows.length === 0}
+            onClick={handleDelete}
+            title={showDeleted ? 'Restaurar seleccionados' : 'Inactivar seleccionados'}
+          >
+            {showDeleted ? (
+              <FaUndo className='text-lg' />
+            ) : (
+              <FaMinusCircle className='text-lg' />
+            )}
           </button>
+          {!showDeleted && (
+            <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-2 rounded h-8'>
+              <FaFilter className='text-lg' />
+            </button>
+          )}
         </div>
       </div>
       <div className='max-w-full mx-auto bg-white shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2 '>
@@ -1074,6 +1135,8 @@ const Clients = () => {
                 onRenderPagination={renderPagination}
                 currentPage={currentPage}
                 pageSize={pageSize}
+                onSelectedRows={setSelectedRows}
+                selectedRowIds={selectedRows}
               />
             </div>
           </div>

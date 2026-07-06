@@ -1,5 +1,32 @@
 import React, { useEffect, useState } from 'react';
-import { getData, postData, putData } from '../../api';
+import { getData } from '../../api';
+
+const EMPLOYEE_FK_FIELDS = {
+  Gender: 'gender_id',
+  genders: 'gender_id',
+  Country: 'country_id',
+  countries: 'country_id',
+  Level: 'level_id',
+  levels: 'level_id',
+  Status: 'statu_id',
+  statuses: 'statu_id',
+};
+
+const resolveFilterField = (filterDef) => {
+  if (!filterDef) return '';
+
+  const { model, model_relation, field_value } = filterDef;
+
+  if (model && field_value === 'id' && EMPLOYEE_FK_FIELDS[model]) {
+    return EMPLOYEE_FK_FIELDS[model];
+  }
+
+  if (model_relation) {
+    return `${model_relation}.${field_value}`;
+  }
+
+  return field_value || '';
+};
 
 const Filter = ({
   filters,
@@ -7,11 +34,10 @@ const Filter = ({
   onCloseFilter,
   onEraseFilter,
   onApplyFilter,
+  isFilterLoading,
 }) => {
   const [tableTopPosition, setTableTopPosition] = useState(0);
-  const [selectedRow, setSelectedRow] = useState({ full_name: 'John Doe' }); // Ejemplo de datos iniciales
   const [fieldFilters, setFieldFilters] = useState([]);
-  const [applyFilters, setApplyFilters] = useState([]);
 
   useEffect(() => {
     const table = document.querySelector('.table-container'); // Clase de contenedor de la tabla
@@ -55,6 +81,12 @@ const Filter = ({
   const handleFilterChange = (index, field, value) => {
     const newFilters = [...filters];
     newFilters[index][field] = value;
+
+    if (field === 'field') {
+      newFilters[index].condition = '';
+      newFilters[index].value = '';
+    }
+
     setFilters(newFilters);
   };
 
@@ -70,22 +102,18 @@ const Filter = ({
     contiene: 'LIKE',
     mayor: '>',
     menor: '<',
+    diferente: '!=',
   };
   const buildQueryParameters = (filters) => {
     const queryParameters = new URLSearchParams();
 
-    filters.forEach(({ field, condition, value, logic }, index) => {
-      const operator = conditionMapping[condition.toLowerCase()];
-      if (!operator || !field || !value) return;
+    filters.forEach(({ field, condition, value }, index) => {
+      const operator = conditionMapping[condition?.trim().toLowerCase()];
+      if (!operator || !field || value === '' || value === undefined) return;
 
-      // Formatear el valor para LIKE si es necesario
-      const formattedValue = operator === 'LIKE' ? `%${value}%` : value;
-
-      // Determinar si el filtro actual necesita compuerta lógica
-      const hasNextFilter = index < filters.length - 1;
-      const logicPrefix = index > 0 ? `${filters[index - 1].logic}-` : ''; // Utilizar la compuerta lógica del filtro anterior
-
-      // Construir el parámetro como "logic-field=operator:value"
+      const formattedValue = operator === 'LIKE' ? `%${value}%` : String(value);
+      const connector = index > 0 ? filters[index - 1]?.logic || 'AND' : null;
+      const logicPrefix = connector ? `${connector}-` : '';
       const key = `${logicPrefix}${field}`;
       const paramValue = `${operator}:${formattedValue}`;
 
@@ -95,35 +123,14 @@ const Filter = ({
     return queryParameters;
   };
 
-  useEffect(() => {
-    const fetchSelect = async () => {
-      try {
-        let query = '';
-        if (applyFilters) {
-          query = applyFilters;
-        }
-        if (query != '') {
-          const optionEmployees = await getData(
-            `employees/getBySearch?${query}`,
-          );
-          console.log('optionEmployees', optionEmployees);
-
-          onApplyFilter(optionEmployees);
-        }
-      } catch (error) {
-        console.log('error', error);
-      }
-    };
-    fetchSelect();
-  }, [applyFilters]);
-
   const handleApplyFilters = () => {
     const queryParameters = buildQueryParameters(filters);
     const queryString = queryParameters.toString();
-    setApplyFilters(queryString);
+    onApplyFilter(queryString);
   };
-  const handleCancelFilters = () => {
-    setApplyFilters('');
+
+  const handleEraseFilters = () => {
+    onEraseFilter();
   };
 
   return (
@@ -167,17 +174,13 @@ const Filter = ({
           // Encontrar el filtro seleccionado
           console.log('filter.field_value', filter.field);
           const selectedField = fieldFilters.find((f) => {
-            const fullField = f.model_relation
-              ? f.model_relation + '.' + f.field_value
-              : f.field_value;
-
-            return fullField === filter.field;
+            return resolveFilterField(f) === filter.field;
           });
 
           // Convertir las condiciones a un array, o usar un array vacío si no hay campo seleccionado
-          const conditions = selectedField
-            ? selectedField.condition.split(',')
-            : [];
+          const conditions = (selectedField?.condition || '')
+            .split(',')
+            .filter(Boolean);
           const relatedData = selectedField?.relatedData || [];
 
           console.log('relateddata', relatedData);
@@ -198,11 +201,7 @@ const Filter = ({
                 {fieldFilters.map((field) => (
                   <option
                     key={field.id}
-                    value={
-                      field.model_relation
-                        ? field.model_relation + '.' + field.field_value
-                        : field.field_value
-                    }
+                    value={resolveFilterField(field)}
                   >
                     {field.field}
                   </option>
@@ -266,6 +265,11 @@ const Filter = ({
                 <button
                   onClick={() => handleLogicToggle(index)}
                   className='border border-gray-300 w-12 rounded-lg'
+                  title={
+                    index === 0
+                      ? 'Conector para el siguiente filtro'
+                      : 'Conecta con el filtro anterior'
+                  }
                 >
                   {filter.logicShow}
                 </button>
@@ -287,16 +291,18 @@ const Filter = ({
         })}
         <div className='flex justify-end mt-4'>
           <button
-            className='mr-4 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-blue-600'
-            onClick={onEraseFilter}
+            className='mr-4 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50'
+            onClick={handleEraseFilters}
+            disabled={isFilterLoading}
           >
             Borrar filtros
           </button>
           <button
-            className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600'
+            className='px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50'
             onClick={handleApplyFilters}
+            disabled={isFilterLoading}
           >
-            Aplicar
+            {isFilterLoading ? 'Aplicando...' : 'Aplicar'}
           </button>
         </div>
       </div>

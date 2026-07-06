@@ -10,7 +10,7 @@ import {
 import { json, useNavigate } from 'react-router-dom';
 import Select from '../../../components/Select';
 import ToastNotify from '../../../components/toast/toast';
-import { FaExpand, FaMinusCircle } from 'react-icons/fa';
+import { FaExpand, FaMinusCircle, FaUser, FaIdCard, FaCamera } from 'react-icons/fa';
 import Spinner from '../../../components/Spinner/Spinner';
 import ChangeLogger from '../../../components/changeLogger';
 import {
@@ -20,6 +20,88 @@ import {
 } from '../../../utils/customFormat';
 import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css';
+
+const ImageUploadSlot = ({
+  id,
+  label,
+  aspectClass,
+  image,
+  emptyIcon: EmptyIcon,
+  onUpload,
+  onExpand,
+  onDelete,
+}) => (
+  <div className='w-full'>
+    <span className='block text-xs font-medium text-gray-600 mb-1.5'>{label}</span>
+    <div
+      className={`group relative w-full ${aspectClass} rounded-xl border-2 border-dashed border-gray-300 bg-white overflow-hidden transition-all hover:border-blue-400 hover:shadow-sm`}
+    >
+      {image ? (
+        <>
+          <label htmlFor={id} className='block w-full h-full cursor-pointer bg-gray-50'>
+            <img
+              src={image}
+              alt={label}
+              className='w-full h-full object-contain p-1'
+            />
+            <input
+              type='file'
+              id={id}
+              name={id}
+              accept='image/*'
+              className='hidden'
+              onChange={onUpload}
+            />
+          </label>
+          <div className='absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/55 via-black/20 to-transparent px-2 py-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
+            <button
+              type='button'
+              onClick={(e) => {
+                e.preventDefault();
+                onExpand();
+              }}
+              className='p-1.5 rounded-full bg-white/95 text-gray-700 hover:bg-white shadow-sm'
+              title='Ampliar'
+            >
+              <FaExpand size={13} />
+            </button>
+            <button
+              type='button'
+              onClick={(e) => {
+                e.preventDefault();
+                onDelete();
+              }}
+              className='p-1.5 rounded-full bg-white/95 text-red-600 hover:bg-white shadow-sm'
+              title='Eliminar'
+            >
+              <FaMinusCircle size={13} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <label
+          htmlFor={id}
+          className='flex flex-col items-center justify-center w-full h-full cursor-pointer text-gray-400 hover:text-blue-500 hover:bg-blue-50/40 transition-colors p-3 text-center'
+        >
+          {EmptyIcon && <EmptyIcon className='text-2xl mb-1.5 opacity-60' />}
+          <FaCamera className='text-sm mb-1 opacity-50' />
+          <span className='text-[11px] font-medium text-gray-500 leading-tight'>
+            Clic para subir
+          </span>
+          <input
+            type='file'
+            id={id}
+            name={id}
+            accept='image/*'
+            className='hidden'
+            onChange={onUpload}
+          />
+        </label>
+      )}
+    </div>
+  </div>
+);
+
 const Form = ({
   onHandleChangeCard,
   id,
@@ -1103,11 +1185,20 @@ const Form = ({
        window.location.href = '/clients';
         }, 500);
   };
+
+  const formLabelClass = 'block text-sm font-medium text-blue-500 mb-1';
+  const formInputClass =
+    'w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+  const formSelectClass =
+    'w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+  const sectionTitleClass =
+    'col-span-full text-sm font-semibold text-gray-600 uppercase tracking-wide border-b border-gray-200 pb-2 mb-1 mt-1';
+
   return (
     <>
-    <form className=''>
+    <form className='pb-4'>
       {loading && <Spinner />}
-      <div className='rounded min-h-[calc(100vh-235px)] mb-20'>
+      <div className='rounded min-h-[calc(100vh-235px)]'>
         {/* <div className='justify-end items-end absolute bottom-5 right-6 z-50'>
           <button
             type='button'
@@ -1122,181 +1213,55 @@ const Form = ({
             Guardar
           </button>
         </div> */}
-        <div className='md:grid md:grid-cols-4 gap-2'>
-          <div className='col-span-1'>
-            <div className='col-span-1'>
-              <div className='relative h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
-                {images.photo != '' ? (
-                  <>
-                    <label htmlFor='photo' className='cursor-pointer'>
-                      <img
-                        src={images.photo}
-                        alt='foto carnet'
-                        className='h-40  w-full rounded-lg'
-                        style={{ objectFit: 'contain' }}
-                      />
-                      <input
-                        type='file'
-                        id='photo'
-                        name='photo'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) => handleImagenChange(event, 'photo')}
-                      />
-                    </label>
-                    <div
-                      className='absolute -top-1 -right-3 cursor-pointer'
-                      onClick={() => openImageModal(images.photo)}
-                    >
-                      <FaExpand size={24} />
-                    </div>
-                    <div
-                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                      title='Eliminar imagen'
-                      onClick={() => deleteImage(images.photo, 'photo')}
-                    >
-                      <FaMinusCircle size={24} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label htmlFor='photo' className='cursor-pointer'>
-                      Foto carnet
-                      <input
-                        type='file'
-                        id='photo'
-                        name='photo'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) => handleImagenChange(event, 'photo')}
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className='col-span-1'>
-              <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
-                {images.dniFront != '' ? (
-                  <>
-                    <label htmlFor='dniFront' className='cursor-pointer'>
-                      <img
-                        src={images.dniFront}
-                        alt='DNI Frontal'
-                        className='h-20  w-full rounded-lg'
-                        style={{ objectFit: 'contain' }}
-                      />
-                      <input
-                        type='file'
-                        id='dniFront'
-                        name='dniFront'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniFront')
-                        }
-                      />
-                    </label>
-                    <div
-                      className='absolute -top-1 -right-3 cursor-pointer'
-                      onClick={() => openImageModal(images.dniFront)}
-                    >
-                      <FaExpand size={24} />
-                    </div>
-                    <div
-                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                      title='Eliminar imagen'
-                      onClick={() => deleteImage(images.dniFront, 'dniFront')}
-                    >
-                      <FaMinusCircle size={24} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label htmlFor='dniFront' className='cursor-pointer'>
-                      DNI Frontal
-                      <input
-                        type='file'
-                        id='dniFront'
-                        name='dniFront'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniFront')
-                        }
-                      />
-                    </label>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className='col-span-1'>
-              <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
-                {images.dniBack != '' ? (
-                  <>
-                    <label htmlFor='dniBack' className='cursor-pointer'>
-                      <img
-                        src={images.dniBack}
-                        alt='DNI Back'
-                        className='h-20  w-full rounded-lg'
-                        style={{ objectFit: 'contain' }}
-                      />
-                      <input
-                        type='file'
-                        id='dniBack'
-                        name='dniBack'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniBack')
-                        }
-                      />
-                    </label>
-                    <div
-                      className='absolute -top-1 -right-3 cursor-pointer'
-                      onClick={() => openImageModal(images.dniBack)}
-                    >
-                      <FaExpand size={24} />
-                    </div>
-                    <div
-                      className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                      title='Eliminar imagen'
-                      onClick={() => deleteImage(images.dniBack, 'dniBack')}
-                    >
-                      <FaMinusCircle size={24} />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <label htmlFor='dniBack' className='cursor-pointer'>
-                      DNI Posterior
-                      <input
-                        type='file'
-                        id='dniBack'
-                        name='dniBack'
-                        accept='image/*'
-                        className='hidden'
-                        onChange={(event) =>
-                          handleImagenChange(event, 'dniBack')
-                        }
-                      />
-                    </label>
-                  </>
-                )}
+        <div className='grid grid-cols-1 lg:grid-cols-[minmax(200px,220px)_1fr] gap-4 lg:gap-6'>
+          <div className='w-full lg:max-w-[220px] mx-auto lg:mx-0'>
+            <div className='rounded-xl border border-gray-200 bg-gray-50/80 p-4 shadow-sm'>
+              <h4 className='text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3 pb-2 border-b border-gray-200'>
+                Documentación
+              </h4>
+              <ImageUploadSlot
+                id='photo'
+                label='Foto carnet'
+                aspectClass='aspect-[3/4]'
+                image={images.photo}
+                emptyIcon={FaUser}
+                onUpload={(event) => handleImagenChange(event, 'photo')}
+                onExpand={() => openImageModal(images.photo)}
+                onDelete={() => deleteImage(images.photo, 'photo')}
+              />
+              <div className='grid grid-cols-2 gap-2 mt-3'>
+                <ImageUploadSlot
+                  id='dniFront'
+                  label='DNI frontal'
+                  aspectClass='aspect-[1.58/1]'
+                  image={images.dniFront}
+                  emptyIcon={FaIdCard}
+                  onUpload={(event) => handleImagenChange(event, 'dniFront')}
+                  onExpand={() => openImageModal(images.dniFront)}
+                  onDelete={() => deleteImage(images.dniFront, 'dniFront')}
+                />
+                <ImageUploadSlot
+                  id='dniBack'
+                  label='DNI posterior'
+                  aspectClass='aspect-[1.58/1]'
+                  image={images.dniBack}
+                  emptyIcon={FaIdCard}
+                  onUpload={(event) => handleImagenChange(event, 'dniBack')}
+                  onExpand={() => openImageModal(images.dniBack)}
+                  onDelete={() => deleteImage(images.dniBack, 'dniBack')}
+                />
               </div>
             </div>
           </div>
-          <div className='col-span-3 md:grid md:grid-cols-2 gap-2'>
-            <div className='col-span-2 md:grid md:grid-cols-4 gap-2'>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='is_active'
-                  className='block text-sm font-medium text-blue-500'
-                >
+          <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 min-w-0'>
+            <h3 className={sectionTitleClass}>Estado y fechas</h3>
+            <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
+              <div>
+                <label htmlFor='is_active' className={formLabelClass}>
                   Estado
                 </label>
                 <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className={formSelectClass}
                   name='is_active'
                   id='is_active'
                   onChange={handleChange}
@@ -1317,15 +1282,12 @@ const Form = ({
                   ))}
                 </select>
               </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='type'
-                  className='block text-sm font-medium text-blue-500'
-                >
+              <div>
+                <label htmlFor='type' className={formLabelClass}>
                   Tipo
                 </label>
                 <select
-                  className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className={formSelectClass}
                   name='type'
                   id='type'
                   onChange={handleChange}
@@ -1342,11 +1304,8 @@ const Form = ({
                   </option>
                 </select>
               </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='date_start'
-                  className='block text-sm font-medium text-blue-500'
-                >
+              <div>
+                <label htmlFor='createdAt' className={formLabelClass}>
                   Fecha de creacion
                 </label>
                 <input
@@ -1355,14 +1314,11 @@ const Form = ({
                   name='createdAt'
                   value={formatISOToDate(formData.createdAt)}
                   onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className={formInputClass}
                 />
               </div>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='date_start'
-                  className='block text-sm font-medium text-blue-500'
-                >
+              <div>
+                <label htmlFor='start_date' className={formLabelClass}>
                   Fecha de alta
                 </label>
                 <input
@@ -1371,16 +1327,15 @@ const Form = ({
                   name='start_date'
                   value={formData.start_date}
                   onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className={formInputClass}
                 />
               </div>
             </div>
-            <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
-              <div className='col-span-1'>
-                <label
-                  htmlFor='dni'
-                  className='block text-sm font-medium text-blue-500'
-                >
+
+            <h3 className={sectionTitleClass}>Identificación</h3>
+            <div className='col-span-full grid grid-cols-1 sm:grid-cols-3 gap-4'>
+              <div>
+                <label htmlFor='dni' className={formLabelClass}>
                   DNI
                 </label>
                 <input
@@ -1391,16 +1346,12 @@ const Form = ({
                   onChange={handleChange}
                   ref={dniRef}
                   onBlur={() => validateField('dni', formData.dni, dniRef)}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className={formInputClass}
                 />
               </div>
-
-              <div className='col-span-1'>
-                <label
-                  htmlFor='born_date'
-                  className='block text-sm font-medium text-blue-500'
-                >
-                  Fecha de nacimiento
+              <div>
+                <label htmlFor='born_date' className={formLabelClass}>
+                  F.Nacimiento
                 </label>
                 <input
                   type='date'
@@ -1408,20 +1359,16 @@ const Form = ({
                   name='born_date'
                   value={formData.born_date}
                   onChange={handleChange}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className={formInputClass}
                 />
               </div>
-
-              <div className='col-span-1'>
-                <label
-                  htmlFor='age'
-                  className='block text-sm font-medium text-blue-500'
-                >
+              <div>
+                <label htmlFor='age' className={formLabelClass}>
                   Edad
                 </label>
                 <input
                   type='text'
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                  className={formInputClass}
                   id='age'
                   name='age'
                   readOnly
@@ -1429,76 +1376,67 @@ const Form = ({
                 />
               </div>
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='first_name'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Nombre
-              </label>
-              <input
-                type='text'
-                id='first_name'
-                name='first_name'
-                value={formData.first_name}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='last_name'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Apellidos
-              </label>
-              <input
-                type='text'
-                id='last_name'
-                name='last_name'
-                value={formData.last_name}
-                onChange={handleChange}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-              />
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='gender_id'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Genero
-              </label>
-              <select
-                className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                name='gender_id'
-                id='gender_id'
-                onChange={handleChange}
-                value={formData.gender_id}
-              >
-                <option value=''>Seleccione</option>
-                {genders?.length > 0 &&
-                  genders.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-              </select>
+            <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'>
+              <div>
+                <label htmlFor='first_name' className={formLabelClass}>
+                  Nombre
+                </label>
+                <input
+                  type='text'
+                  id='first_name'
+                  name='first_name'
+                  value={formData.first_name}
+                  onChange={handleChange}
+                  className={formInputClass}
+                />
+              </div>
+              <div>
+                <label htmlFor='last_name' className={formLabelClass}>
+                  Apellidos
+                </label>
+                <input
+                  type='text'
+                  id='last_name'
+                  name='last_name'
+                  value={formData.last_name}
+                  onChange={handleChange}
+                  className={formInputClass}
+                />
+              </div>
+              <div className='sm:col-span-2 xl:col-span-1'>
+                <label htmlFor='gender_id' className={formLabelClass}>
+                  Genero
+                </label>
+                <select
+                  className={formSelectClass}
+                  name='gender_id'
+                  id='gender_id'
+                  onChange={handleChange}
+                  value={formData.gender_id}
+                >
+                  <option value=''>Seleccione</option>
+                  {genders?.length > 0 &&
+                    genders.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
             </div>
 
-            <div className='col-span-1'>
-              <label
-                htmlFor='phone'
-                className='block text-sm font-medium text-blue-500'
-              >
+            <h3 className={sectionTitleClass}>Contacto</h3>
+            <div className='col-span-full sm:col-span-2 xl:col-span-2'>
+              <label htmlFor='phone' className={formLabelClass}>
                 Teléfono
               </label>
-              <div className='flex mt-1'>
+              <div className='flex flex-col sm:flex-row gap-2'>
                 <select
                   id='code_phone'
                   name='code_phone'
                   onChange={handleChange}
                   value={formData.code_phone}
-                  className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
+                  className={`${formSelectClass} w-full sm:w-[135px] sm:min-w-[135px] shrink-0`}
                 >
                   <option value='' disabled>
                     Cód País
@@ -1520,17 +1458,14 @@ const Form = ({
                   onBlur={() =>
                     validateField('phone', formData.phone, phoneRef)
                   }
-                  className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                  className={formInputClass}
                   placeholder='Número de teléfono'
                 />
               </div>
             </div>
-            <div className='col-span-2'>
-              <label
-                htmlFor='email'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Correo(s) electrónico(s) separe con ;
+            <div className='col-span-full'>
+              <label htmlFor='email' className={formLabelClass}>
+                Correo(s)
               </label>
               <input
                 type='text'
@@ -1540,14 +1475,12 @@ const Form = ({
                 onChange={handleChange}
                 ref={emailRef}
                 onBlur={() => validateField('email', formData.email, emailRef)}
-                className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                className={formInputClass}
+                placeholder='email1@ejemplo.com; email2@ejemplo.com'
               />
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='language_id'
-                className='block text-sm font-medium text-blue-500'
-              >
+            <div className='col-span-full'>
+              <label htmlFor='language_id' className={formLabelClass}>
                 Idiomas
               </label>
               <Select
@@ -1556,167 +1489,87 @@ const Form = ({
                 options={languages}
                 onChange={handleSelectChange}
                 defaultValue={selectedLanguages}
-                isMulti={true} // Enable multi-selection
+                isMulti={true}
                 onHandleLoadingSelect={handleLoadingSelect}
               />
             </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='country_current_id'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Pais de residencia
-              </label>
-              <select
-                id='country_current_id'
-                name='country_current_id'
-                onChange={handleChange}
-                value={formData.country_current_id}
-                className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-              >
-                <option value='' disabled>
-                  Seleccione...
-                </option>
-                {countries.length > 0 &&
-                  countries.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='state_id'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Provincia{' '}
-              </label>
-              <select
-                id='state_id'
-                name='state_id'
-                onChange={handleChange}
-                value={formData.state_id}
-                className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-              >
-                <option>Seleccione...</option>
-                {selectedCountry &&
-                  selectedCountry.states.map((state) => (
-                    <option key={state.id} value={state.id}>
-                      {state.name}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div className='col-span-1'>
-              <label
-                htmlFor='cod_post_id'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Codigo Postal
-              </label>
-              <Select
-                id='cod_post_id'
-                name='cod_post_id'
-                options={postalCodes}
-                onChange={handleSelect}
-                defaultValue={formData.cod_post_id}
-                isMulti={false} // Enable multi-selection
-              />
-            </div>
-            {/* <div className='col-span-1'>
-              <label
-                htmlFor='asset'
-                className='block text-sm font-medium text-blue-500'
-              >
-                Código postal
-              </label>
-              <div ref={ref} style={{ position: 'relative' }}>
-                <input
-                  name='cod_post_id'
-                  id='cod_post_id'
-                  type='text'
-                  value={codPost}
-                  autoComplete='off' // Desactiva la función de autocompletar
-                  onClick={handleOpenCodPost}
-                  className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  onChange={handleSearchCodPost}
-                />
-                {isOpen && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      zIndex: 100,
-                      top: '100%',
-                      maxHeight: '200px', // Altura máxima de la tabla
-                      overflowY: 'auto', // Agrega un scroll vertical si es necesario
-                      left: 0,
-                      width: '100%',
-                      backgroundColor: 'white',
-                      boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-                    }}
-                  >
-                    <table
-                      border={1}
-                      style={{ width: '100%' }}
-                      className='border border-gray-300'
-                    >
-                      <thead className=''>
-                        <tr>
-                          <th className='border border-gray-300'>
-                            Codigo Postal
-                          </th>
-                          <th className='border border-gray-300'>Poblacion</th>
-                          <th className='border border-gray-300'>Provincia</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {codPosts?.length > 0 &&
-                          codPosts.map((option) => (
-                            <tr
-                              key={option.id}
-                              onClick={() => handleSelectedCodPost(option)}
-                              className='cursor-pointer hover:bg-gray-200'
-                            >
-                              <td className='border border-gray-300 px-2'>
-                                {option.code}
-                              </td>
-                              <td className='border border-gray-300 px-2'>
-                                {option.name}
-                              </td>
-                              <td className='border border-gray-300 px-2'>
-                                {option.state?.name}
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+
+            <h3 className={sectionTitleClass}>Ubicación</h3>
+            <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'>
+              <div>
+                <label htmlFor='country_current_id' className={formLabelClass}>
+                  Pais de residencia
+                </label>
+                <select
+                  id='country_current_id'
+                  name='country_current_id'
+                  onChange={handleChange}
+                  value={formData.country_current_id}
+                  className={formSelectClass}
+                >
+                  <option value='' disabled>
+                    Seleccione...
+                  </option>
+                  {countries.length > 0 &&
+                    countries.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.name}
+                      </option>
+                    ))}
+                </select>
               </div>
-            </div> */}
-            <div className='col-span-2'>
-              <label
-                htmlFor='address'
-                className='block text-sm font-medium text-blue-500'
-              >
+              <div>
+                <label htmlFor='state_id' className={formLabelClass}>
+                  Provincia
+                </label>
+                <select
+                  id='state_id'
+                  name='state_id'
+                  onChange={handleChange}
+                  value={formData.state_id}
+                  className={formSelectClass}
+                >
+                  <option>Seleccione...</option>
+                  {selectedCountry &&
+                    selectedCountry.states.map((state) => (
+                      <option key={state.id} value={state.id}>
+                        {state.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className='sm:col-span-2 xl:col-span-1'>
+                <label htmlFor='cod_post_id' className={formLabelClass}>
+                  Codigo Postal
+                </label>
+                <Select
+                  id='cod_post_id'
+                  name='cod_post_id'
+                  options={postalCodes}
+                  onChange={handleSelect}
+                  defaultValue={formData.cod_post_id}
+                  isMulti={false}
+                />
+              </div>
+            </div>
+            <div className='col-span-full'>
+              <label htmlFor='address' className={formLabelClass}>
                 Dirección
               </label>
               <input
                 type='text'
                 id='address'
                 name='address'
-                maxLength={70} // Limitar a 70 caracteres
+                maxLength={70}
                 value={formData.address}
                 onChange={handleChange}
-                className='w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500'
+                className={formInputClass}
               />
             </div>
-            <div className='col-span-2'>
-              <label
-                htmlFor='observations'
-                className='block text-sm font-medium text-blue-500'
-              >
+
+            <h3 className={sectionTitleClass}>Notas</h3>
+            <div className='col-span-full'>
+              <label htmlFor='observations' className={formLabelClass}>
                 Observaciones
               </label>
               <div
@@ -1911,27 +1764,27 @@ const Form = ({
         </div>
       )}
     </form>
-    <div className='absolute bottom-0 right-0 w-1/2 bg-transparent py-3 px-8 flex justify-end gap-4 z-30'>
-  <button
-    type='button'
-    className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
-    onClick={handleCancel}
-  >
-    Cancelar
-  </button>
-  <button
-            type='button'
-            className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
-            onClick={
-              formData.is_active == 'false' &&
-              (oldData.is_active === true || oldData.is_active === 'true')
-                ? handleOpenReason
-                : handleSubmit
-            }
-          >
-            Guardar
-          </button>
-</div>
+    <div className='sticky bottom-0 -mx-2 mt-4 bg-white/95 backdrop-blur-sm border-t border-gray-200 py-3 px-4 flex flex-col-reverse sm:flex-row justify-end gap-3 z-30'>
+      <button
+        type='button'
+        className='w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
+        onClick={handleCancel}
+      >
+        Cancelar
+      </button>
+      <button
+        type='button'
+        className='w-full sm:w-auto bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+        onClick={
+          formData.is_active == 'false' &&
+          (oldData.is_active === true || oldData.is_active === 'true')
+            ? handleOpenReason
+            : handleSubmit
+        }
+      >
+        Guardar
+      </button>
+    </div>
 </>
   );
 };

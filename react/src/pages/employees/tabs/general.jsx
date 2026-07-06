@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   getData,
   postData,
@@ -10,7 +10,7 @@ import {
 import { json, useNavigate } from 'react-router-dom';
 import Select from '../../../components/Select';
 import ToastNotify from '../../../components/toast/toast';
-import { FaExpand, FaMinusCircle, FaEye } from 'react-icons/fa';
+import { FaExpand, FaMinusCircle, FaEye, FaUser, FaIdCard, FaCamera } from 'react-icons/fa';
 import { FaRotate } from 'react-icons/fa6';
 
 import Spinner from '../../../components/Spinner/Spinner';
@@ -25,6 +25,87 @@ import ReactQuill from 'react-quill';
 import 'react-quill/dist/quill.snow.css'; // Estilos por defecto
 import ColorSelect from '../../../components/ColorSelect/colorSelect';
 import { validarDNI, validarDocumento, validarNSS, formatPhoneNumber } from '../../../utils/customFormat';
+
+const ImageUploadSlot = ({
+  id,
+  label,
+  aspectClass,
+  image,
+  emptyIcon: EmptyIcon,
+  onUpload,
+  onExpand,
+  onDelete,
+}) => (
+  <div className='w-full'>
+    <span className='block text-xs font-medium text-gray-600 mb-1.5'>{label}</span>
+    <div
+      className={`group relative w-full ${aspectClass} rounded-xl border-2 border-dashed border-gray-300 bg-white overflow-hidden transition-all hover:border-blue-400 hover:shadow-sm`}
+    >
+      {image ? (
+        <>
+          <label htmlFor={id} className='block w-full h-full cursor-pointer bg-gray-50'>
+            <img
+              src={image}
+              alt={label}
+              className='w-full h-full object-contain p-1'
+            />
+            <input
+              type='file'
+              id={id}
+              name={id}
+              accept='image/*'
+              className='hidden'
+              onChange={onUpload}
+            />
+          </label>
+          <div className='absolute inset-x-0 bottom-0 flex justify-end gap-1.5 bg-gradient-to-t from-black/55 via-black/20 to-transparent px-2 py-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity'>
+            <button
+              type='button'
+              onClick={(e) => {
+                e.preventDefault();
+                onExpand();
+              }}
+              className='p-1.5 rounded-full bg-white/95 text-gray-700 hover:bg-white shadow-sm'
+              title='Ampliar'
+            >
+              <FaExpand size={13} />
+            </button>
+            <button
+              type='button'
+              onClick={(e) => {
+                e.preventDefault();
+                onDelete();
+              }}
+              className='p-1.5 rounded-full bg-white/95 text-red-600 hover:bg-white shadow-sm'
+              title='Eliminar'
+            >
+              <FaMinusCircle size={13} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <label
+          htmlFor={id}
+          className='flex flex-col items-center justify-center w-full h-full cursor-pointer text-gray-400 hover:text-blue-500 hover:bg-blue-50/40 transition-colors p-3 text-center'
+        >
+          {EmptyIcon && <EmptyIcon className='text-2xl mb-1.5 opacity-60' />}
+          <FaCamera className='text-sm mb-1 opacity-50' />
+          <span className='text-[11px] font-medium text-gray-500 leading-tight'>
+            Clic para subir
+          </span>
+          <input
+            type='file'
+            id={id}
+            name={id}
+            accept='image/*'
+            className='hidden'
+            onChange={onUpload}
+          />
+        </label>
+      )}
+    </div>
+  </div>
+);
 
 const Form = ({
   onHandleChangeCard,
@@ -1299,9 +1380,17 @@ const Form = ({
   }
 };
 
+  const formLabelClass = 'block text-sm font-medium text-blue-500 mb-1';
+  const formInputClass =
+    'w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+  const formSelectClass =
+    'w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500';
+  const sectionTitleClass =
+    'col-span-full text-sm font-semibold text-gray-600 uppercase tracking-wide border-b border-gray-200 pb-2 mb-1 mt-1';
+
   return (
     <>
-      <form className=''>
+      <form className='pb-4'>
         {loadingForm && <Spinner />}
         <div className='rounded min-h-[calc(100vh-600px)]'>
           {/* <div className='justify-end items-end absolute bottom-5 right-8 z-50'>
@@ -1318,241 +1407,66 @@ const Form = ({
             Guardar
           </button>
         </div> */}
-          <div className='md:grid md:grid-cols-[180px_1fr_1fr_1fr] gap-2 text-[12px]'>
-            <div className='grid grid-cols-2 md:grid-cols-1'>
-              <div className='col-span-1'>
-                <div className='flex'>
-                  <label className='block text-[12px] font-medium text-blue-500'>
-                    Foto Principal
-                  </label>
-                </div>
-                <div className='relative h-40 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center '>
-                  {images.photo != '' ? (
-                    <>
-                      <label htmlFor='photo' className='cursor-pointer'>
-                        <img
-                          src={images.photo}
-                          alt='foto carnet'
-                          className='h-40  w-full rounded-lg'
-                          style={{ objectFit: 'contain' }}
-                        />
-                        <input
-                          type='file'
-                          id='photo'
-                          name='photo'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={(event) =>
-                            handleImagenChange(event, 'photo')
-                          }
-                        />
-                      </label>
-                      <div
-                        className='absolute -top-1 -right-3 cursor-pointer'
-                        onClick={() => openImageModal(images.photo)}
-                      >
-                        <FaExpand size={24} />
-                      </div>
-                      <div
-                        className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                        title='Eliminar imagen'
-                        onClick={() => deleteImage(images.photo, 'photo')}
-                      >
-                        <FaMinusCircle size={24} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <label htmlFor='photo' className='cursor-pointer'>
-                        Foto carnet
-                        <input
-                          type='file'
-                          id='photo'
-                          name='photo'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={(event) =>
-                            handleImagenChange(event, 'photo')
-                          }
-                        />
-                      </label>
-                    </>
-                  )}
-                </div>
-                <div className='flex'>
-                  <label className='block text-[12px] font-medium text-blue-500'>
-                    DNI Frontal
-                  </label>
-                </div>
-                <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-center items-center relative'>
-                  {images.dniFront != '' ? (
-                    <>
-                      <label htmlFor='dniFront' className='cursor-pointer'>
-                        <img
-                          src={images.dniFront}
-                          alt='DNI Frontal'
-                          className='h-20  w-full rounded-lg'
-                          style={{ objectFit: 'contain' }}
-                        />
-                        <input
-                          type='file'
-                          id='dniFront'
-                          name='dniFront'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={(event) =>
-                            handleImagenChange(event, 'dniFront')
-                          }
-                        />
-                      </label>
-                      <div
-                        className='absolute -top-1 -right-3 cursor-pointer'
-                        onClick={() => openImageModal(images.dniFront)}
-                      >
-                        <FaExpand size={24} />
-                      </div>
-                      <div
-                        className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                        title='Eliminar imagen'
-                        onClick={() => deleteImage(images.dniFront, 'dniFront')}
-                      >
-                        <FaMinusCircle size={24} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <label htmlFor='dniFront' className='cursor-pointer'>
-                        DNI Frontal
-                        <input
-                          type='file'
-                          id='dniFront'
-                          name='dniFront'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={(event) =>
-                            handleImagenChange(event, 'dniFront')
-                          }
-                        />
-                      </label>
-                    </>
-                  )}
-                </div>
-                <div className='flex'>
-                  <label className='block text-[12px] font-medium text-blue-500'>
-                    DNI Posterior
-                  </label>
-                </div>
-                <div className='mt-2 h-20 w-40 bg-gray-200 rounded-lg border-2 border-dashed border-gray-400 flex justify-start items-start relative'>
-                  {images.dniBack != '' ? (
-                    <>
-                      <label htmlFor='dniBack' className='cursor-pointer'>
-                        <img
-                          src={images.dniBack}
-                          alt='DNI Back'
-                          className='h-20  w-full rounded-lg'
-                          style={{ objectFit: 'contain' }}
-                        />
-                        <input
-                          type='file'
-                          id='dniBack'
-                          name='dniBack'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={(event) =>
-                            handleImagenChange(event, 'dniBack')
-                          }
-                        />
-                      </label>
-                      <div
-                        className='absolute -top-1 -right-3 cursor-pointer'
-                        onClick={() => openImageModal(images.dniBack)}
-                      >
-                        <FaExpand size={24} />
-                      </div>
-                      <div
-                        className='absolute -top-1 -left-3 cursor-pointer text-red-500'
-                        title='Eliminar imagen'
-                        onClick={() => deleteImage(images.dniBack, 'dniBack')}
-                      >
-                        <FaMinusCircle size={24} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <label htmlFor='dniBack' className='cursor-pointer'>
-                        DNI Posterior
-                        <input
-                          type='file'
-                          id='dniBack'
-                          name='dniBack'
-                          accept='image/*'
-                          className='hidden'
-                          onChange={(event) =>
-                            handleImagenChange(event, 'dniBack')
-                          }
-                        />
-                      </label>
-                    </>
-                  )}
-                </div>
-                <FileInput
-                  label='Curriculum'
-                  name='attach_curriculum'
-                  accept='.pdf'
-                  onFileChange={(file) =>
-                    handleFileChange(file, 'attach_curriculum')
-                  }
-                  fileUrl={
-                    oldData.attach_curriculum &&
-                    getStorage(oldData.attach_curriculum)
-                  }
-                  onDeleteImage={() =>
-                    deleteImage(oldData.attach_curriculum, 'attach_curriculum')
-                  }
+          <div className='grid grid-cols-1 lg:grid-cols-[minmax(200px,220px)_1fr] gap-4 lg:gap-6'>
+            <div className='w-full lg:max-w-[220px] mx-auto lg:mx-0'>
+              <div className='rounded-xl border border-gray-200 bg-gray-50/80 p-4 shadow-sm'>
+                <h4 className='text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3 pb-2 border-b border-gray-200'>
+                  Documentación
+                </h4>
+                <ImageUploadSlot
+                  id='photo'
+                  label='Foto principal'
+                  aspectClass='aspect-[3/4]'
+                  image={images.photo}
+                  emptyIcon={FaUser}
+                  onUpload={(event) => handleImagenChange(event, 'photo')}
+                  onExpand={() => openImageModal(images.photo)}
+                  onDelete={() => deleteImage(images.photo, 'photo')}
                 />
-                {/* <div className='flex mt-2'></div>
-                <FileInput
-                  label='Referencia'
-                  name='attach_reference'
-                  accept='.pdf'
-                  onFileChange={(file) =>
-                    handleFileChange(file, 'attach_reference')
-                  }
-                  fileUrl={
-                    oldData.attach_reference &&
-                    getStorage(oldData.attach_reference)
-                  }
-                  onDeleteImage={() =>
-                    deleteImage(oldData.attach_reference, 'attach_reference')
-                  }
-                /> */}
-
-                <div className='flex'>
-                  {/* <label className='block text-[12px] font-medium text-blue-500'>
-                  Curriculum
-                </label> */}
+                <div className='grid grid-cols-2 gap-2 mt-3'>
+                  <ImageUploadSlot
+                    id='dniFront'
+                    label='DNI frontal'
+                    aspectClass='aspect-[1.58/1]'
+                    image={images.dniFront}
+                    emptyIcon={FaIdCard}
+                    onUpload={(event) => handleImagenChange(event, 'dniFront')}
+                    onExpand={() => openImageModal(images.dniFront)}
+                    onDelete={() => deleteImage(images.dniFront, 'dniFront')}
+                  />
+                  <ImageUploadSlot
+                    id='dniBack'
+                    label='DNI posterior'
+                    aspectClass='aspect-[1.58/1]'
+                    image={images.dniBack}
+                    emptyIcon={FaIdCard}
+                    onUpload={(event) => handleImagenChange(event, 'dniBack')}
+                    onExpand={() => openImageModal(images.dniBack)}
+                    onDelete={() => deleteImage(images.dniBack, 'dniBack')}
+                  />
                 </div>
-                {/* <input
-                  type='file'
-                  accept='.pdf'
-                  name='attach_curriculum'
-                  id='attach_curriculum'
-                  onChange={handleFileChange}
-                  style={{ width: '100%' }}
-                />
-                {formData.attach_curriculum && (
-                  <a
-                    href={getStorage(formData.attach_curriculum)}
-                    target='_blank'
-                    className='p-2 bg-green-500 rounded-lg'
-                  >
-                    <FaEye />
-                  </a>
-                )} */}
+                <div className='mt-3'>
+                  <FileInput
+                    label='Curriculum'
+                    name='attach_curriculum'
+                    accept='.pdf'
+                    onFileChange={(file) =>
+                      handleFileChange(file, 'attach_curriculum')
+                    }
+                    fileUrl={
+                      oldData.attach_curriculum &&
+                      getStorage(oldData.attach_curriculum)
+                    }
+                    onDeleteImage={() =>
+                      deleteImage(oldData.attach_curriculum, 'attach_curriculum')
+                    }
+                  />
+                </div>
               </div>
             </div>
-            <div className='col-span-3 md:grid md:grid-cols-2 gap-2 text-[12px]'>
-              <div className='col-span-2 md:grid md:grid-cols-5 gap-2 text-[12px]'>
+            <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 min-w-0'>
+              <h3 className={sectionTitleClass}>Estado y fechas</h3>
+              <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4'>
                 {/* <div className='col-span-1'>
                   <label
                     htmlFor='is_active'
@@ -1577,27 +1491,10 @@ const Form = ({
                     ))}
                   </select>
                 </div> */}
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='type'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='type' className={formLabelClass}>
                     Tipo
                   </label>
-                  {/* <select
-                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    name='type'
-                    id='type'
-                    onChange={handleChange}
-                    value={formData.type}
-                  >
-                    {Object.entries(tipo_config).map(([value, option]) => (
-                      <option key={value} value={value}>
-                        <span style={{ color: option.color }}>●</span>{' '}
-                        {option.label}
-                      </option>
-                    ))}
-                  </select> */}
                   <ColorSelect
                     value={formData.type}
                     onChange={(val) =>
@@ -1606,29 +1503,21 @@ const Form = ({
                     optionsConfig={tipo_config}
                   />
                 </div>
-
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='level_id'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='level_id' className={formLabelClass}>
                     Nivel
                   </label>
-
                   <ColorSelect
-                    value={String(formData.level_id)} // 👈 lo pasamos a string para que haga match
-                    onChange={
-                      (val) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          level_id: Number(val),
-                        })) // 👈 lo guardamos como número
+                    value={String(formData.level_id)}
+                    onChange={(val) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        level_id: Number(val),
+                      }))
                     }
                     optionsConfig={levels.reduce((acc, level) => {
                       const rgb = `rgb(${level.color})`;
-
                       acc[String(level.id)] = {
-                        // 👈 lo guardamos como string
                         label: level.name,
                         color: rgb,
                       };
@@ -1636,27 +1525,21 @@ const Form = ({
                     }, {})}
                   />
                 </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='statu_id'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='statu_id' className={formLabelClass}>
                     Situacion
                   </label>
-
                   <ColorSelect
-                    value={String(formData.statu_id)} // 👈 lo forzamos a string
-                    onChange={
-                      (val) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          statu_id: Number(val),
-                        })) // 👈 lo devolvemos como número
+                    value={String(formData.statu_id)}
+                    onChange={(val) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        statu_id: Number(val),
+                      }))
                     }
                     optionsConfig={status.reduce((acc, statu) => {
                       const rgb = `rgb(${statu.color})`;
                       acc[String(statu.id)] = {
-                        // 👈 lo guardamos como string
                         label: statu.name,
                         color: rgb,
                       };
@@ -1664,11 +1547,8 @@ const Form = ({
                     }, {})}
                   />
                 </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='date_start'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='start_date' className={formLabelClass}>
                     Fecha de alta
                   </label>
                   <input
@@ -1677,14 +1557,11 @@ const Form = ({
                     name='start_date'
                     value={formData.start_date}
                     onChange={handleChange}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    className={formInputClass}
                   />
                 </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='date_start'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='antique' className={formLabelClass}>
                     Antiguedad
                   </label>
                   <input
@@ -1693,20 +1570,19 @@ const Form = ({
                     name='antique'
                     value={formData.antique}
                     disabled={true}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    className={formInputClass}
                   />
                 </div>
               </div>
-              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='gender_id'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+
+              <h3 className={sectionTitleClass}>Identificación</h3>
+              <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5 gap-4'>
+                <div>
+                  <label htmlFor='gender_id' className={formLabelClass}>
                     Genero
                   </label>
                   <select
-                    className='w-full px-3 mt-1 p-1 bg-white border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    className={formSelectClass}
                     name='gender_id'
                     id='gender_id'
                     onChange={handleChange}
@@ -1721,87 +1597,64 @@ const Form = ({
                       ))}
                   </select>
                 </div>
-                <div className='col-span-3 grid grid-cols-2 gap-2'>
-                  <div>
-                    <label
-                      htmlFor='first_name'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Nombre
-                    </label>
-                    <input
-                      type='text'
-                      id='first_name'
-                      name='first_name'
-                      value={formData.first_name}
-                      onChange={handleChange}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    />
-                  </div>
-                  <div>
-                    <label
-                      htmlFor='last_name'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Apellidos
-                    </label>
-                    <input
-                      type='text'
-                      id='last_name'
-                      name='last_name'
-                      value={formData.last_name}
-                      onChange={handleChange}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    />
-                  </div>
+                <div>
+                  <label htmlFor='first_name' className={formLabelClass}>
+                    Nombre
+                  </label>
+                  <input
+                    type='text'
+                    id='first_name'
+                    name='first_name'
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    className={formInputClass}
+                  />
                 </div>
-
-                <div className='col-span-1'>
-                  <div className='flex flex-row'>
-                    <div className='w-[65%]'>
-                      <label
-                        htmlFor='born_date'
-                        className='block text-[12px] font-medium text-blue-500'
-                      >
-                        F. de nacimiento
-                      </label>
-                      <input
-                        type='date'
-                        id='born_date'
-                        name='born_date'
-                        value={formData.born_date}
-                        onChange={handleChange}
-                        className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                      />
-                    </div>
-
-                    <div className='w-[30%]'>
-                      <label
-                        htmlFor='age'
-                        className='block text-[12px] font-medium text-blue-500'
-                      >
-                        Edad
-                      </label>
-                      <input
-                        type='text'
-                        className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                        id='age'
-                        name='age'
-                        readOnly
-                        value={formData.age}
-                      />
-                    </div>
-                  </div>
+                <div>
+                  <label htmlFor='last_name' className={formLabelClass}>
+                    Apellidos
+                  </label>
+                  <input
+                    type='text'
+                    id='last_name'
+                    name='last_name'
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    className={formInputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor='born_date' className={formLabelClass}>
+                    F.Nacimiento
+                  </label>
+                  <input
+                    type='date'
+                    id='born_date'
+                    name='born_date'
+                    value={formData.born_date}
+                    onChange={handleChange}
+                    className={formInputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor='age' className={formLabelClass}>
+                    Edad
+                  </label>
+                  <input
+                    type='text'
+                    className={formInputClass}
+                    id='age'
+                    name='age'
+                    readOnly
+                    value={formData.age}
+                  />
                 </div>
               </div>
 
-              {/* otra columna */}
-              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='dni'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+              <h3 className={sectionTitleClass}>Documentación personal</h3>
+              <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 2xl:grid-cols-4 gap-4'>
+                <div>
+                  <label htmlFor='dni' className={formLabelClass}>
                     DNI
                   </label>
                   <input
@@ -1812,14 +1665,11 @@ const Form = ({
                     onChange={handleChange}
                     ref={dniRef}
                     onBlur={() => validateField('dni', formData.dni, dniRef)}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    className={formInputClass}
                   />
                 </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='dni_date_expiration'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='dni_date_expiration' className={formLabelClass}>
                     F. Vto. DNI
                   </label>
                   <input
@@ -1828,14 +1678,11 @@ const Form = ({
                     name='dni_date_expiration'
                     value={formData.dni_date_expiration}
                     onChange={handleChange}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    className={formInputClass}
                   />
                 </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='last_name'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='num_social_security' className={formLabelClass}>
                     Número SS
                   </label>
                   <input
@@ -1845,15 +1692,18 @@ const Form = ({
                     value={formData.num_social_security}
                     ref={nssRef}
                     onChange={handleChange}
-                    onBlur={() => validateField('num_social_security', formData.num_social_security, nssRef)}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
+                    onBlur={() =>
+                      validateField(
+                        'num_social_security',
+                        formData.num_social_security,
+                        nssRef,
+                      )
+                    }
+                    className={formInputClass}
                   />
                 </div>
-                <div className='col-span-2'>
-                  <label
-                    htmlFor='country_id'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='country_id' className={formLabelClass}>
                     Pais de nacimiento
                   </label>
                   <select
@@ -1861,7 +1711,7 @@ const Form = ({
                     name='country_id'
                     onChange={handleChange}
                     value={formData.country_id}
-                    className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                    className={formSelectClass}
                   >
                     <option value=''>Seleccione...</option>
                     {countries.length > 0 &&
@@ -1872,186 +1722,98 @@ const Form = ({
                       ))}
                   </select>
                 </div>
-
-                {/* <div className='col-span-1'>
-                <label
-                  htmlFor='asset'
-                  className='block text-[12px] font-medium text-blue-500'
-                >
-                  Código postal
-                </label>
-                <div ref={ref} style={{ position: 'relative' }}>
-                  <input
-                    name='cod_post_id'
-                    id='cod_post_id'
-                    type='text'
-                    value={codPost}
-                    autoComplete='off' // Desactiva la función de autocompletar
-                    onClick={handleOpenCodPost}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    onChange={handleSearchCodPost}
-                  />
-                  {isOpen && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        zIndex: 100,
-                        top: '100%',
-                        maxHeight: '200px', // Altura máxima de la tabla
-                        overflowY: 'auto', // Agrega un scroll vertical si es necesario
-                        left: 0,
-                        width: '100%',
-                        backgroundColor: 'white',
-                        boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.1)',
-                      }}
-                    >
-                      <table
-                        border={1}
-                        style={{ width: '100%' }}
-                        className='border border-gray-300'
-                      >
-                        <thead className=''>
-                          <tr>
-                            <th className='border border-gray-300'>
-                              Codigo Postal
-                            </th>
-                            <th className='border border-gray-300'>
-                              Poblacion
-                            </th>
-                            <th className='border border-gray-300'>
-                              Provincia
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {codPosts.length > 0 &&
-                            codPosts.map((option) => (
-                              <tr
-                                key={option.id}
-                                onClick={() => handleSelectedCodPost(option)}
-                                className='cursor-pointer hover:bg-gray-200'
-                              >
-                                <td className='border border-gray-300 px-2'>
-                                  {option.code}
-                                </td>
-                                <td className='border border-gray-300 px-2'>
-                                  {option.name}
-                                </td>
-                                <td className='border border-gray-300 px-2'>
-                                  {option.state?.name}
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              </div> */}
               </div>
-              <div className='col-span-2 md:grid md:grid-cols-5 gap-2'>
-                <div className='col-span-3 grid grid-cols-2 gap-2'>
-                  <div>
-                    <label
-                      htmlFor='phone'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Teléfono
-                    </label>
-                    <div className='flex mt-1'>
-                      <select
-                        id='code_phone'
-                        name='code_phone'
-                        onChange={handleChange}
-                        value={formData.code_phone}
-                        className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
-                      >
-                        <option value='' disabled>
-                          Seleccione...
-                        </option>
-                        {countries.length > 0 &&
-                          countries.map((option) => (
-                            <option key={option.id} value={option.code_phone}>
-                              {option.code_phone}
-                            </option>
-                          ))}
-                      </select>
-                      <input
-                        type='text'
-                        id='phone'
-                        name='phone'
-                        onChange={handleChange}
-                        value={formatPhoneNumber(formData.phone, currentPhoneMask)}
-                        className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                        placeholder='Número de teléfono'
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor='phone2'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Teléfono [opcional]
-                    </label>
-                    <div className='flex mt-1'>
-                      <select
-                        id='code_phone2'
-                        name='code_phone2'
-                        onChange={handleChange}
-                        value={formData.code_phone2}
-                        className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-1/3'
-                      >
-                        <option value='' disabled>
-                          Seleccione...
-                        </option>
-                        {countries.length > 0 &&
-                          countries.map((option) => (
-                            <option key={option.id} value={option.code_phone}>
-                              {option.code_phone}
-                            </option>
-                          ))}
-                      </select>
-                      <input
-                        type='text'
-                        id='phone2'
-                        name='phone'
-                        onChange={handleChange}
-                        value={formatPhoneNumber(formData.phone2, currentPhoneMask)}
-                        className='flex px-3 p-1 ml-2 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
-                        placeholder='Número de teléfono'
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className='col-span-2'>
-                  <label
-                    htmlFor='email'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
-                    Correo electrónico
+
+              <h3 className={sectionTitleClass}>Contacto</h3>
+              <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                <div>
+                  <label htmlFor='phone' className={formLabelClass}>
+                    Teléfono
                   </label>
-                  <input
-                    type='text'
-                    id='email'
-                    name='email'
-                    value={formData.email}
-                    onChange={handleChange}
-                    ref={emailRef}
-                    onBlur={() =>
-                      validateField('email', formData.email, emailRef)
-                    }
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  />
+                  <div className='flex flex-col sm:flex-row gap-2'>
+                    <select
+                      id='code_phone'
+                      name='code_phone'
+                      onChange={handleChange}
+                      value={formData.code_phone}
+                      className={`${formSelectClass} w-full sm:w-[135px] sm:min-w-[135px] shrink-0`}
+                    >
+                      <option value='' disabled>
+                        Seleccione...
+                      </option>
+                      {countries.length > 0 &&
+                        countries.map((option) => (
+                          <option key={option.id} value={option.code_phone}>
+                            {option.code_phone}
+                          </option>
+                        ))}
+                    </select>
+                    <input
+                      type='text'
+                      id='phone'
+                      name='phone'
+                      onChange={handleChange}
+                      value={formatPhoneNumber(formData.phone, currentPhoneMask)}
+                      className={formInputClass}
+                      placeholder='Número de teléfono'
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor='phone2' className={formLabelClass}>
+                    Teléfono [opcional]
+                  </label>
+                  <div className='flex flex-col sm:flex-row gap-2'>
+                    <select
+                      id='code_phone2'
+                      name='code_phone2'
+                      onChange={handleChange}
+                      value={formData.code_phone2}
+                      className={`${formSelectClass} w-full sm:w-[135px] sm:min-w-[135px] shrink-0`}
+                    >
+                      <option value='' disabled>
+                        Seleccione...
+                      </option>
+                      {countries.length > 0 &&
+                        countries.map((option) => (
+                          <option key={option.id} value={option.code_phone}>
+                            {option.code_phone}
+                          </option>
+                        ))}
+                    </select>
+                    <input
+                      type='text'
+                      id='phone2'
+                      name='phone'
+                      onChange={handleChange}
+                      value={formatPhoneNumber(formData.phone2, currentPhoneMask)}
+                      className={formInputClass}
+                      placeholder='Número de teléfono'
+                    />
+                  </div>
                 </div>
               </div>
+              <div className='col-span-full'>
+                <label htmlFor='email' className={formLabelClass}>
+                  Correo electrónico
+                </label>
+                <input
+                  type='text'
+                  id='email'
+                  name='email'
+                  value={formData.email}
+                  onChange={handleChange}
+                  ref={emailRef}
+                  onBlur={() => validateField('email', formData.email, emailRef)}
+                  className={formInputClass}
+                  placeholder='email@ejemplo.com'
+                />
+              </div>
 
-              <div className='col-span-2 md:grid md:grid-cols-3 gap-2'>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='country_current_id'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+              <h3 className={sectionTitleClass}>Ubicación</h3>
+              <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4'>
+                <div>
+                  <label htmlFor='country_current_id' className={formLabelClass}>
                     Pais de residencia
                   </label>
                   <select
@@ -2059,7 +1821,7 @@ const Form = ({
                     name='country_current_id'
                     onChange={handleChange}
                     value={formData.country_current_id}
-                    className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                    className={formSelectClass}
                   >
                     <option value=''>Seleccione...</option>
                     {countries.length > 0 &&
@@ -2070,11 +1832,8 @@ const Form = ({
                       ))}
                   </select>
                 </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='state_id'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div>
+                  <label htmlFor='state_id' className={formLabelClass}>
                     Provincia
                   </label>
                   <select
@@ -2082,7 +1841,7 @@ const Form = ({
                     name='state_id'
                     onChange={handleChange}
                     value={formData.state_id}
-                    className='px-3 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500 w-full'
+                    className={formSelectClass}
                   >
                     <option>Seleccione...</option>
                     {selectedCountry &&
@@ -2093,11 +1852,8 @@ const Form = ({
                       ))}
                   </select>
                 </div>
-                <div className='col-span-1'>
-                  <label
-                    htmlFor='cod_post_id'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
+                <div className='sm:col-span-2 lg:col-span-1 xl:col-span-1'>
+                  <label htmlFor='cod_post_id' className={formLabelClass}>
                     Codigo Postal
                   </label>
                   <Select
@@ -2106,163 +1862,107 @@ const Form = ({
                     options={postalCodes}
                     onChange={handleSelect}
                     defaultValue={formData.cod_post_id}
-                    isMulti={false} // Enable multi-selection
+                    isMulti={false}
                   />
                 </div>
-                <div className='col-span-3 md:grid md:grid-cols-5 gap-2'>
-                  <div className='col-span-3'>
-                    <label
-                      htmlFor='address'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Calle
-                    </label>
-                    <input
-                      id='address'
-                      name='address'
-                      rows='3'
-                      value={formData.address}
-                      onChange={handleChange}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    ></input>
-                  </div>
-                  <div className='col-span-1'>
-                    <label
-                      htmlFor='address_num'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Numero
-                    </label>
-                    <input
-                      type='text'
-                      id='address_num'
-                      name='address_num'
-                      value={formData.address_num}
-                      onChange={handleChange}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    />
-                  </div>
-                  <div className='col-span-1'>
-                    <label
-                      htmlFor='address_flat'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Piso
-                    </label>
-                    <input
-                      type='text'
-                      id='address_flat'
-                      name='address_flat'
-                      value={formData.address_flat}
-                      onChange={handleChange}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    />
-                  </div>
-                </div>
-                <div className='col-span-3'>
-                  <label
-                    htmlFor='address'
-                    className='block text-[12px] font-medium text-blue-500'
-                  >
-                    Alias
+              </div>
+              <div className='col-span-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-4'>
+                <div className='sm:col-span-2 lg:col-span-2 2xl:col-span-3'>
+                  <label htmlFor='address' className={formLabelClass}>
+                    Calle
                   </label>
-                  <div className='flex flex-row space-between'>
-                    <input
-                      id='alias'
-                      name='alias'
-                      rows='3'
-                      value={formData.alias}
-                      onChange={handleChange}
-                      className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                    ></input>
-                    <button
-                      className='btn px-4 py-1'
-                      type='button'
-                      onClick={handleAlias}
-                    >
-                      <FaRotate />
-                    </button>
-                  </div>
-                </div>
-                <div className='col-span-3'>
-                  <div className='mb-2'>
-                    <label
-                      htmlFor='observations'
-                      className='block text-[12px] font-medium text-blue-500'
-                    >
-                      Observaciones
-                    </label>
-                    <div
-                      className={`${
-                        isFullScreen
-                          ? 'fixed inset-0 z-50 bg-white flex flex-col'
-                          : 'relative'
-                      }`}
-                    >
-                      {/* Botón para maximizar/minimizar */}
-                      <button
-                        type='button'
-                        className='absolute top-2 right-2 z-50 bg-gray-200 px-2 py-1 rounded text-[12px]'
-                        onClick={() => setIsFullScreen(!isFullScreen)}
-                      >
-                        {isFullScreen ? '⤢ Minimizar' : '⤢ Maximizar'}
-                      </button>
-                      <ReactQuill
-                        theme='snow'
-                        value={formData.observations}
-                        placeholder='Escribe aquí...'
-                        className='bg-white'
-                        style={{ height: isFullScreen ? '100vh' : '200px' }}
-                        onChange={(content) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            observations: content,
-                          }))
-                        }
-                      />{' '}
-                    </div>
-                    {/* <textarea
-                    type='textarea'
-                    rows={6}
-                    id='observations'
-                    value={formData.observations}
+                  <input
+                    id='address'
+                    name='address'
+                    value={formData.address}
                     onChange={handleChange}
-                    className='w-full px-3 mt-1 p-1 border border-gray-300 rounded-md focus:outline-none focus:border-indigo-500'
-                  /> */}
-                  </div>
+                    className={formInputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor='address_num' className={formLabelClass}>
+                    Numero
+                  </label>
+                  <input
+                    type='text'
+                    id='address_num'
+                    name='address_num'
+                    value={formData.address_num}
+                    onChange={handleChange}
+                    className={formInputClass}
+                  />
+                </div>
+                <div>
+                  <label htmlFor='address_flat' className={formLabelClass}>
+                    Piso
+                  </label>
+                  <input
+                    type='text'
+                    id='address_flat'
+                    name='address_flat'
+                    value={formData.address_flat}
+                    onChange={handleChange}
+                    className={formInputClass}
+                  />
+                </div>
+              </div>
+
+              <h3 className={sectionTitleClass}>Otros</h3>
+              <div className='col-span-full'>
+                <label htmlFor='alias' className={formLabelClass}>
+                  Alias
+                </label>
+                <div className='flex flex-row gap-2'>
+                  <input
+                    id='alias'
+                    name='alias'
+                    value={formData.alias}
+                    onChange={handleChange}
+                    className={formInputClass}
+                  />
+                  <button
+                    className='btn px-4 py-2 shrink-0'
+                    type='button'
+                    onClick={handleAlias}
+                  >
+                    <FaRotate />
+                  </button>
+                </div>
+              </div>
+              <div className='col-span-full'>
+                <label htmlFor='observations' className={formLabelClass}>
+                  Observaciones
+                </label>
+                <div
+                  className={`${
+                    isFullScreen
+                      ? 'fixed inset-0 z-50 bg-white flex flex-col'
+                      : 'relative'
+                  }`}
+                >
+                  <button
+                    type='button'
+                    className='absolute top-2 right-2 z-50 bg-gray-200 px-2 py-1 rounded text-xs'
+                    onClick={() => setIsFullScreen(!isFullScreen)}
+                  >
+                    {isFullScreen ? '⤢ Minimizar' : '⤢ Maximizar'}
+                  </button>
+                  <ReactQuill
+                    theme='snow'
+                    value={formData.observations}
+                    placeholder='Escribe aquí...'
+                    className='bg-white'
+                    style={{ height: isFullScreen ? '100vh' : '200px' }}
+                    onChange={(content) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        observations: content,
+                      }))
+                    }
+                  />
                 </div>
               </div>
             </div>
-            {/* <div className='col-span-2 md:grid md:grid-cols-2 gap-2 mb-20'>
-              <div>
-                <FileInput
-                  label='Curriculum'
-                  name='attach_curriculum'
-                  accept='.pdf'
-                  onFileChange={(file) =>
-                    handleFileChange(file, 'attach_curriculum')
-                  }
-                  fileUrl={
-                    formData.attach_curriculum &&
-                    getStorage(formData.attach_curriculum)
-                  }
-                />
-              </div>
-              <div className=''>
-                <FileInput
-                  label='Referencia'
-                  name='attach_reference'
-                  accept='.pdf'
-                  onFileChange={(file) =>
-                    handleFileChange(file, 'attach_reference')
-                  }
-                  fileUrl={
-                    formData.attach_reference &&
-                    getStorage(formData.attach_reference)
-                  }
-                />
-              </div>
-            </div> */}
           </div>
         </div>
 
@@ -2408,17 +2108,17 @@ const Form = ({
           </div>
         )}
       </form>
-      <div className='absolute bottom-0 right-0 w-1/2 bg-transparent py-3 px-8 flex justify-end gap-4 z-30'>
+      <div className='sticky bottom-0 -mx-2 mt-4 bg-white/95 backdrop-blur-sm border-t border-gray-200 py-3 px-4 flex flex-col-reverse sm:flex-row justify-end gap-3 z-30'>
         <button
           type='button'
-          className='bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
+          className='w-full sm:w-auto bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded'
           onClick={handleCancel}
         >
           Cancelar
         </button>
         <button
           type='button'
-          className='bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
+          className='w-full sm:w-auto bg-primary hover:bg-blue-700 text-white font-bold py-2 px-4 rounded'
           onClick={
             formData.is_active === 'false' &&
             (oldData.is_active === true || oldData.is_active === 'true')

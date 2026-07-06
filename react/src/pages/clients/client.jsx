@@ -316,11 +316,11 @@ const Clients = () => {
             : { label: '', route: `/Client/${id}` },
         ]}
       />
-      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-80px)]'>
-        <div className='grid grid-cols-[auto_1fr] md:grid-cols-[auto_280px_1fr_1fr]'>
+      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400 min-h-[calc(100vh-80px)] flex flex-col'>
+        <div className='flex flex-col lg:grid lg:grid-cols-[auto_1fr] flex-1 min-h-0'>
           <div
-            className={`relative border-r-2 border-gray-200 h-full transition-all duration-300 ease-in-out ${
-              collapsed ? 'w-[50px]' : 'w-[280px]'
+            className={`relative border-b-2 lg:border-b-0 lg:border-r-2 border-gray-200 transition-all duration-300 ease-in-out shrink-0 ${
+              collapsed ? 'w-full lg:w-[50px]' : 'w-full lg:w-[280px]'
             }`}
           >
             <button
@@ -443,11 +443,11 @@ const Clients = () => {
               )}
             </div>
           </div>
-          <div className='md:col-span-3'>
-            {/* Contenido del lado derecho */}
-            <div className='mb-4 border-b-2 border-gray-400 p-2'>
+          <div className='flex flex-col flex-1 min-w-0 min-h-0'>
+            <div className='mb-4 border-b-2 border-gray-400 p-2 overflow-x-auto'>
+              <div className='flex flex-nowrap min-w-max'>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400  ${
                   activeTab === 'general'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
@@ -457,7 +457,7 @@ const Clients = () => {
                 General
               </button>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400  ${
                   activeTab === 'especifico'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
@@ -468,29 +468,30 @@ const Clients = () => {
                 Especifico
               </button>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400  ${
                   activeTab === 'servicios'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
-                }${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
+                }${isNewRecord ? ' opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('servicios')}
                 disabled={isNewRecord}
               >
                 Servicios
               </button>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400  ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400  ${
                   activeTab === 'seguimientos'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
-                }${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
+                }${isNewRecord ? ' opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('seguimientos')}
                 disabled={isNewRecord}
               >
                 Seguimientos
               </button>
+              </div>
             </div>
-            <div className='p-2 w-full overflow-y-auto flex-1 overflow-y-auto h-[80vh]'>
+            <div className='p-2 sm:p-4 w-full flex-1 overflow-y-auto min-h-0 pb-6'>
               {activeTab === 'general' && (
                 <General
                   onHandleChangeCard={handleChangeCard}

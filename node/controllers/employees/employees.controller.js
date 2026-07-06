@@ -172,85 +172,180 @@ CTRL.getAll = async (req, res, next) => {
   }
 };
 const processQueryParameters = (queryParameters) => {
-  const andConditions = [];
-  const orConditions = [];
-  const extraAndConditions = [];
+  const INTEGER_FIELDS = new Set([
+    "gender_id",
+    "country_id",
+    "cod_post_id",
+    "level_id",
+    "statu_id",
+    "country_current_id",
+    "state_id",
+    "type",
+    "cook_id",
+    "educational_level_id",
+    "time_experience_id",
+  ]);
+
+  const FIELD_ALIASES = {
+    "Gender.id": "gender_id",
+    "genders.id": "gender_id",
+    "Country.id": "country_id",
+    "countries.id": "country_id",
+    "Level.id": "level_id",
+    "levels.id": "level_id",
+    "Status.id": "statu_id",
+    "statuses.id": "statu_id",
+    "CodPost.id": "cod_post_id",
+    "cod_posts.id": "cod_post_id",
+  };
+
+  const CSV_FIELDS = new Set([
+    "employee_complementary.language_id",
+    "employee_specific.patologies",
+    "employee_specific.tasks",
+    "employee_specific.services",
+  ]);
+
+  const BOOLEAN_FIELDS = new Set([
+    "is_active",
+    "employee_complementary.driving_license",
+    "employee_complementary.own_vehicle",
+  ]);
+
+  const parseFilterParam = (paramValue) => {
+    if (!paramValue || typeof paramValue !== "string") return null;
+
+    const colonIndex = paramValue.indexOf(":");
+    if (colonIndex === -1) {
+      return { operator: "=", rawValue: paramValue };
+    }
+
+    const operator = paramValue.slice(0, colonIndex);
+    const rawValue = paramValue.slice(colonIndex + 1);
+
+    if (!operator || rawValue === "") return null;
+
+    return { operator, rawValue };
+  };
+
+  const parseFieldValue = (field, rawValue) => {
+    if (INTEGER_FIELDS.has(field) || field.endsWith("_id")) {
+      const asNumber = Number(rawValue);
+      if (!Number.isNaN(asNumber)) return asNumber;
+    }
+
+    if (rawValue === "true") return true;
+    if (rawValue === "false") return false;
+
+    return rawValue;
+  };
+
+  const buildOperatorCondition = (field, operator, parsedValue) => {
+    switch (operator) {
+      case "LIKE":
+        return { [field]: { [Op.like]: parsedValue } };
+      case ">":
+        return { [field]: { [Op.gt]: parsedValue } };
+      case "<":
+        return { [field]: { [Op.lt]: parsedValue } };
+      case "!=":
+      case "<>":
+        return { [field]: { [Op.ne]: parsedValue } };
+      case "=":
+      default:
+        return { [field]: { [Op.eq]: parsedValue } };
+    }
+  };
+
+  const buildAgeCondition = (operator, rawValue) => {
+    const parsedValue = Number(rawValue);
+    const ageExpr = Sequelize.fn(
+      "TIMESTAMPDIFF",
+      Sequelize.literal("YEAR"),
+      Sequelize.col("born_date"),
+      Sequelize.fn("CURDATE")
+    );
+
+    switch (operator) {
+      case ">":
+        return Sequelize.where(ageExpr, { [Op.gt]: parsedValue });
+      case "<":
+        return Sequelize.where(ageExpr, { [Op.lt]: parsedValue });
+      case "!=":
+      case "<>":
+        return Sequelize.where(ageExpr, { [Op.ne]: parsedValue });
+      case "=":
+      default:
+        return Sequelize.where(ageExpr, { [Op.eq]: parsedValue });
+    }
+  };
+
+  const createCondition = (field, operator, rawValue) => {
+    const normalizedField = FIELD_ALIASES[field] || field;
+
+    if (normalizedField === "age") {
+      return buildAgeCondition(operator, rawValue);
+    }
+
+    let parsedValue = parseFieldValue(normalizedField, rawValue);
+
+    if (BOOLEAN_FIELDS.has(normalizedField)) {
+      if (rawValue === "1" || rawValue === 1) parsedValue = true;
+      if (rawValue === "0" || rawValue === 0) parsedValue = false;
+    }
+
+    if (normalizedField.includes(".") && CSV_FIELDS.has(normalizedField)) {
+      return Sequelize.where(
+        Sequelize.fn(
+          "FIND_IN_SET",
+          Sequelize.literal(String(parsedValue)),
+          Sequelize.col(normalizedField)
+        ),
+        { [Op.gt]: 0 }
+      );
+    }
+
+    if (normalizedField.includes(".")) {
+      const sequelizeField = `$${normalizedField}$`;
+      return buildOperatorCondition(sequelizeField, operator, parsedValue);
+    }
+
+    return buildOperatorCondition(normalizedField, operator, parsedValue);
+  };
+
+  let combinedCondition = null;
 
   Object.keys(queryParameters).forEach((key) => {
-    const value = queryParameters[key];
+    const parsed = parseFilterParam(queryParameters[key]);
+    if (!parsed) return;
 
-    const createCondition = (field, operator, value) => {
-      console.log("field", field);
-      if (field.includes(".")) {
-        // Usar FIND_IN_SET si es un campo relacionado
-        return Sequelize.where(
-          Sequelize.fn(
-            "FIND_IN_SET",
-            Sequelize.literal(value),
-            Sequelize.col(field)
-          ),
-          { [Op.gt]: 0 }
-        );
-      } else {
-        return {
-          [field]:
-            operator === "LIKE" ? { [Op.like]: value } : { [Op.eq]: value },
-        };
-      }
-    };
+    const { operator, rawValue } = parsed;
 
-    const [operator, rawValue] = value.split(":");
-    // const condition = createCondition(key, operator, rawValue);
+    let logic = "AND";
+    let field = key;
 
     if (key.startsWith("OR-")) {
-      // Condición OR
-      const actualKey = key.substring(3);
-      const fields = actualKey.split("OR-");
-      const orCondition = fields.map((field) =>
-        createCondition(field, operator, rawValue)
-      );
-      orConditions.push({ [Op.or]: orCondition });
+      logic = "OR";
+      field = key.substring(3);
     } else if (key.startsWith("AND-")) {
-      // Condición AND adicional
-      const actualKey = key.substring(4);
-      extraAndConditions.push(createCondition(actualKey, operator, rawValue));
-    } else {
-      // Condición AND
-      andConditions.push(createCondition(key, operator, rawValue));
+      logic = "AND";
+      field = key.substring(4);
     }
+
+    const condition = createCondition(field, operator, rawValue);
+
+    if (combinedCondition === null) {
+      combinedCondition = condition;
+      return;
+    }
+
+    combinedCondition =
+      logic === "OR"
+        ? { [Op.or]: [combinedCondition, condition] }
+        : { [Op.and]: [combinedCondition, condition] };
   });
 
-  // Combinar las condiciones lógicas como antes
-  const condition = {};
-
-  if (andConditions.length) {
-    if (orConditions.length) {
-      if (extraAndConditions.length) {
-        condition[Op.and] = [
-          ...extraAndConditions,
-          { [Op.or]: [{ [Op.and]: andConditions }, ...orConditions] },
-        ];
-      } else {
-        condition[Op.or] = [{ [Op.and]: andConditions }, ...orConditions];
-      }
-    } else {
-      if (extraAndConditions.length) {
-        condition[Op.and] = [...andConditions, ...extraAndConditions];
-      } else {
-        condition[Op.and] = andConditions;
-      }
-    }
-  } else if (orConditions.length) {
-    if (extraAndConditions.length) {
-      condition[Op.and] = [...extraAndConditions, { [Op.or]: orConditions }];
-    } else {
-      condition[Op.or] = orConditions;
-    }
-  } else if (extraAndConditions.length) {
-    condition[Op.and] = extraAndConditions;
-  }
-
-  return condition;
+  return combinedCondition || {};
 };
 CTRL.getBySearch = async (req, res, next) => {
   try {
@@ -262,14 +357,14 @@ CTRL.getBySearch = async (req, res, next) => {
       conditions = processQueryParameters(queryParameters);
       console.log("conditions", conditions);
       employees = await Employee.findAll({
-        where: conditions,
+        where: { ...conditions, is_deleted: false },
         include: [
-          {
-            model: EmployeeSpecific,
-          },
-          {
-            model: EmployeeComplementary,
-          },
+          { model: Gender },
+          { model: EmployeeSpecific, required: false },
+          { model: EmployeeComplementary, required: false },
+          { model: Status },
+          { model: Level },
+          { model: ClientsServices, required: false },
         ],
       });
     } else {

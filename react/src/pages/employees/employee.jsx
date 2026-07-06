@@ -266,12 +266,12 @@ const Employees = () => {
             : { label: '', route: `/employee/${id}` },
         ]}
       />
-      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400  min-h-[calc(100vh-80px)]'>
-        <div className='grid grid-cols-[auto_1fr] md:grid-cols-[auto_280px_1fr_1fr] '>
+      <div className='max-w-full mx-auto bg-content shadow-md sm:rounded-lg border-t-2 border-gray-400 min-h-[calc(100vh-80px)] flex flex-col'>
+        <div className='flex flex-col lg:grid lg:grid-cols-[auto_1fr] flex-1 min-h-0'>
           {/* Sidebar */}
           <div
-            className={`relative border-r-2 border-gray-200 h-full transition-all duration-300 ease-in-out ${
-              collapsed ? 'w-[50px]' : 'w-[280px]'
+            className={`relative border-b-2 lg:border-b-0 lg:border-r-2 border-gray-200 transition-all duration-300 ease-in-out shrink-0 ${
+              collapsed ? 'w-full lg:w-[50px]' : 'w-full lg:w-[240px]'
             }`}
           >
             {/* Botón flecha */}
@@ -283,134 +283,101 @@ const Employees = () => {
             </button>
 
             {/* Contenido */}
-            {!collapsed ? (
-              <div className='grid grid-cols-2 md:grid-cols-1'>
-                <div className='col-span-1'>
-                  <div className='w-full border-r-2 border-gray-200'>
-                    <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>
-                      <div
-  className="w-10 h-full border-l"
-  style={{ backgroundColor: colorLateral }}
-></div>
-                      <div className='absolute top-12 left-3 bg-white border-2 border-gray-300 rounded-full'>
-                        {cardData.photo ? (
-                          <img
-                            src={cardData.photo}
-                            alt=''
-                            className='h-12 w-12 rounded-full object-cover'
-                          />
-                        ) : (
-                          <FaUser className='text-gray-300 text-5xl p-2' />
-                        )}
-                      </div>
-                      <div className='mt-8 ml-8'>
-                        <label className='font-semibold text-md block uppercase'>
-                          {cardData.full_name}
-                        </label>
-                        <label className='font-light text-sm block mt-2'>
-                          {cardData.dni}
-                        </label>
-                        <label className='font-light text-sm block '>
-                          {cardData.fecha}
-                        </label>
-                        {cardData.id && (
-                          <div className='flex items-center'>
-                            <label className='font-light text-sm block'>
-                              ID CLIENTE
-                            </label>
-                            <div className='ml-4 w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center mr-2'>
-                              <span className='text-lg font-bold'>
-                                {cardData.id}
-                              </span>
-                            </div>
+            <div className='w-full border-r-2 border-gray-200'>
+              {!collapsed ? (
+                <>
+                  <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>
+                    <div
+                      className='w-10 h-full border-l shrink-0'
+                      style={{ backgroundColor: colorLateral }}
+                    />
+                    <div className='absolute top-12 left-2 bg-white border-2 border-gray-300 rounded-full flex items-center justify-center h-12 w-12 overflow-hidden'>
+                      {cardData.photo ? (
+                        <img
+                          src={cardData.photo}
+                          alt=''
+                          className='h-12 w-12 rounded-full object-cover'
+                        />
+                      ) : (
+                        <FaUser className='text-gray-300 text-3xl' />
+                      )}
+                    </div>
+                    <div className='mt-4 ml-8 min-w-0 pr-2'>
+                      <label className='font-semibold text-sm block uppercase truncate'>
+                        {cardData.full_name}
+                      </label>
+                      <label className='font-light text-xs block mt-1 truncate'>
+                        {cardData.dni}
+                      </label>
+                      {cardData.id && (
+                        <div className='flex items-center mt-1'>
+                          <label className='font-light text-xs block shrink-0'>
+                            ID
+                          </label>
+                          <div className='ml-2 w-8 h-8 bg-blue-300 rounded-full flex items-center justify-center'>
+                            <span className='text-sm font-bold'>{cardData.id}</span>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
-                <div className='col-span-1 mt-8 pr-4 text-xs'>
-                  <div className='w-full ml-5'>
-                    <label className='text-primary mt-4 mb-4 mt-12 text-base'>
-                      Datos de contacto
-                    </label>
+                  <div className='mt-4 pr-4 pb-4 text-xs'>
+                    <div className='w-full ml-2 flex'>
+                      <label className='text-primary mb-3 text-sm font-medium'>
+                        Datos de contacto
+                      </label>
+                    </div>
+                    <div className='w-full ml-2 flex items-start mb-1.5'>
+                      <FaMapMarkerAlt className='mr-2 mt-0.5 shrink-0' />
+                      <label className='flex truncate text-wrap leading-snug'>
+                        {[cardData.address, cardData.address_num, cardData.address_flat]
+                          .filter(Boolean)
+                          .join(', ') || 'Dirección'}
+                      </label>
+                    </div>
+                    <div className='w-full ml-2 flex items-center mb-1.5'>
+                      <FaMapMarkerAlt className='mr-2 shrink-0' />
+                      <label className='flex truncate text-wrap'>
+                        {cardData.cod_post}
+                      </label>
+                    </div>
+                    <div className='w-full ml-2 flex items-center mb-1.5'>
+                      <FaEnvelope className='mr-2 shrink-0' />
+                      <a
+                        href={`mailto:${cardData.email}`}
+                        className='truncate max-w-xs hover:text-blue-600 transition-colors'
+                        title={cardData.email}
+                      >
+                        {cardData.email || 'Correo'}
+                      </a>
+                    </div>
+                    <div className='w-full ml-2 flex items-center'>
+                      <FaPhoneSquareAlt className='mr-2 shrink-0' />
+                      <a
+                        href={`tel:${cardData.code_phone}${cardData.phone}`}
+                        className='truncate max-w-xs hover:text-blue-600 transition-colors'
+                        title={`${cardData.code_phone} ${cardData.phone}`}
+                      >
+                        {`${cardData.code_phone} ${cardData.phone || 'Teléfono'}`}
+                      </a>
+                    </div>
                   </div>
-                  <div className='w-full ml-5 flex items-center'>
-                    <FaMapMarkerAlt className='mr-2' />
-                    <label className='flex truncate text-wrap'>
-                      {cardData.address +
-                        ', calle ' +
-                        cardData.address_num +
-                        ' numero ' +
-                        cardData.address_flat}
-                    </label>
-                  </div>
-                  <div className='w-full ml-5 flex items-center'>
-                    <FaMapMarkerAlt className='mr-2' />
-                    <label className='flex truncate text-wrap'>
-                      {cardData.cod_post}
-                    </label>
-                  </div>
-                  <div className='w-full ml-5 flex items-center'>
-                    <FaEnvelope className='mr-2' />
-                    <a
-                      href={`mailto:${cardData.email}`}
-                      className='truncate max-w-xs hover:text-blue-600 transition-colors text-wrap'
-                      title={cardData.email}
-                    >
-                      {cardData.email || 'Enviar correo'}
-                    </a>
-                  </div>
-                  <div className='w-full ml-5 flex items-center'>
-                    <FaPhoneSquareAlt className='mr-2' />
-                    <a
-                      href={`tel:${cardData.code_phone}${cardData.phone}`}
-                      className='truncate max-w-xs hover:text-blue-600 transition-colors'
-                      title={`${cardData.code_phone} ${cardData.phone}`}
-                    >
-                      {`${cardData.code_phone} ${cardData.phone || 'Teléfono'}`}
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {' '}
-                <div className='w-full bg-blue-300 h-[200px] border-l relative'>
-                  <div className='absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2  bg-white border-1 border-gray-300 rounded-full'>
-                    {cardData.photo ? (
-                      <img
-                        src={cardData.photo}
-                        alt=''
-                        className='h-12 w-12 rounded-full object-cover'
-                      />
-                    ) : (
-                      <FaUser className='text-gray-300 text-5xl p-2' />
-                    )}
-                  </div>
-                  <div className=' w-10 h-10 bg-blue-300 rounded-full flex items-center justify-center mr-2 absolute left-1/2 -translate-x-1/2 -bottom-5'>
-                    <span className='text-lg font-bold'>{cardData.id}</span>
-                  </div>
-                </div>
-                <div className='flex items-start justify-center h-full'>
-                  <div
-                    style={{
-                      writingMode: 'vertical-rl',
-                      transform: 'rotate(180deg)',
-                    }}
-                    className='mt-16 font-bold'
-                  >
+                </>
+              ) : (
+                <div className='flex flex-col items-center justify-center h-full min-h-[200px] text-xs font-semibold py-4'>
+                  <FaUser className='text-gray-400 text-3xl mb-2' />
+                  <span className='rotate-180 [writing-mode:vertical-rl] truncate max-h-[160px]'>
                     {cardData.full_name}
-                  </div>
+                  </span>
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
-          <div className='md:col-span-3'>
-            {/* Contenido del lado derecho */}
-            <div className='mb-4 border-b-2 border-gray-400 p-2'>
+          <div className='flex flex-col flex-1 min-w-0 min-h-0'>
+            <div className='mb-4 border-b-2 border-gray-400 p-2 overflow-x-auto'>
+              <div className='flex flex-nowrap min-w-max'>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400 ${
                   activeTab === 'general'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
@@ -420,7 +387,7 @@ const Employees = () => {
                 General
               </button>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400 ${
                   activeTab === 'complementary'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
@@ -431,7 +398,7 @@ const Employees = () => {
                 Complementario
               </button>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400 ${
                   activeTab === 'laboral'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
@@ -442,7 +409,7 @@ const Employees = () => {
                 Laboral
               </button>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400 ${
                   activeTab === 'specific'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
@@ -453,18 +420,19 @@ const Employees = () => {
                 Especifico
               </button>
               <button
-                className={`tab px-4 border-r-2 border-r-gray-400 ${
+                className={`tab px-4 py-2 whitespace-nowrap border-r-2 border-r-gray-400 ${
                   activeTab === 'followUps'
                     ? 'text-black font-semibold border-b-2 border-b-orange-600'
                     : ''
-                } ${isNewRecord ? 'opacity-25 cursor-not-allowed' : ''}`}
+                } ${isNewRecord ? ' opacity-25 cursor-not-allowed' : ''}`}
                 onClick={() => handleTabChange('followUps')}
                 disabled={isNewRecord}
               >
                 Seguimientos
               </button>
+              </div>
             </div>
-            <div className='p-2 w-full overflow-y-auto flex-1 overflow-y-auto h-[80vh]'>
+            <div className='p-2 sm:p-4 w-full flex-1 overflow-y-auto min-h-0 pb-6'>
               {activeTab === 'general' && (
                 <General
                   onHandleChangeCard={handleChangeCard}
