@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { cakeLogout, verifyToken } from '../api';
 import Cookies from 'js-cookie';
+import { clearSession, isPublicRoute, isTokenExpired } from '../utils/auth';
 
 const UserContext = createContext();
 
@@ -39,64 +40,57 @@ export const UserProvider = ({ children }) => {
   };
 
   const logout = async () => {
-    const response = await cakeLogout();
-    if (response.status == 200) {
+    try {
+      await cakeLogout();
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    } finally {
       setUser(null);
-      Cookies.set('user', null, { expires: 1 });
+      clearSession();
 
-      // Verifica si la ruta actual no es /login antes de redirigir
-      if (location.pathname !== '/login') {
+      if (!isPublicRoute()) {
         window.location.href = '/login';
       }
     }
   };
 
   useEffect(() => {
+    setEmail(Cookies.get('email') || '');
+    setFrom(Cookies.get('from') || '');
+
     function redirect() {
-      if (location.pathname !== '/login') {
+      if (!isPublicRoute()) {
         window.location.href = '/login';
       }
     }
+
     async function fetchData(userDataCookie, token) {
-      let response = await verifyToken({ token });
+      const response = await verifyToken({ token });
 
       if (response.success) {
         setUser(userDataCookie);
-
         setIsAuthenticated(true);
       } else {
+        clearSession();
         redirect();
       }
     }
 
-    const cookies = Cookies.get();
-    const user = Cookies.get('user');
-    const email = Cookies.get('email');
-    const from = Cookies.get('from');
-    setEmail(Cookies.get('email'));
-    setFrom(from);
-
-    if (location.pathname === '/login/password' && email == '') {
-      redirect();
-    } else if (location.pathname === '/login/password' && email != '') {
-    } else {
-      if (user) {
-        const userDataCookie = JSON.parse(user);
-        if (userDataCookie) {
-          //ya tenemos el token y el usuario
-          // ahora debemos verificar el token que sea valido
-          if (cookies.authToken) {
-            fetchData(userDataCookie, cookies.authToken);
-          } else {
-            redirect();
-          }
-        } else {
-          redirect();
-        }
-      } else {
-        redirect();
-      }
+    if (isPublicRoute()) {
+      return;
     }
+
+    const userCookie = Cookies.get('user');
+    const authToken = Cookies.get('authToken');
+
+    if (userCookie && authToken && !isTokenExpired(authToken)) {
+      const userDataCookie = JSON.parse(userCookie);
+      fetchData(userDataCookie, authToken);
+      return;
+    }
+
+    clearSession();
+    redirect();
   }, []);
 
   return (

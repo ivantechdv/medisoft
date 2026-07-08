@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { getData, putData, postData, getCountriesPhoneConfigs, updateCountryPhoneConfig, deleteCountryPhoneConfig } from '../../../api';
+import { getData, getCachedData, putData, postData, getCountriesPhoneConfigs, updateCountryPhoneConfig, deleteCountryPhoneConfig } from '../../../api';
 import Spinner from '../../../components/Spinner/Spinner';
 import ToastNotify from '../../../components/toast/toast';
 
@@ -53,8 +53,8 @@ const General = () => {
     try {
       setLoading(true);
       const [countriesResponse, configResponse, phoneConfigsResponse] = await Promise.all([
-        getData('configs/countries/list'),
-        getData('configs/active'),
+        getCachedData('configs/countries/list'),
+        getCachedData('configs/active', 10 * 60 * 1000),
         getCountriesPhoneConfigs(),
       ]);
 

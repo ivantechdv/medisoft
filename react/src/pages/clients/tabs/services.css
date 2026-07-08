@@ -1,7 +1,10 @@
 .table-container {
-  max-height: 180px; /* Ajusta la altura según sea necesario */
+  max-height: 180px;
   overflow-y: auto;
   position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
 }
 
 .table-container table {
@@ -13,5 +16,5 @@
   position: sticky;
   top: 0;
   z-index: 1;
-  background-color: white; /* O el color de fondo que prefieras */
+  background-color: #f3f3f3;
 }

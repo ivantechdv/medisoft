@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
-import { getData, postData, putData } from '../../api';
-import { FaFilter, FaPlusCircle, FaMinusCircle } from 'react-icons/fa';
+import { getData, getCachedData, postData, putData } from '../../api';
+import { FaFilter, FaPlusCircle, FaMinusCircle, FaUndo } from 'react-icons/fa';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -44,6 +44,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { FaSort, FaSortUp, FaSortDown, FaGripVertical } from 'react-icons/fa';
 
+const LIST_CACHE_TTL_MS = 2 * 60 * 1000;
+
 const DraggableHeader = ({ header, index }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: header.column.id });
@@ -52,12 +54,12 @@ const DraggableHeader = ({ header, index }) => {
     transform: CSS.Transform.toString(transform),
     transition,
     width: `${header.getSize()}px`,
-    padding: '8px',
-    borderBottom: '1px solid #ccc',
+    padding: '4px 6px',
+    borderBottom: '1px solid #d9e1ea',
     textAlign: 'center',
-    fontSize: '13px',
+    fontSize: '10.5px',
     position: 'relative',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#edf2f7',
     userSelect: 'none',
     boxSizing: 'border-box',
     overflow: 'hidden',
@@ -155,8 +157,10 @@ const MyDataTable = ({
   onRenderPagination,
   currentPage,
   pageSize,
+  setPageSize,
   onHandleViewClient = () => {},
   onSelectedRows,
+  selectedRowIds = [],
   tableContainerRef,
   initialSelectedId,
 }) => {
@@ -164,7 +168,7 @@ const MyDataTable = ({
   const [sorting, setSorting] = useState([]);
   const [initialPreferencesLoaded, setInitialPreferencesLoaded] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
-  const [selectedRows, setSelectedRows] = useState([]); // Nuevo estado para los checkboxes
+  const selectedRows = selectedRowIds;
   const [columnSizing, setColumnSizing] = useState({});
   const [columnOrder, setColumnOrder] = useState(null);
 
@@ -246,7 +250,7 @@ const MyDataTable = ({
         clickTimer.current = null;
         onRowClicked(row);
         // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
-      }, 250);
+      }, 180);
     }
   };
 
@@ -277,28 +281,20 @@ const MyDataTable = ({
 
   // Función para manejar el cambio de selección de filas
   const handleRowSelection = (rowId) => {
-    setSelectedRows((prev) => {
-      if (prev.includes(rowId)) {
-        return prev.filter((id) => id !== rowId);
-      } else {
-        return [...prev, rowId];
-      }
-    });
     onSelectedRows((prev) => {
       if (prev.includes(rowId)) {
         return prev.filter((id) => id !== rowId);
-      } else {
-        return [...prev, rowId];
       }
+      return [...prev, rowId];
     });
   };
 
-  // Función para seleccionar/deseleccionar todas las filas
   const toggleAllRowsSelection = () => {
+    const allIds = rows.map((row) => row.id);
     if (selectedRows.length === rows.length) {
-      setSelectedRows([]);
+      onSelectedRows([]);
     } else {
-      setSelectedRows(rows.map((row) => row.id));
+      onSelectedRows(allIds);
     }
   };
 
@@ -354,8 +350,8 @@ const MyDataTable = ({
             <div
               title={title}
               style={{
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
                 borderRadius: 2,
                 margin: '0 auto',
                 backgroundColor: getColor('t', data),
@@ -380,8 +376,8 @@ const MyDataTable = ({
             <div
               title={title}
               style={{
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
                 borderRadius: 2,
                 margin: '0 auto',
                 backgroundColor: getColor('n', data),
@@ -406,8 +402,8 @@ const MyDataTable = ({
             <div
               title={title}
               style={{
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
                 borderRadius: 2,
                 margin: '0 auto',
                 backgroundColor: getColor('s', data),
@@ -450,10 +446,6 @@ const MyDataTable = ({
             return String(valueA).localeCompare(String(valueB));
           },
           cell: ({ row, getValue, column }) => {
-            const isSelected = row.original.id == selectedRowId;
-            const bgColor = isSelected
-              ? '#d3d3d3'
-              : getRowBackgroundColor(row.original);
             const originalValue = String(getValue() || "");
             const isAlias = column.id === 'alias'; 
             const isStartDate = column.id === 'start_date';
@@ -480,13 +472,13 @@ const MyDataTable = ({
             return (
               <div
                 style={{
-                  backgroundColor: bgColor,
+                  backgroundColor: 'transparent',
                   width: '100%',
                   height: '100%',
-                  padding: '4px 4px',
+                  padding: '3px 8px',
                   display: 'flex',
                   alignItems: 'center',
-                  fontSize: '13px',
+                  fontSize: '10.5px',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: isAlias ? 'normal' : 'nowrap',
@@ -563,9 +555,16 @@ const MyDataTable = ({
     // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
   };
 
-  // No renderizar hasta que las preferencias se carguen
+  // No renderizar la tabla hasta cargar preferencias de usuario.
   if (!initialPreferencesLoaded) {
-    return null;
+    return (
+      <div
+        className='w-full flex items-center justify-center'
+        style={{ minHeight: 220 }}
+      >
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -612,11 +611,11 @@ const MyDataTable = ({
                             key={header.id}
                             style={{
                               width: `${header.getSize()}px`,
-                              padding: '4px',
-                              borderBottom: '1px solid #ccc',
+                              padding: '4px 6px',
+                              borderBottom: '1px solid #d9e1ea',
                               textAlign: 'center',
-                              fontSize: '13px',
-                              backgroundColor: '#f9f9f9',
+                              fontSize: '10.5px',
+                              backgroundColor: '#edf2f7',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -642,7 +641,9 @@ const MyDataTable = ({
               <tbody>
                 {table.getRowModel().rows.map((row) => {
                   const isSelected = row.original.id === selectedRowId;
-                  const rowBgColor = getRowBackgroundColor(row.original);
+                  const rowBgColor = isSelected
+                    ? '#d1d5db'
+                    : getRowBackgroundColor(row.original);
                   return (
                     <tr
                       key={row.id}
@@ -651,25 +652,36 @@ const MyDataTable = ({
                         cursor: 'pointer',
                       }}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          style={{
-                            fontSize: '12px',
-                            width: `${cell.column.getSize()}px`,
-                            boxSizing: 'border-box',
-                            overflow: 'hidden',
-                            backgroundColor: '#fff !important',
-                            padding: '0px',
-                            borderBottom: '1px solid #ccc',
-                          }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const paintFromId = ![
+                          'selection',
+                          'indicator_t',
+                          'indicator_n',
+                          'indicator_s',
+                        ].includes(cell.column.id);
+                        const cellBackgroundColor = paintFromId
+                          ? rowBgColor
+                          : 'transparent';
+                        return (
+                          <td
+                            key={cell.id}
+                            style={{
+                              fontSize: '10.5px',
+                              width: `${cell.column.getSize()}px`,
+                              boxSizing: 'border-box',
+                              overflow: 'hidden',
+                              padding: '0px',
+                              borderBottom: '1px solid #e8edf3',
+                              backgroundColor: cellBackgroundColor,
+                            }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -721,6 +733,11 @@ const Employees = () => {
   const [selectedRows, setSelectedRows] = useState([]); //los checkbox
   const [isLoading, setIsLoading] = useState(true);
   const [isFilter, setIsFilter] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
+  const [advancedFilterQuery, setAdvancedFilterQuery] = useState(null);
+  const [filters, setFilters] = useState([
+    { field: '', condition: '', value: '', logic: 'AND', logicShow: 'AND' },
+  ]);
   const [selectedRowId, setSelectedRowId] = useState(null);
 
   const [dictionaries, setDictionaries] = useState({
@@ -752,8 +769,13 @@ const Employees = () => {
   const [preselections, setPreselections] = useState([]);
   const navigateTo = useNavigate();
   const sweetAlert = ConfirmSweetAlert({
-    title: 'Cuidadores',
-    text: '¿Desea eliminar los cuidadores seleccionado?',
+    title: 'Inactivar cuidadores',
+    text: '¿Desea inactivar los cuidadores seleccionados? Dejarán de aparecer en el listado principal.',
+    icon: 'warning',
+  });
+  const restoreAlert = ConfirmSweetAlert({
+    title: 'Restaurar cuidadores',
+    text: '¿Desea restaurar los cuidadores seleccionados?',
     icon: 'question',
   });
 
@@ -779,9 +801,9 @@ const Employees = () => {
         );
         const services = await getData(`services/all?order=${order}`);
 
-        const responseLevels = await getData('employees/level/all');
+        const responseLevels = await getCachedData('employees/level/all');
         setNiveles(responseLevels);
-        const responseStatus = await getData('employees/status/all');
+        const responseStatus = await getCachedData('employees/status/all');
         setSituaciones(responseStatus);
 
         // Crear diccionarios
@@ -826,7 +848,7 @@ const Employees = () => {
       }
       let response;
       // Usar el término debounced para construir la URL y evitar llamadas por cada pulsación
-      let url = `employees?is_deleted=0&searchTerm=${debouncedSearchTerm}`;
+      let url = `employees?is_deleted=${showDeleted ? 1 : 0}&searchTerm=${debouncedSearchTerm}`;
 
       if (filtersT.estado) url += `&is_active=${filtersT.estado}`;
       if (filtersT.tipo) url += `&type=${filtersT.tipo}`;
@@ -840,7 +862,7 @@ const Employees = () => {
         // Cuando pageSize es 'todos', usar un número grande para obtener todos los registros
         url += `&page=1&pageSize=1000`;
       }
-      response = await getData(url);
+      response = await getCachedData(url, LIST_CACHE_TTL_MS);
       console.log(response);
       const { data, meta } = response;
 
@@ -864,16 +886,18 @@ const Employees = () => {
   };
 
   useEffect(() => {
+    if (advancedFilterQuery) return;
     try {
       getRows();
     } catch (error) {
       console.log('error =>', error);
     }
-  }, [currentPage, pageSize, debouncedSearchTerm]);
+  }, [currentPage, pageSize, debouncedSearchTerm, advancedFilterQuery, showDeleted]);
 
   const handleSearchTermChange = (event) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1); // Reiniciar a la primera página al cambiar el término de búsqueda
+    setAdvancedFilterQuery(null);
+    setCurrentPage(1);
   };
 
   const handleChange = (event) => {
@@ -1052,24 +1076,31 @@ const handleViewClient = (clientId, color) => {
     setIsFilter(!isFilter);
   };
 
-  const [filters, setFilters] = useState([
-    { field: '', condition: '', value: '', logic: 'AND', logicShow: 'AND' },
-  ]);
-  const [applyFilters, setApplyFilters] = useState('');
-
   const eraseFilter = () => {
-    setIsFilter(!isFilter);
+    setAdvancedFilterQuery(null);
+    setIsFilter(false);
     setFilters([
       { field: '', condition: '', value: '', logic: 'AND', logicShow: 'AND' },
     ]);
     getRows();
   };
 
-  // Construcción de parámetros de consulta
-  const applyFilter = (rowsFilter) => {
-    setRows(rowsFilter);
-    setPageSize(10); // Actualiza el tamaño de la página
-    setCurrentPage(1); // Reinicia a la primera página
+  const applyFilter = async (queryString) => {
+    if (!queryString) return;
+
+    setAdvancedFilterQuery(queryString);
+    setIsLoading(true);
+    try {
+      const data = await getData(`employees/getBySearch?${queryString}`);
+      setRows(data);
+      setTotalPages(1);
+      setCurrentPage(1);
+      setPageSize('todos');
+    } catch (error) {
+      console.error('Error applying advanced filter:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const calculateAge = (birthDate) => {
@@ -1096,11 +1127,10 @@ const handleViewClient = (clientId, color) => {
 
   const handleDelete = async () => {
     try {
-      console.log('selectedRows', selectedRows);
-      const result = await sweetAlert.showSweetAlert();
+      const result = await (showDeleted
+        ? restoreAlert.showSweetAlert()
+        : sweetAlert.showSweetAlert());
       const isConfirmed = result !== null && result;
-
-      console.log('selectedRows', selectedRows);
 
       if (!isConfirmed) {
         ToastNotify({
@@ -1110,32 +1140,38 @@ const handleViewClient = (clientId, color) => {
         return;
       }
 
-      for (const row of selectedRows) {
-        console.log('row', row);
-        const id = row; // Asumiendo que cada fila tiene una propiedad 'id'
-        const dataToSend = {
-          is_deleted: 1,
-        };
+      const payload = showDeleted
+        ? { is_deleted: 0, is_active: true }
+        : { is_deleted: 1, is_active: false };
 
+      for (const row of selectedRows) {
+        const id = row;
         try {
-          await putData(`employees/${id}`, dataToSend);
-          // Manejar la respuesta según sea necesario
+          await putData(`employees/${id}`, payload);
         } catch (error) {
-          console.error(`Error al actualizar el cliente con ID ${id}:`, error);
-          // Manejar el error según sea necesario
+          console.error(`Error al actualizar el cuidador con ID ${id}:`, error);
         }
       }
 
+      setSelectedRows([]);
       getRows();
       ToastNotify({
-        message: 'clientes eliminados correctamente.',
+        message: showDeleted
+          ? 'Cuidadores restaurados correctamente.'
+          : 'Cuidadores inactivados correctamente.',
         position: 'top-left',
         type: 'success',
       });
     } catch (error) {
-      console.error('Error al eliminar:', error);
-      // Maneja el error según sea necesario
+      console.error('Error al actualizar registros:', error);
     }
+  };
+
+  const handleToggleDeletedView = () => {
+    setShowDeleted((prev) => !prev);
+    setSelectedRows([]);
+    setAdvancedFilterQuery(null);
+    setCurrentPage(1);
   };
 
   const handleFilterChange = (e) => {
@@ -1146,6 +1182,7 @@ const handleViewClient = (clientId, color) => {
     }));
   };
   const handleAplyFilter = () => {
+    setAdvancedFilterQuery(null);
     setCurrentPage(1);
     getRows();
   };
@@ -1169,18 +1206,18 @@ const handleViewClient = (clientId, color) => {
   };
 
   return (
-    <div className='max-w-full mx-auto'>
-      <div className='flex justify-between px-4 sm:px-6'>
+    <div className='max-w-full mx-auto erp-list-page'>
+      <div className='flex justify-between px-4 sm:px-6 erp-list-toolbar'>
         <Breadcrumbs
           items={[
             { label: 'Inicio', route: '/' },
             { label: 'Cuidadores', route: '/employees' },
           ]}
         />
-        <div className='flex space-x-2'>
+        <div className='flex items-center space-x-2 erp-list-actions'>
           <div className='relative'>
             <button
-              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-4 pt-2'
+              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-2 flex items-center justify-center'
               onClick={() => setIsFilterOpen(!isFilterOpen)}
             >
               <FaFilter className='text-lg' />
@@ -1291,9 +1328,12 @@ const handleViewClient = (clientId, color) => {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className='relative'>
             <input
               type='text'
-              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7' // Aumentado a text-base (16px)
+              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7'
               placeholder='Búsqueda Rápida'
               value={searchTerm}
               onChange={handleSearchTermChange}
@@ -1334,29 +1374,51 @@ const handleViewClient = (clientId, color) => {
             <option value={'todos'}>Todos</option>
           </select>
           <button
-            className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
-            onClick={handleFormEmployee}
-          >
-            <FaPlusCircle className='text-lg' />
-          </button>
-          <button
-            className={`bg-red-500 hover:bg-red-700 text-sm text-white font-bold py-2 px-2 rounded h-8 ${
-              selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''
+            className={`text-sm font-bold py-2 px-3 rounded h-8 ${
+              showDeleted
+                ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                : 'bg-gray-500 hover:bg-gray-600 text-white'
             }`}
+            onClick={handleToggleDeletedView}
+            title={showDeleted ? 'Volver al listado activo' : 'Ver registros inactivados'}
+          >
+            {showDeleted ? 'Ver activos' : 'Ver borrados'}
+          </button>
+          {!showDeleted && (
+            <button
+              className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 flex items-center justify-center'
+              onClick={handleFormEmployee}
+            >
+              <FaPlusCircle className='text-lg' />
+            </button>
+          )}
+          <button
+            className={`text-sm text-white font-bold py-2 px-2 rounded h-8 ${
+              showDeleted
+                ? 'bg-green-600 hover:bg-green-700'
+                : 'bg-red-500 hover:bg-red-700'
+            } ${selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-center`}
             disabled={selectedRows.length === 0}
             onClick={handleDelete}
+            title={showDeleted ? 'Restaurar seleccionados' : 'Inactivar seleccionados'}
           >
-            <FaMinusCircle className='text-lg' />
+            {showDeleted ? (
+              <FaUndo className='text-lg' />
+            ) : (
+              <FaMinusCircle className='text-lg' />
+            )}
           </button>
-          <button
-            className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
-            onClick={handleFilter}
-          >
-            <FaFilter className='text-lg' />
-          </button>
+          {!showDeleted && (
+            <button
+              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 flex items-center justify-center'
+              onClick={handleFilter}
+            >
+              <FaFilter className='text-lg' />
+            </button>
+          )}
         </div>
       </div>
-      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2'>
+      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid grid-cols-10 gap-2 erp-list-shell'>
         <div
           className={`${
             selectedRow ? 'col-span-8' : 'col-span-10'
@@ -1370,7 +1432,9 @@ const handleViewClient = (clientId, color) => {
               onRenderPagination={renderPagination}
               currentPage={currentPage}
               pageSize={pageSize}
+              setPageSize={setPageSize}
               onSelectedRows={setSelectedRows}
+              selectedRowIds={selectedRows}
               tableContainerRef={tableContainerRef}
               initialSelectedId={null}
             />
@@ -1379,7 +1443,7 @@ const handleViewClient = (clientId, color) => {
 
         {/* Modal */}
         {selectedRow && (
-          <div className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg h-[calc(100vh-85px)] overflow-auto'>
+          <div className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg h-[calc(100vh-85px)] overflow-auto erp-detail-panel'>
             <div className='bg-primary  p-2 flex justify-between'>
               <label className='text-white pt-2 '>
                 {selectedRow.full_name}
@@ -1535,10 +1599,11 @@ const handleViewClient = (clientId, color) => {
         {isFilter && (
           <Filter
             filters={filters}
-            setFilters={setFilters} // Pasar función para actualizar filtros
-            onCloseFilter={() => setIsFilter(false)} // Cierra el panel
-            onEraseFilter={eraseFilter} // Cierra el panel
+            setFilters={setFilters}
+            onCloseFilter={() => setIsFilter(false)}
+            onEraseFilter={eraseFilter}
             onApplyFilter={applyFilter}
+            isFilterLoading={isLoading}
           />
         )}
       </div>

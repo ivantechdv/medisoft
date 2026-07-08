@@ -106,14 +106,10 @@ const Form = ({
         const option_services = await getData(`services/all?order=${order}`);
         setServices(option_services);
 
-        if (employee_id) {
-          // Asegúrate de que `id` esté definido
-          await getRecordById(employee_id);
-        }
       } catch (error) {
         console.log('ERRR', error);
       } finally {
-        setTimeout(() => setLoadingFetch(false), 400);
+        setLoadingFetch(false);
       }
     };
     fetchSelect();
@@ -129,7 +125,7 @@ const Form = ({
       } catch (error) {
         console.log('ERRR', error);
       } finally {
-        setTimeout(() => setLoadingData(false), 400);
+        setLoadingData(false);
       }
     };
     getRecord();

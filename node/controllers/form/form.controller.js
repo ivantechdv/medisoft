@@ -5,36 +5,48 @@ const CodPost = require("../../models/cod_posts/cod_posts.model");
 const Cook = require("../../models/cooks/cooks.model");
 const State = require("../../models/states/states.model");
 const Employee = require("../../models/employees/employees.model");
+const EmployeeReference = require("../../models/employees/reference.model");
 const Methods = require("../methods/methods.controller");
 const validationField = require("../../utils/validators");
+const { validateEmployeeReference } = validationField;
+
 CTRL.create = async (req, res, next) => {
   try {
     const model = req.params.model;
-if (model=== Employee) {
-        const duplicated = await validationField(
-      Employee,
-      {
-        dni: req.body.dni,
-        email: req.body.email,
-        phone: req.body.phone,
-        code_phone: req.body.code_phone,
-        full_name: req.body.full_name,
-        num_social_security: req.body.num_social_security,
-      },
-      null,
-      ["code_phone", "phone"]
-    );
 
-    console.log("duplicated", duplicated);
+    if (model === Employee) {
+      const duplicated = await validationField(
+        Employee,
+        {
+          dni: req.body.dni,
+          email: req.body.email,
+          phone: req.body.phone,
+          code_phone: req.body.code_phone,
+          full_name: req.body.full_name,
+          num_social_security: req.body.num_social_security,
+        },
+        null,
+        ["code_phone", "phone"]
+      );
 
-    if (duplicated) {
-      return res.json({
-        error: `Ya existe un cuidador con los siguientes campos duplicados: ${duplicated.join(
-          ", "
-        )}`,
-      });
+      console.log("duplicated", duplicated);
+
+      if (duplicated) {
+        return res.json({
+          error: `Ya existe un cuidador con los siguientes campos duplicados: ${duplicated.join(
+            ", "
+          )}`,
+        });
+      }
     }
+
+    if (model === EmployeeReference) {
+      const errors = validateEmployeeReference(req.body);
+      if (errors.length) {
+        return res.status(400).json({ error: errors.join(". ") });
+      }
     }
+
     Methods.create(req, res, next, model);
   } catch (error) {
     console.log("error", error);

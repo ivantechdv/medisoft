@@ -1,8 +1,11 @@
 .table-container {
-  max-height: 200px; /* Ajusta la altura según sea necesario */
+  max-height: 200px;
   min-height: 200px;
   overflow-y: auto;
   position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  background-color: #ffffff;
 }
 
 .table-container table {
@@ -13,5 +16,5 @@
 .table-container thead {
   position: sticky;
   top: 0;
-  background-color: white; /* O el color de fondo que prefieras */
+  background-color: #f3f3f3;
 }

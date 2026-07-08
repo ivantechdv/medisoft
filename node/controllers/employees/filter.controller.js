@@ -37,6 +37,7 @@ CTRL.get = async (req, res, next) => {
 
 const models = {
   Gender: require("../../models/genders/genders.model"),
+  Country: require("../../models/countries/countries.model"),
   Language: require("../../models/languages/languages.model"),
   EducationalLevel: require("../../models/educational_level/educational_level.model"),
   TimeExperience: require("../../models/time_experience/time_experience.model"),

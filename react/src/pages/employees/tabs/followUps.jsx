@@ -115,7 +115,7 @@ const FollowUps = ({ id, onFormData, onGetRecordById, setUnsavedChanges }) => {
 
   useEffect(() => {
     if (onFormData) {
-      setTimeout(() => setLoadingCount((prev) => prev - 1), 500);
+      setLoadingCount((prev) => prev - 1);
     }
   }, [onFormData]);
 
