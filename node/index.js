@@ -21,6 +21,7 @@ const globalPhoneFormat = require("./middleware/globalPhoneFormat.middleware");
 
 const db = require("./database/sequelize");
 const cookieParser = require("cookie-parser");
+const { apiCacheMiddleware } = require("./middleware/apiCache.middleware");
 const Permiology = db.permiology;
 ////START SERVER ////
 
@@ -158,6 +159,8 @@ function middlewares() {
   app.use(bodyParserJSON);
   app.use(bodyParserURLEncoded);
   app.use(cookieParser()); // instaciamos  ayudas de cookes como req.cookie
+  // Debe ir antes de routes() para cachear todos los endpoints, incluido /api/v1/clients.
+  app.use(apiCacheMiddleware);
   
   routes();
   
@@ -172,6 +175,7 @@ app.set("view engine", "ejs");
 // Especifica la ubicación de tus vistas (plantillas EJS)
 app.set("views", path.join(__dirname, "email/provider"));
 app.use(express.static("public"));
+
 function routes() {
   // app.use("/api/v1/permisologys", trafic, require("./routes/permisologys/permisologys.routes"))
   app.use("/api/v1/users/preferences", trafic, require("./routes/users/userPreferences.routes"));

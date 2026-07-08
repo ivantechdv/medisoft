@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
-import { getData, postData, putData } from '../../api';
+import { getData, getCachedData, postData, putData } from '../../api';
 import { FaFilter, FaPlusCircle, FaMinusCircle, FaUndo } from 'react-icons/fa';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
@@ -44,6 +44,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { FaSort, FaSortUp, FaSortDown, FaGripVertical } from 'react-icons/fa';
 
+const LIST_CACHE_TTL_MS = 2 * 60 * 1000;
+
 const DraggableHeader = ({ header, index }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: header.column.id });
@@ -52,12 +54,12 @@ const DraggableHeader = ({ header, index }) => {
     transform: CSS.Transform.toString(transform),
     transition,
     width: `${header.getSize()}px`,
-    padding: '8px',
-    borderBottom: '1px solid #ccc',
+    padding: '4px 6px',
+    borderBottom: '1px solid #d9e1ea',
     textAlign: 'center',
-    fontSize: '13px',
+    fontSize: '10.5px',
     position: 'relative',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#edf2f7',
     userSelect: 'none',
     boxSizing: 'border-box',
     overflow: 'hidden',
@@ -248,7 +250,7 @@ const MyDataTable = ({
         clickTimer.current = null;
         onRowClicked(row);
         // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
-      }, 250);
+      }, 180);
     }
   };
 
@@ -348,8 +350,8 @@ const MyDataTable = ({
             <div
               title={title}
               style={{
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
                 borderRadius: 2,
                 margin: '0 auto',
                 backgroundColor: getColor('t', data),
@@ -374,8 +376,8 @@ const MyDataTable = ({
             <div
               title={title}
               style={{
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
                 borderRadius: 2,
                 margin: '0 auto',
                 backgroundColor: getColor('n', data),
@@ -400,8 +402,8 @@ const MyDataTable = ({
             <div
               title={title}
               style={{
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
                 borderRadius: 2,
                 margin: '0 auto',
                 backgroundColor: getColor('s', data),
@@ -444,10 +446,6 @@ const MyDataTable = ({
             return String(valueA).localeCompare(String(valueB));
           },
           cell: ({ row, getValue, column }) => {
-            const isSelected = row.original.id == selectedRowId;
-            const bgColor = isSelected
-              ? '#d3d3d3'
-              : getRowBackgroundColor(row.original);
             const originalValue = String(getValue() || "");
             const isAlias = column.id === 'alias'; 
             const isStartDate = column.id === 'start_date';
@@ -474,13 +472,13 @@ const MyDataTable = ({
             return (
               <div
                 style={{
-                  backgroundColor: bgColor,
+                  backgroundColor: 'transparent',
                   width: '100%',
                   height: '100%',
-                  padding: '4px 4px',
+                  padding: '3px 8px',
                   display: 'flex',
                   alignItems: 'center',
-                  fontSize: '13px',
+                  fontSize: '10.5px',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: isAlias ? 'normal' : 'nowrap',
@@ -557,9 +555,16 @@ const MyDataTable = ({
     // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
   };
 
-  // No renderizar hasta que las preferencias se carguen
+  // No renderizar la tabla hasta cargar preferencias de usuario.
   if (!initialPreferencesLoaded) {
-    return null;
+    return (
+      <div
+        className='w-full flex items-center justify-center'
+        style={{ minHeight: 220 }}
+      >
+        <Spinner />
+      </div>
+    );
   }
 
   return (
@@ -606,11 +611,11 @@ const MyDataTable = ({
                             key={header.id}
                             style={{
                               width: `${header.getSize()}px`,
-                              padding: '4px',
-                              borderBottom: '1px solid #ccc',
+                              padding: '4px 6px',
+                              borderBottom: '1px solid #d9e1ea',
                               textAlign: 'center',
-                              fontSize: '13px',
-                              backgroundColor: '#f9f9f9',
+                              fontSize: '10.5px',
+                              backgroundColor: '#edf2f7',
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
@@ -636,7 +641,9 @@ const MyDataTable = ({
               <tbody>
                 {table.getRowModel().rows.map((row) => {
                   const isSelected = row.original.id === selectedRowId;
-                  const rowBgColor = getRowBackgroundColor(row.original);
+                  const rowBgColor = isSelected
+                    ? '#d1d5db'
+                    : getRowBackgroundColor(row.original);
                   return (
                     <tr
                       key={row.id}
@@ -645,25 +652,36 @@ const MyDataTable = ({
                         cursor: 'pointer',
                       }}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          style={{
-                            fontSize: '12px',
-                            width: `${cell.column.getSize()}px`,
-                            boxSizing: 'border-box',
-                            overflow: 'hidden',
-                            backgroundColor: '#fff !important',
-                            padding: '0px',
-                            borderBottom: '1px solid #ccc',
-                          }}
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const paintFromId = ![
+                          'selection',
+                          'indicator_t',
+                          'indicator_n',
+                          'indicator_s',
+                        ].includes(cell.column.id);
+                        const cellBackgroundColor = paintFromId
+                          ? rowBgColor
+                          : 'transparent';
+                        return (
+                          <td
+                            key={cell.id}
+                            style={{
+                              fontSize: '10.5px',
+                              width: `${cell.column.getSize()}px`,
+                              boxSizing: 'border-box',
+                              overflow: 'hidden',
+                              padding: '0px',
+                              borderBottom: '1px solid #e8edf3',
+                              backgroundColor: cellBackgroundColor,
+                            }}
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -783,9 +801,9 @@ const Employees = () => {
         );
         const services = await getData(`services/all?order=${order}`);
 
-        const responseLevels = await getData('employees/level/all');
+        const responseLevels = await getCachedData('employees/level/all');
         setNiveles(responseLevels);
-        const responseStatus = await getData('employees/status/all');
+        const responseStatus = await getCachedData('employees/status/all');
         setSituaciones(responseStatus);
 
         // Crear diccionarios
@@ -844,7 +862,7 @@ const Employees = () => {
         // Cuando pageSize es 'todos', usar un número grande para obtener todos los registros
         url += `&page=1&pageSize=1000`;
       }
-      response = await getData(url);
+      response = await getCachedData(url, LIST_CACHE_TTL_MS);
       console.log(response);
       const { data, meta } = response;
 
@@ -1188,18 +1206,18 @@ const handleViewClient = (clientId, color) => {
   };
 
   return (
-    <div className='max-w-full mx-auto'>
-      <div className='flex justify-between px-4 sm:px-6'>
+    <div className='max-w-full mx-auto erp-list-page'>
+      <div className='flex justify-between px-4 sm:px-6 erp-list-toolbar'>
         <Breadcrumbs
           items={[
             { label: 'Inicio', route: '/' },
             { label: 'Cuidadores', route: '/employees' },
           ]}
         />
-        <div className='flex space-x-2'>
+        <div className='flex items-center space-x-2 erp-list-actions'>
           <div className='relative'>
             <button
-              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-4 pt-2'
+              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-2 flex items-center justify-center'
               onClick={() => setIsFilterOpen(!isFilterOpen)}
             >
               <FaFilter className='text-lg' />
@@ -1310,9 +1328,12 @@ const handleViewClient = (clientId, color) => {
                 </div>
               </div>
             )}
+          </div>
+
+          <div className='relative'>
             <input
               type='text'
-              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7' // Aumentado a text-base (16px)
+              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7'
               placeholder='Búsqueda Rápida'
               value={searchTerm}
               onChange={handleSearchTermChange}
@@ -1365,7 +1386,7 @@ const handleViewClient = (clientId, color) => {
           </button>
           {!showDeleted && (
             <button
-              className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
+              className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 flex items-center justify-center'
               onClick={handleFormEmployee}
             >
               <FaPlusCircle className='text-lg' />
@@ -1376,7 +1397,7 @@ const handleViewClient = (clientId, color) => {
               showDeleted
                 ? 'bg-green-600 hover:bg-green-700'
                 : 'bg-red-500 hover:bg-red-700'
-            } ${selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-center`}
             disabled={selectedRows.length === 0}
             onClick={handleDelete}
             title={showDeleted ? 'Restaurar seleccionados' : 'Inactivar seleccionados'}
@@ -1389,7 +1410,7 @@ const handleViewClient = (clientId, color) => {
           </button>
           {!showDeleted && (
             <button
-              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
+              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 flex items-center justify-center'
               onClick={handleFilter}
             >
               <FaFilter className='text-lg' />
@@ -1397,7 +1418,7 @@ const handleViewClient = (clientId, color) => {
           )}
         </div>
       </div>
-      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2'>
+      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid grid-cols-10 gap-2 erp-list-shell'>
         <div
           className={`${
             selectedRow ? 'col-span-8' : 'col-span-10'
@@ -1422,7 +1443,7 @@ const handleViewClient = (clientId, color) => {
 
         {/* Modal */}
         {selectedRow && (
-          <div className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg h-[calc(100vh-85px)] overflow-auto'>
+          <div className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg h-[calc(100vh-85px)] overflow-auto erp-detail-panel'>
             <div className='bg-primary  p-2 flex justify-between'>
               <label className='text-white pt-2 '>
                 {selectedRow.full_name}

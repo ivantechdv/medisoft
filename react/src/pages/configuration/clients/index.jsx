@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { getData, putData, postData } from '../../../api';
+import { getCachedData, putData, postData } from '../../../api';
 import Spinner from '../../../components/Spinner/Spinner';
 import ToastNotify from '../../../components/toast/toast';
 import Select from 'react-select';
@@ -60,8 +60,8 @@ const Clients = () => {
     try {
       setLoading(true);
       const [languagesResponse, configResponse] = await Promise.all([
-        getData('configs/languages/list'),
-        getData('configs/active'),
+        getCachedData('configs/languages/list'),
+        getCachedData('configs/active', 10 * 60 * 1000),
       ]);
 
       setLanguages(

@@ -1,8 +1,17 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 
-import { getData, postData, putData } from '../../api';
-import { FaFilter, FaPlusCircle, FaMinusCircle, FaSort, FaSortUp, FaSortDown, FaUndo } from 'react-icons/fa';
+import { getCachedData, postData, putData } from '../../api';
+import {
+  FaFilter,
+  FaPlusCircle,
+  FaMinusCircle,
+  FaSort,
+  FaSortUp,
+  FaSortDown,
+  FaUndo,
+  FaGripVertical,
+} from 'react-icons/fa';
 import Spinner from '../../components/Spinner/Spinner';
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import Breadcrumbs from '../../components/Breadcrumbs';
@@ -35,17 +44,20 @@ const getRowBackgroundColor = (row) => {
   return client_estado_config[0].color; // Gris claro - sin contrato activo
 };
 
+const LIST_CACHE_TTL_MS = 2 * 60 * 1000;
+const CLIENTS_TABLE_PREFS_KEY = 'clients_table_preferences';
+
 const ResizableHeaderCell = ({ header }) => {
   const { getResizeHandler, column } = header;
   return (
     <th
       style={{
         width: `${column.getSize()}px`,
-        padding: '4px',
-        borderBottom: '1px solid #ccc',
+        padding: '4px 6px',
+        borderBottom: '1px solid #d9e1ea',
         textAlign: 'center',
-        fontSize: '13px',
-        backgroundColor: '#ffffff',
+        fontSize: '10.5px',
+        backgroundColor: '#edf2f7',
         whiteSpace: 'nowrap',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
@@ -120,12 +132,12 @@ const DraggableHeader = ({ header, index }) => {
     transform: CSS.Transform.toString(transform),
     transition,
     width: `${header.getSize()}px`,
-    padding: '8px',
-    borderBottom: '1px solid #ccc',
+    padding: '4px 6px',
+    borderBottom: '1px solid #d9e1ea',
     textAlign: 'center',
-    fontSize: '13px',
+    fontSize: '10.5px',
     position: 'relative',
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#edf2f7',
     userSelect: 'none',
     boxSizing: 'border-box',
     overflow: 'hidden',
@@ -150,7 +162,7 @@ const DraggableHeader = ({ header, index }) => {
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           width: '100%',
           height: '100%',
         }}
@@ -182,7 +194,7 @@ const DraggableHeader = ({ header, index }) => {
             opacity: 0.5,
           }}
         >
-          <span style={{ fontSize: 12 }}>☰</span>
+          <FaGripVertical />
         </div>
       </div>
       {header.column.getCanResize() && (
@@ -194,13 +206,16 @@ const DraggableHeader = ({ header, index }) => {
             right: 0,
             top: 0,
             height: '100%',
-            width: '4px',
+            width: '1px',
             cursor: 'col-resize',
             zIndex: 1,
             userSelect: 'none',
             backgroundColor: '#ddd',
-            borderLeft: '2px solid #aaa',
+            borderLeft: '3px solid #aaa',
+            transition: 'background-color 0.4s',
           }}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#aaa')}
+          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#ddd')}
         />
       )}
     </th>
@@ -218,14 +233,30 @@ const MyDataTable = ({
   selectedRowIds = [],
   tableContainerRef,
 }) => {
+  const localPreferences = useMemo(() => {
+    try {
+      const raw = localStorage.getItem(CLIENTS_TABLE_PREFS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (error) {
+      return {};
+    }
+  }, []);
   const [selectedRowId, setSelectedRowId] = useState(null);
   const selectedRows = selectedRowIds;
-  const [sorting, setSorting] = useState([]);
+  const [sorting, setSorting] = useState(
+    Array.isArray(localPreferences.sorting) ? localPreferences.sorting : [],
+  );
   const [initialPreferencesLoaded, setInitialPreferencesLoaded] = useState(false);
   const [userHasInteracted, setUserHasInteracted] = useState(false);
 
-  const [columnSizing, setColumnSizing] = useState({});
-  const [columnOrder, setColumnOrder] = useState(null);
+  const [columnSizing, setColumnSizing] = useState(
+    localPreferences.columnSizing && typeof localPreferences.columnSizing === 'object'
+      ? localPreferences.columnSizing
+      : {},
+  );
+  const [columnOrder, setColumnOrder] = useState(
+    Array.isArray(localPreferences.columnOrder) ? localPreferences.columnOrder : null,
+  );
 
   useEffect(() => {
     const loadUserPreferences = async () => {
@@ -246,6 +277,7 @@ const MyDataTable = ({
         if (preferences.pageSize) {
           setPageSize(preferences.pageSize);
         }
+        localStorage.setItem(CLIENTS_TABLE_PREFS_KEY, JSON.stringify(preferences));
         setInitialPreferencesLoaded(true);
       } catch (error) {
         console.error('Error loading user preferences:', error);
@@ -273,13 +305,15 @@ const MyDataTable = ({
           pageSize
         });
         try {
-          await saveUserPreferences('clients', { 
+          const preferencesToSave = {
             sorting,
             columnSizing,
             columnOrder,
             selectedRowId,
             pageSize
-          });
+          };
+          localStorage.setItem(CLIENTS_TABLE_PREFS_KEY, JSON.stringify(preferencesToSave));
+          await saveUserPreferences('clients', preferencesToSave);
         } catch (error) {
           console.error('Error saving table preferences:', error);
         }
@@ -324,7 +358,7 @@ const MyDataTable = ({
         clickTimer.current = null;
         onHandleRowClick(row);
         // sessionStorage.setItem('clients_selected_row', JSON.stringify(row));
-      }, 250);
+      }, 180);
     }
   };
 
@@ -376,8 +410,8 @@ const MyDataTable = ({
             <div
               title={title}
               style={{
-                width: 20,
-                height: 20,
+                width: 14,
+                height: 14,
                 borderRadius: 2,
                 margin: '0 auto',
                 backgroundColor: getClientTypeColor(data),
@@ -407,8 +441,6 @@ const MyDataTable = ({
         enableResizing: true,
         cell: ({ row, getValue, column }) => {
           const value = getValue();
-          const isSelected = row.original.id == selectedRowId;
-          const bgColor = isSelected ? '#d3d3d3' : getRowBackgroundColor(row.original);
 
           // Manejo específico para campos de familia
           if (key.startsWith('family')) {
@@ -420,29 +452,21 @@ const MyDataTable = ({
             return (
               <div
                 style={{
-                  backgroundColor: bgColor,
+                  backgroundColor: 'transparent',
                   width: '100%',
                   height: '100%',
-                  padding: '4px 8px',
+                  padding: '3px 8px',
                   display: 'flex',
                   alignItems: 'center',
-                  fontSize: '13px',
-                  minWidth: 0,
-                  maxWidth: '100%',
+                  fontSize: '10.5px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  wordBreak: 'normal',
                 }}
                 title={text}
               >
-                <span
-                  style={{
-                    display: 'block',
-                    width: '100%',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {text}
-                </span>
+                {text}
               </div>
             );
           }
@@ -450,29 +474,21 @@ const MyDataTable = ({
           return (
             <div
               style={{
-                backgroundColor: bgColor,
+                backgroundColor: 'transparent',
                 width: '100%',
                 height: '100%',
-                padding: '4px 8px',
+                padding: '3px 8px',
                 display: 'flex',
                 alignItems: 'center',
-                fontSize: '13px',
-                minWidth: 0,
-                maxWidth: '100%',
+                fontSize: '10.5px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                wordBreak: 'normal',
               }}
               title={value ?? '-'}
             >
-              <span
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {value ?? '-'}
-              </span>
+              {value ?? '-'}
             </div>
           );
         },
@@ -528,6 +544,18 @@ const MyDataTable = ({
     onHandleRowClick(row);
   };
 
+  // No renderizar la tabla hasta cargar preferencias de usuario.
+  if (!initialPreferencesLoaded) {
+    return (
+      <div
+        className='w-full flex items-center justify-center'
+        style={{ minHeight: 220 }}
+      >
+        <Spinner />
+      </div>
+    );
+  }
+
   return (
     <>
       <div
@@ -569,7 +597,10 @@ const MyDataTable = ({
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row) => {
-                  const rowBackgroundColor = getRowBackgroundColor(row.original);
+                  const isSelectedRow = row.original.id === selectedRowId;
+                  const rowBackgroundColor = isSelectedRow
+                    ? '#d1d5db'
+                    : getRowBackgroundColor(row.original);
                   return (
                     <tr 
                       key={row.id} 
@@ -578,23 +609,30 @@ const MyDataTable = ({
                         cursor: 'pointer',
                       }}
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <td
-                          key={cell.id}
-                          style={{
-                            fontSize: '12px',
-                            width: `${cell.column.getSize()}px`,
-                            maxWidth: `${cell.column.getSize()}px`,
-                            minWidth: 0,
-                            boxSizing: 'border-box',
-                            overflow: 'hidden',
-                            padding: '0px',
-                            borderBottom: '1px solid #ccc',
-                          }}
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        const paintFromId = !['selection', 'indicator_t'].includes(
+                          cell.column.id,
+                        );
+                        const cellBackgroundColor = paintFromId
+                          ? rowBackgroundColor
+                          : 'transparent';
+                        return (
+                          <td
+                            key={cell.id}
+                            style={{
+                              fontSize: '10.5px',
+                              width: `${cell.column.getSize()}px`,
+                              boxSizing: 'border-box',
+                              overflow: 'hidden',
+                              padding: '0px',
+                              borderBottom: '1px solid #e8edf3',
+                              backgroundColor: cellBackgroundColor,
+                            }}
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </td>
+                        );
+                      })}
                     </tr>
                   );
                 })}
@@ -679,9 +717,12 @@ const Clients = () => {
 
       let response;
       if (pageSize == 'todos') {
-        response = await getData(url);
+        response = await getCachedData(url, LIST_CACHE_TTL_MS);
       } else {
-        response = await getData(`${url}&page=${currentPage}&pageSize=${pageSize}`);
+        response = await getCachedData(
+          `${url}&page=${currentPage}&pageSize=${pageSize}`,
+          LIST_CACHE_TTL_MS,
+        );
       }
 
       console.log(response);
@@ -961,8 +1002,8 @@ const Clients = () => {
     setCurrentPage(1);
   };
   return (
-    <div className='max-w-full mx-auto bg-white'>
-      <div className='flex justify-between px-4 sm:px-6'>
+    <div className='max-w-full mx-auto erp-list-page'>
+      <div className='flex justify-between px-4 sm:px-6 erp-list-toolbar'>
         <Breadcrumbs
           items={[
             { label: 'Inicio', route: '/' },
@@ -970,10 +1011,10 @@ const Clients = () => {
           ]}
         />
 
-        <div className='flex space-x-2'>
+        <div className='flex items-center space-x-2 erp-list-actions'>
           <div className='relative'>
             <button
-              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-4 pt-2'
+              className='bg-secondary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 mr-2 flex items-center justify-center'
               onClick={() => setShowFilterModal(!showFilterModal)}
             >
               <FaFilter className='text-lg' />
@@ -1041,7 +1082,7 @@ const Clients = () => {
           <div className='relative'>
             <input
               type='text'
-              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7' // Aumentado a text-base (16px)
+              className='w-[250px] border border-gray-600 rounded h-8 px-2 text-base pr-7'
               placeholder='Campo de busqueda'
               value={searchTerm}
               onChange={handleSearchTermChange}
@@ -1086,7 +1127,7 @@ const Clients = () => {
               showDeleted
                 ? 'bg-orange-500 hover:bg-orange-600 text-white'
                 : 'bg-gray-500 hover:bg-gray-600 text-white'
-            }`}
+            } flex items-center justify-center`}
             onClick={handleToggleDeletedView}
             title={showDeleted ? 'Volver al listado activo' : 'Ver registros inactivados'}
           >
@@ -1094,7 +1135,7 @@ const Clients = () => {
           </button>
           {!showDeleted && (
             <button
-              className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8'
+              className='bg-primary text-lg text-textWhite font-bold py-2 px-2 rounded h-8 flex items-center justify-center'
               onClick={handleFormClient}
             >
               <FaPlusCircle className='text-lg' />
@@ -1105,7 +1146,7 @@ const Clients = () => {
               showDeleted
                 ? 'bg-green-600 hover:bg-green-700'
                 : 'bg-red-500 hover:bg-red-700'
-            } ${selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${selectedRows.length === 0 ? 'opacity-50 cursor-not-allowed' : ''} flex items-center justify-center`}
             disabled={selectedRows.length === 0}
             onClick={handleDelete}
             title={showDeleted ? 'Restaurar seleccionados' : 'Inactivar seleccionados'}
@@ -1117,15 +1158,15 @@ const Clients = () => {
             )}
           </button>
           {!showDeleted && (
-            <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-2 rounded h-8'>
+            <button className='bg-secondary text-lg text-textWhite font-bold py-1 px-2 rounded h-8 flex items-center justify-center'>
               <FaFilter className='text-lg' />
             </button>
           )}
         </div>
       </div>
-      <div className='max-w-full mx-auto bg-white shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid  grid-cols-10 gap-2 '>
+      <div className='max-w-full mx-auto bg-content shadow-md overflow-hidden sm:rounded-lg border-t-2 border-gray-400 grid grid-cols-10 gap-2 erp-list-shell'>
         <div className={`${selectedRow ? 'col-span-8' : 'col-span-10'}`}>
-          <div className='border-t border-gray-200 overflow-x-auto table-responsive'>
+          <div className='border-t border-gray-200 overflow-x-auto'>
             <div className='overflow-x-auto max-h-screen'>
               {/* Contenedor de la tabla con table-layout: fixed */}
               <MyDataTable
@@ -1144,10 +1185,7 @@ const Clients = () => {
 
         {/* Modal */}
         {selectedRow && (
-          <div
-            className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg  h-[calc(100vh-85px)]
-overflow-auto'
-          >
+          <div className='col-span-2 bg-panel border-2 border-gray-300 shadow-lg h-[calc(100vh-85px)] overflow-auto erp-detail-panel'>
             <div className='bg-primary  p-2 flex justify-between'>
               <label className='text-white pt-2 '>
                 {selectedRow.full_name}

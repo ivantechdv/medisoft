@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   getData,
+  getCachedData,
   postData,
   putData,
   postStorage,
@@ -312,7 +313,7 @@ const Form = ({
         setCurrentPhoneMask(countryConfig.phone_mask);
       } else {
         // Fallback a máscara global
-        const maskResponse = await getData('configs/phone-mask');
+        const maskResponse = await getCachedData('configs/phone-mask', 10 * 60 * 1000);
         setCurrentPhoneMask(maskResponse?.phoneMask || '999 99 99 99');
       }
     } catch (error) {
@@ -385,7 +386,7 @@ const Form = ({
         console.log('error=>', error);
       } finally {
         //setLoadingForm(false);
-        setTimeout(() => setLoadingForm(false), 1600);
+        setLoadingForm(false);
       }
     };
     initForm();
@@ -396,7 +397,7 @@ const Form = ({
       if (id || hasLoadedEmployeeDefaults.current) return;
 
       try {
-        const configResponse = await getData('configs/active');
+        const configResponse = await getCachedData('configs/active', 10 * 60 * 1000);
         console.log('EMPLOYEE Config response:', configResponse);
         const employeeConfig = configResponse?.employee_config || {};
 
@@ -491,19 +492,19 @@ const Form = ({
       const fetchSelect = async () => {
         const order = 'name-asc';
 
-        const responseLevels = await getData('employees/level/all');
+        const responseLevels = await getCachedData('employees/level/all');
         setLevels(responseLevels);
-        const responseStatus = await getData('employees/status/all');
+        const responseStatus = await getCachedData('employees/status/all');
         setStatus(responseStatus);
 
-        const responseCodPosts = await getData('cod_posts/all');
+        const responseCodPosts = await getCachedData('cod_posts/all');
 
         setCodPosts(responseCodPosts);
 
-        const responseGenders = await getData('genders/all');
+        const responseGenders = await getCachedData('genders/all');
         setGenders(responseGenders);
 
-        const responseLanguages = await getData('languages/all');
+        const responseLanguages = await getCachedData('languages/all');
 
         if (responseLanguages) {
           const options = responseLanguages.map((item, index) => ({
@@ -515,7 +516,7 @@ const Form = ({
           setLanguages(options);
         }
 
-        const responseCountries = await getData('countries/all');
+        const responseCountries = await getCachedData('countries/all');
         setCountries(responseCountries);
 
         const responseReason = await getData(
@@ -629,11 +630,14 @@ const Form = ({
 
   useEffect(() => {
     const fetchSelect = async () => {
+      const normalizedSearch = codPost?.trim();
+      if (!normalizedSearch) return;
+
       const queryParameters = new URLSearchParams();
-      if (codPost) {
-        queryParameters.append('name', `%${codPost}%`);
-        queryParameters.append('code', `%${codPost}%`);
-        queryParameters.append('$state.name$', `%${codPost}%`);
+      if (normalizedSearch) {
+        queryParameters.append('name', `%${normalizedSearch}%`);
+        queryParameters.append('code', `%${normalizedSearch}%`);
+        queryParameters.append('$state.name$', `%${normalizedSearch}%`);
         queryParameters.append('useLike', 'true'); // Paramentro adicional para indicar uso de LIKE
       }
 
@@ -647,7 +651,7 @@ const Form = ({
   }, [codPost]);
 
   const handleLoadingSelect = () => {
-    setTimeout(() => setLoadingSelect(false), 400);
+    setLoadingSelect(false);
   };
 
   const calculateAge = (birthDate) => {

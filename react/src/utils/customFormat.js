@@ -63,9 +63,9 @@ export const loadPhoneMask = async () => {
   
   try {
     // Importar getData dinámicamente para evitar circular dependencies
-    const { getData } = await import('../api');
+    const { getCachedData } = await import('../api');
     
-    const response = await getData('configs/phone-mask');
+    const response = await getCachedData('configs/phone-mask', 10 * 60 * 1000);
     
     if (response && response.phoneMask) {
       localStorage.setItem('phoneMask', response.phoneMask);

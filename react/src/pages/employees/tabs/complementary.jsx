@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   getData,
+  getCachedData,
   postData,
   putData,
   postStorage,
@@ -79,20 +80,20 @@ const Form = ({
   const navigateTo = useNavigate();
 
   useEffect(() => {
-    try {
+    const fetchSelect = async () => {
       setLoading(true);
-      const fetchSelect = async () => {
+      try {
         const order = 'name-asc';
 
-        const cooks = await getData('cooks/all');
+        const cooks = await getCachedData('cooks/all');
         setCooks(cooks);
 
-        const el = await getData('educational-levels/all');
+        const el = await getCachedData('educational-levels/all');
         setEducationalLevels(el);
 
-        const te = await getData('time-experiences/all');
+        const te = await getCachedData('time-experiences/all');
         setTimeExperiences(te);
-        const oq = await getData('official-qualifications/all');
+        const oq = await getCachedData('official-qualifications/all');
         console.log('oq', oq);
         if (oq) {
           const options = oq.map((item, index) => ({
@@ -104,7 +105,7 @@ const Form = ({
           setOfficialQualifications(options);
         }
 
-        const responseLanguages = await getData('languages/all');
+        const responseLanguages = await getCachedData('languages/all');
 
         if (responseLanguages) {
           const options = responseLanguages.map((item, index) => ({
@@ -119,21 +120,20 @@ const Form = ({
           // Asegúrate de que `id` esté definido
           await getRecordById(employee_id);
         }
-      };
-
-      fetchSelect();
-    } catch (error) {
-      console.log('error=>', error);
-    } finally {
-      setTimeout(() => setLoading(false), 100);
-    }
+      } catch (error) {
+        console.log('error=>', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSelect();
   }, [employee_id]);
 
   useEffect(() => {
     try {
-      setLoading(true);
-      const languageIds = formData.language_id
+      const languageIds = (formData.language_id || '')
         .split(',')
+        .filter((id) => id !== '')
         .map((id) => parseInt(id));
       console.log('languageIds', languageIds);
       const selectedLanguages = languages.filter((language) =>
@@ -142,8 +142,9 @@ const Form = ({
       console.log('selectedLanguages', selectedLanguages);
       setSelectedLanguages(selectedLanguages);
 
-      const oqIds = formData.official_qualification_id
+      const oqIds = (formData.official_qualification_id || '')
         .split(',')
+        .filter((id) => id !== '')
         .map((id) => parseInt(id));
       const selectedOQ = officialQualifications.filter(
         (officialQualification) => oqIds.includes(officialQualification.value),
@@ -151,13 +152,10 @@ const Form = ({
       setSelectedOQ(selectedOQ);
     } catch (error) {
       console.log('error=>', error);
-    } finally {
-      setTimeout(() => setLoading(false), 1400);
     }
-  }, [formData.language_id]);
+  }, [formData.language_id, formData.official_qualification_id, languages, officialQualifications]);
   const getRecordById = async (employee_id) => {
     try {
-      setLoading(true);
       const response = await getData(
         'employees/complementary/all?employee_id=' + employee_id,
       );
@@ -167,8 +165,6 @@ const Form = ({
       }
     } catch (error) {
       console.error('Error al obtener el registro por id:', error);
-    } finally {
-      setTimeout(() => setLoading(false), 400);
     }
   };
 

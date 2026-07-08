@@ -4,6 +4,10 @@ const publicUrl = import.meta.env.VITE_API_PUBLIC || 'http://localhost:3000/';
 import Cookies from 'js-cookie';
 import { isTokenExpired } from '../utils/auth';
 
+const apiResponseCache = new Map();
+const apiInFlightCache = new Map();
+const DEFAULT_CACHE_TTL_MS = 5 * 60 * 1000;
+
 export const select = async (endpoint) => {
   const fetchData = async () => {
     try {
@@ -45,6 +49,54 @@ export const getData = async (endpoint) => {
   return data;
 };
 
+export const getCachedData = async (
+  endpoint,
+  ttlMs = DEFAULT_CACHE_TTL_MS,
+) => {
+  const now = Date.now();
+  const cacheKey = endpoint;
+  const cached = apiResponseCache.get(cacheKey);
+
+  if (cached && now - cached.timestamp < ttlMs) {
+    return cached.data;
+  }
+
+  if (apiInFlightCache.has(cacheKey)) {
+    return apiInFlightCache.get(cacheKey);
+  }
+
+  const request = getData(endpoint)
+    .then((data) => {
+      apiResponseCache.set(cacheKey, { data, timestamp: Date.now() });
+      return data;
+    })
+    .finally(() => {
+      apiInFlightCache.delete(cacheKey);
+    });
+
+  apiInFlightCache.set(cacheKey, request);
+  return request;
+};
+
+export const clearApiCache = (prefix = '') => {
+  if (!prefix) {
+    apiResponseCache.clear();
+    apiInFlightCache.clear();
+    return;
+  }
+
+  for (const key of apiResponseCache.keys()) {
+    if (key.startsWith(prefix)) {
+      apiResponseCache.delete(key);
+    }
+  }
+  for (const key of apiInFlightCache.keys()) {
+    if (key.startsWith(prefix)) {
+      apiInFlightCache.delete(key);
+    }
+  }
+};
+
 export const postData = async (endpoint, data) => {
   const token = Cookies.get('authToken');
   const config = {};
@@ -57,6 +109,7 @@ export const postData = async (endpoint, data) => {
   
   try {
     const res = await axios.post(apiUrl + endpoint, data, config);
+    clearApiCache();
     return res.data;
   } catch (error) {
     console.error(error);
@@ -72,6 +125,7 @@ export const putData = async (endpoint, data) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    clearApiCache();
     return res.data;
   } catch (error) {
     console.error(error);
@@ -82,6 +136,7 @@ export const putData = async (endpoint, data) => {
 export const deleteById = async (endpoint, id) => {
   try {
     const res = await axios.delete(apiUrl + endpoint + id);
+    clearApiCache();
     return res.status;
   } catch (error) {
     console.error(error);
@@ -149,7 +204,7 @@ export const cakeLogout = async () => {
 
 // Funciones específicas para configuración de teléfono por país
 export const getCountriesPhoneConfigs = async () => {
-  return await getData('configs/countries/phone-configs');
+  return await getCachedData('configs/countries/phone-configs', 10 * 60 * 1000);
 };
 
 export const updateCountryPhoneConfig = async (countryId, data) => {
