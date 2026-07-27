@@ -324,8 +324,6 @@ const MyDataTable = ({
     }
   }, [sorting, columnSizing, columnOrder, selectedRowId, pageSize, initialPreferencesLoaded, userHasInteracted]);
 
-  const clickTimer = useRef(null);
-
   const handleRowSelection = (rowId) => {
     onSelectedRows?.((prev) => {
       if (prev.includes(rowId)) {
@@ -344,22 +342,20 @@ const MyDataTable = ({
     }
   };
 
-  const onRowInteraction = (row) => {
+  const onRowClick = (row, event) => {
+    if (!row?.id) return;
+    // Evita reaccionar al 2.º clic de un doble clic (detail === 2).
+    if (event?.detail > 1) return;
+
+    setSelectedRowId(row.id);
+    onHandleRowClick(row);
+  };
+
+  const onRowDoubleClick = (row) => {
     if (!row?.id) return;
 
     setSelectedRowId(row.id);
-
-    if (clickTimer.current) {
-      clearTimeout(clickTimer.current);
-      clickTimer.current = null;
-      onHandleViewClient(row.id);
-    } else {
-      clickTimer.current = setTimeout(() => {
-        clickTimer.current = null;
-        onHandleRowClick(row);
-        // sessionStorage.setItem('clients_selected_row', JSON.stringify(row));
-      }, 180);
-    }
+    onHandleViewClient(row.id);
   };
 
   const columnDefs = useMemo(
@@ -602,10 +598,11 @@ const MyDataTable = ({
                     ? '#d1d5db'
                     : getRowBackgroundColor(row.original);
                   return (
-                    <tr 
-                      key={row.id} 
-                      onClick={() => onRowInteraction(row.original)} 
-                      style={{ 
+                    <tr
+                      key={row.id}
+                      onClick={(event) => onRowClick(row.original, event)}
+                      onDoubleClick={() => onRowDoubleClick(row.original)}
+                      style={{
                         cursor: 'pointer',
                       }}
                     >

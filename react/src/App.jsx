@@ -7,6 +7,8 @@ import toast, { Toaster } from 'react-hot-toast';
 import 'react-tooltip/dist/react-tooltip.css';
 import Cookies from 'js-cookie';
 import { loadPhoneMask } from './utils/customFormat';
+import { loadUiThemeFromConfig } from './utils/uiTheme';
+import { getCachedData } from './api';
 import { UserProvider } from './context/userContext';
 
 function App() {
@@ -20,6 +22,7 @@ function App() {
     
     // Cargar la máscara de teléfono configurada
     loadPhoneMask();
+    loadUiThemeFromConfig(getCachedData);
   }, []);
 
   return (

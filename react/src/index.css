@@ -11,10 +11,10 @@
 }
 body {
   margin: 0;
-  font-family: Manrope, Inter, 'Segoe UI', system-ui, sans-serif;
-  font-size: 11px;
+  font-family: var(--erp-font-family);
+  font-size: var(--erp-font-size-base);
   letter-spacing: -0.01em;
-  color: #1f2937;
+  color: var(--erp-text);
   background-color: #f1f4f8;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -29,6 +29,21 @@ body {
   --erp-surface: #ffffff;
   --erp-toolbar-bg: #f7f9fc;
   --erp-text: #243447;
+  --erp-font-family: Manrope, Inter, 'Segoe UI', system-ui, sans-serif;
+  --erp-font-size-base: 11px;
+  --erp-color-label: #374151;
+  --erp-color-title: #111827;
+  --erp-color-panel-title: #274C8F;
+  --erp-color-panel-text: #334155;
+  --erp-card-title-size: 13px;
+  --erp-card-title-color: #1f2937;
+  --erp-card-text-size: 12px;
+  --erp-card-text-color: #4b5563;
+  --erp-card-padding: 8px;
+  --erp-table-header-size: 10px;
+  --erp-table-header-color: #334155;
+  --erp-table-cell-size: 10.5px;
+  --erp-table-cell-color: #1f2937;
 }
 
 #root {
@@ -171,17 +186,90 @@ h6 {
 
 h1,
 .text-2xl {
-  font-size: 16px !important;
+  font-size: calc(var(--erp-font-size-base) * 1.45) !important;
 }
 
 h2,
 .text-xl {
-  font-size: 15px !important;
+  font-size: calc(var(--erp-font-size-base) * 1.36) !important;
 }
 
-label,
+h3,
+.text-lg {
+  font-size: calc(var(--erp-font-size-base) * 1.18) !important;
+}
+
+/* Labels: tamaño global, color SOLO en formularios */
+label {
+  font-size: calc(var(--erp-font-size-base) * 0.91) !important;
+  letter-spacing: -0.01em;
+}
+
+form label,
+.erp-form label {
+  color: var(--erp-color-label) !important;
+}
+
+form h1,
+form h2,
+form h3,
+form h4,
+form h5,
+form h6,
+.erp-form h1,
+.erp-form h2,
+.erp-form h3,
+.erp-form h4,
+.erp-form h5,
+.erp-form h6 {
+  color: var(--erp-color-title) !important;
+}
+
+/* Panel lateral / ficha (cliente, cuidador): colores independientes */
+.erp-profile-panel label {
+  color: var(--erp-color-panel-text) !important;
+}
+
+.erp-profile-panel label.font-semibold,
+.erp-profile-panel label.text-primary,
+.erp-profile-panel label.text-base,
+.erp-profile-panel label.text-md,
+.erp-profile-panel label.text-sm.font-medium {
+  color: var(--erp-color-panel-title) !important;
+}
+
+.erp-profile-panel svg {
+  color: var(--erp-color-panel-text);
+}
+
+.erp-profile-panel button svg {
+  color: #111827 !important;
+}
+
+/* Cards internas (Datos Familiar, etc.) */
+.erp-familiar-card {
+  padding: var(--erp-card-padding) !important;
+}
+
+.erp-familiar-card-title,
+.erp-familiar-card h2 {
+  font-size: var(--erp-card-title-size) !important;
+  color: var(--erp-card-title-color) !important;
+  font-weight: 600;
+  line-height: 1.25;
+  margin: 0 0 4px;
+}
+
+.erp-familiar-card-text,
+.erp-familiar-card p {
+  font-size: var(--erp-card-text-size) !important;
+  color: var(--erp-card-text-color) !important;
+  line-height: 1.3;
+  margin: 0;
+}
+
 .text-xs {
-  font-size: 10px !important;
+  font-size: calc(var(--erp-font-size-base) * 0.91) !important;
   letter-spacing: -0.01em;
 }
 
@@ -359,24 +447,63 @@ main textarea {
   border-radius: 6px !important;
 }
 
+/*
+  Colores originales de botones de acción (toolbar).
+  Independientes de apariencia global (labels/títulos).
+*/
 main button.bg-primary {
-  background-color: var(--brand-navy) !important;
+  background-color: #334155 !important; /* navy carbón original */
+  color: #ffffff !important;
 }
 
 main button.bg-primary:hover {
-  background-color: #253244 !important;
+  background-color: #1f2937 !important;
+}
+
+main button.bg-secondary {
+  background-color: rgba(55, 65, 81, 0.9) !important;
+  color: #ffffff !important;
+}
+
+main button.bg-secondary:hover {
+  background-color: #374151 !important;
+}
+
+main button.bg-red-500 {
+  background-color: #f87171 !important; /* salmón original */
+  color: #ffffff !important;
+}
+
+main button.bg-red-500:hover {
+  background-color: #ef4444 !important;
+}
+
+main button.bg-gray-500 {
+  background-color: #6b7280 !important;
+  color: #ffffff !important;
+}
+
+main button.bg-primary svg,
+main button.bg-secondary svg,
+main button.bg-red-500 svg,
+main button.bg-gray-500 svg,
+.erp-list-actions button svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
 }
 
 /* Ajustes finos ERP para Clientes/Cuidadores */
-main div[style*='max-height: calc(100vh - 130px)'] table {
+main div[style*='max-height: calc(100vh - 130px)'] table,
+.erp-list-page table {
   border-collapse: collapse !important;
   table-layout: fixed !important;
 }
 
-main div[style*='max-height: calc(100vh - 130px)'] table th {
+main div[style*='max-height: calc(100vh - 130px)'] table th,
+.erp-list-page table th {
   background: #f3f4f6 !important;
-  color: #334155 !important;
-  font-size: 10px !important;
+  color: var(--erp-table-header-color) !important;
+  font-size: var(--erp-table-header-size) !important;
   font-weight: 600 !important;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -385,15 +512,19 @@ main div[style*='max-height: calc(100vh - 130px)'] table th {
   padding: 4px 6px !important;
 }
 
-main div[style*='max-height: calc(100vh - 130px)'] table td {
-  font-size: 10.5px !important;
+main div[style*='max-height: calc(100vh - 130px)'] table td,
+.erp-list-page table td {
+  font-size: var(--erp-table-cell-size) !important;
+  color: var(--erp-table-cell-color) !important;
   border-bottom: 1px solid #e8edf3 !important;
   padding: 0 !important;
   background: #ffffff !important;
 }
 
-main div[style*='max-height: calc(100vh - 130px)'] table td > div {
-  font-size: 10.5px !important;
+main div[style*='max-height: calc(100vh - 130px)'] table td > div,
+.erp-list-page table td > div {
+  font-size: var(--erp-table-cell-size) !important;
+  color: var(--erp-table-cell-color) !important;
   padding: 3px 8px !important;
   min-height: 24px;
   background: transparent !important;
