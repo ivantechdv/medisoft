@@ -329,7 +329,7 @@ const Clients = () => {
             >
               {collapsed ? <FaChevronRight /> : <FaChevronLeft />}
             </button>
-            <div className='w-full border-r-2 border-gray-200'>
+            <div className='w-full border-r-2 border-gray-200 erp-profile-panel'>
               {/* Contenido del lado izquierdo */}
               {!collapsed ? (
                 <>

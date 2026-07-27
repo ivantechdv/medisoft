@@ -3,11 +3,13 @@ import Breadcrumbs from '../../components/Breadcrumbs';
 import General from './general';
 import Caregivers from './caregivers';
 import Clients from './clients';
+import Appearance from './appearance';
 
 const tabs = [
   { id: 'general', label: 'General' },
   { id: 'clients', label: 'Clientes' },
   { id: 'caregivers', label: 'Cuidadores' },
+  { id: 'appearance', label: 'Apariencia' },
 ];
 
 const Configuration = () => {
@@ -45,6 +47,7 @@ const Configuration = () => {
           {activeTab === 'general' && <General />}
           {activeTab === 'clients' && <Clients />}
           {activeTab === 'caregivers' && <Caregivers />}
+          {activeTab === 'appearance' && <Appearance />}
         </div>
       </div>
     </div>

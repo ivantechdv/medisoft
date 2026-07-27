@@ -283,7 +283,7 @@ const Employees = () => {
             </button>
 
             {/* Contenido */}
-            <div className='w-full border-r-2 border-gray-200'>
+            <div className='w-full border-r-2 border-gray-200 erp-profile-panel'>
               {!collapsed ? (
                 <>
                   <div className='flex relative bg-white border-b-2 border-gray-200 h-40'>

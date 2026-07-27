@@ -234,24 +234,20 @@ const MyDataTable = ({
     }
   }, [initialSelectedId, selectedRowId]);
 
-  const clickTimer = useRef(null);
-
-  const onRowInteraction = (row) => {
+  const onRowClick = (row, event) => {
     if (!row?.id) return;
-    setSelectedRowId(row.id);
+    if (event?.detail > 1) return;
 
-    if (clickTimer.current) {
-      clearTimeout(clickTimer.current);
-      clickTimer.current = null;
-      const color = getRowBackgroundColor(row);
-      onHandleViewClient(row.id, color);
-    } else {
-      clickTimer.current = setTimeout(() => {
-        clickTimer.current = null;
-        onRowClicked(row);
-        // sessionStorage.setItem('employees_selected_row', JSON.stringify(row));
-      }, 180);
-    }
+    setSelectedRowId(row.id);
+    onRowClicked(row);
+  };
+
+  const onRowDoubleClick = (row) => {
+    if (!row?.id) return;
+
+    setSelectedRowId(row.id);
+    const color = getRowBackgroundColor(row);
+    onHandleViewClient(row.id, color);
   };
 
   const getRowBackgroundColor = (row) => {
@@ -647,7 +643,8 @@ const MyDataTable = ({
                   return (
                     <tr
                       key={row.id}
-                      onClick={() => onRowInteraction(row.original)}
+                      onClick={(event) => onRowClick(row.original, event)}
+                      onDoubleClick={() => onRowDoubleClick(row.original)}
                       style={{
                         cursor: 'pointer',
                       }}

@@ -12,7 +12,17 @@ CTRL.create = async (req, res, next) => {
     const transaction = await sequelize.transaction();
 
     try {
-      const config = await Config.create(req.body, { transaction });
+      const createData = { ...req.body };
+
+      if (createData.ui_config) {
+        createData.client_config = mergeUiConfigIntoClientConfig(
+          createData.client_config,
+          createData.ui_config,
+        );
+        delete createData.ui_config;
+      }
+
+      const config = await Config.create(createData, { transaction });
       await transaction.commit();
       
       res.status(201).json(formatConfigResponse(config));
@@ -93,6 +103,51 @@ CTRL.getById = async (req, res, next) => {
 
 const NUMERIC_KEY_REGEX = /^\d+$/;
 
+const DEFAULT_UI_CONFIG = {
+  fontFamily: 'Manrope',
+  fontSize: '11px',
+  labelColor: '#374151',
+  titleColor: '#111827',
+  panelTitleColor: '#274C8F',
+  panelTextColor: '#334155',
+  cardTitleSize: '13px',
+  cardTitleColor: '#1f2937',
+  cardTextSize: '12px',
+  cardTextColor: '#4b5563',
+  cardPadding: '8px',
+  tableHeaderSize: '10px',
+  tableHeaderColor: '#334155',
+  tableCellSize: '10.5px',
+  tableCellColor: '#1f2937',
+};
+
+const sanitizeUiConfig = (config) => {
+  if (!config || typeof config !== 'object' || Array.isArray(config)) {
+    return null;
+  }
+
+  return {
+    fontFamily: config.fontFamily || DEFAULT_UI_CONFIG.fontFamily,
+    fontSize: config.fontSize || DEFAULT_UI_CONFIG.fontSize,
+    labelColor: config.labelColor || DEFAULT_UI_CONFIG.labelColor,
+    titleColor: config.titleColor || DEFAULT_UI_CONFIG.titleColor,
+    panelTitleColor: config.panelTitleColor || DEFAULT_UI_CONFIG.panelTitleColor,
+    panelTextColor: config.panelTextColor || DEFAULT_UI_CONFIG.panelTextColor,
+    cardTitleSize: config.cardTitleSize || DEFAULT_UI_CONFIG.cardTitleSize,
+    cardTitleColor: config.cardTitleColor || DEFAULT_UI_CONFIG.cardTitleColor,
+    cardTextSize: config.cardTextSize || DEFAULT_UI_CONFIG.cardTextSize,
+    cardTextColor: config.cardTextColor || DEFAULT_UI_CONFIG.cardTextColor,
+    cardPadding: config.cardPadding || DEFAULT_UI_CONFIG.cardPadding,
+    tableHeaderSize: config.tableHeaderSize || DEFAULT_UI_CONFIG.tableHeaderSize,
+    tableHeaderColor: config.tableHeaderColor || DEFAULT_UI_CONFIG.tableHeaderColor,
+    tableCellSize: config.tableCellSize || DEFAULT_UI_CONFIG.tableCellSize,
+    tableCellColor: config.tableCellColor || DEFAULT_UI_CONFIG.tableCellColor,
+  };
+};
+
+const extractUiConfig = (clientConfig = {}) =>
+  sanitizeUiConfig(clientConfig.ui_config) || { ...DEFAULT_UI_CONFIG };
+
 const sanitizeClientConfig = (config) => {
   if (!config || typeof config !== 'object') return {};
 
@@ -140,7 +195,31 @@ const sanitizeClientConfig = (config) => {
     sanitized.default_country_code = typeof value === 'string' ? value.trim() : '';
   }
 
+  if (Object.prototype.hasOwnProperty.call(config, 'ui_config')) {
+    const uiConfig = sanitizeUiConfig(config.ui_config);
+    if (uiConfig) {
+      sanitized.ui_config = uiConfig;
+    }
+  }
+
   return sanitized;
+};
+
+const mergeUiConfigIntoClientConfig = (clientConfig = {}, uiConfig = {}) => {
+  const sanitizedClientConfig = sanitizeClientConfig(parseConfigSection(clientConfig));
+  const sanitizedUiConfig = sanitizeUiConfig(parseConfigSection(uiConfig));
+
+  if (!sanitizedUiConfig) {
+    return sanitizedClientConfig;
+  }
+
+  return {
+    ...sanitizedClientConfig,
+    ui_config: {
+      ...extractUiConfig(sanitizedClientConfig),
+      ...sanitizedUiConfig,
+    },
+  };
 };
 
 const parseConfigSection = (section) => {
@@ -264,11 +343,13 @@ const formatConfigResponse = (config) => {
   if (!config) return config;
 
   const plainConfig = typeof config.toJSON === 'function' ? config.toJSON() : config;
+  const clientConfig = sanitizeClientConfig(parseConfigSection(plainConfig.client_config));
 
   return {
     ...plainConfig,
-    client_config: sanitizeClientConfig(parseConfigSection(plainConfig.client_config)),
+    client_config: clientConfig,
     employee_config: parseConfigSection(plainConfig.employee_config),
+    ui_config: extractUiConfig(clientConfig),
   };
 };
 
@@ -308,6 +389,17 @@ CTRL.update = async (req, res, next) => {
           ...storedEmployeeConfig,
           ...incomingEmployeeConfig,
         };
+      }
+      if (req.body.ui_config) {
+        const baseClientConfig = updateData.client_config
+          ? updateData.client_config
+          : sanitizeClientConfig(parseConfigSection(config.client_config));
+
+        updateData.client_config = mergeUiConfigIntoClientConfig(
+          baseClientConfig,
+          req.body.ui_config,
+        );
+        delete updateData.ui_config;
       }
 
       await config.update(updateData, { transaction });

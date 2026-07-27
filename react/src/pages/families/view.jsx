@@ -65,15 +65,15 @@ const FamiliarCard = ({ family, openModalFamily }) => {
     <>
       <div
         ref={cardRef}
-        className='bg-gray-100 shadow-md rounded-md p-2 h-auto flex flex-col justify-between cursor-pointer mb-2'
+        className='erp-familiar-card bg-gray-100 shadow-md rounded-md h-auto flex flex-col justify-between cursor-pointer mb-2'
         onClick={editFamily}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         <div>
-          <h2 className='text-sm font-semibold text-gray-800'>{family.name}</h2>
-          <p className='text-gray-600 text-sm'>{family.email}</p>
-          <p className='text-gray-600 text-sm'>
+          <h2 className='erp-familiar-card-title font-semibold'>{family.name}</h2>
+          <p className='erp-familiar-card-text'>{family.email}</p>
+          <p className='erp-familiar-card-text'>
             {formatPhoneNumber(family.phone)}
           </p>
         </div>
