@@ -1,19 +1,67 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { getCachedData, putData } from '../../../api';
 import Spinner from '../../../components/Spinner/Spinner';
 import ToastNotify from '../../../components/toast/toast';
+import { useUser } from '../../../context/userContext';
 import {
   applyUiTheme,
   DEFAULT_UI_THEME,
   FONT_FAMILY_OPTIONS,
-  FONT_SIZE_OPTIONS,
-  CARD_PADDING_OPTIONS,
-  TABLE_SIZE_OPTIONS,
+  FONT_SIZE_MIN,
+  FONT_SIZE_MAX,
   normalizeUiTheme,
+  pxToNumber,
+  loadUiThemeForUser,
+  saveUiThemeForUser,
 } from '../../../utils/uiTheme';
 
+const inputClass =
+  'mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500';
+
+const SizeInput = ({ id, labelText, value, onChange }) => (
+  <div>
+    <label htmlFor={id}>{labelText}</label>
+    <div className='mt-1 flex items-center gap-2'>
+      <input
+        id={id}
+        type='number'
+        min={FONT_SIZE_MIN}
+        max={FONT_SIZE_MAX}
+        step='0.5'
+        value={pxToNumber(value)}
+        onChange={(event) => onChange(`${event.target.value}px`)}
+        className={inputClass}
+      />
+      <span className='text-gray-500 text-sm shrink-0'>px</span>
+    </div>
+    <p className='mt-1 text-xs text-gray-400'>
+      Entre {FONT_SIZE_MIN} y {FONT_SIZE_MAX}
+    </p>
+  </div>
+);
+
+const ColorInput = ({ id, labelText, value, onChange }) => (
+  <div>
+    <label htmlFor={id}>{labelText}</label>
+    <div className='mt-1 flex items-center gap-3'>
+      <input
+        id={id}
+        type='color'
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
+      />
+      <input
+        type='text'
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={inputClass}
+      />
+    </div>
+  </div>
+);
+
 const Appearance = () => {
-  const [configId, setConfigId] = useState(null);
+  const { user } = useUser();
   const [loading, setLoading] = useState(true);
   const [savingUiTheme, setSavingUiTheme] = useState(false);
   const [uiTheme, setUiTheme] = useState(DEFAULT_UI_THEME);
@@ -21,16 +69,8 @@ const Appearance = () => {
   const initializeForm = useCallback(async () => {
     try {
       setLoading(true);
-      const configResponse = await getCachedData('configs/active', 10 * 60 * 1000);
-
-      if (configResponse) {
-        setConfigId(configResponse.id);
-        if (configResponse.ui_config) {
-          const normalizedTheme = normalizeUiTheme(configResponse.ui_config);
-          setUiTheme(normalizedTheme);
-          applyUiTheme(normalizedTheme);
-        }
-      }
+      const theme = await loadUiThemeForUser(user?.id);
+      setUiTheme(normalizeUiTheme(theme));
     } catch (error) {
       console.error('Error cargando apariencia:', error);
       ToastNotify({
@@ -41,7 +81,7 @@ const Appearance = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => {
     initializeForm();
@@ -50,34 +90,18 @@ const Appearance = () => {
   const handleUiThemeChange = (field, value) => {
     setUiTheme((prev) => {
       const nextTheme = normalizeUiTheme({ ...prev, [field]: value });
-      applyUiTheme(nextTheme);
+      applyUiTheme(nextTheme, user?.id);
       return nextTheme;
     });
   };
 
   const handleUiThemeSubmit = async () => {
-    if (!configId) {
-      ToastNotify({
-        message:
-          'Primero guarda la configuración general para poder persistir la apariencia en el servidor',
-        type: 'error',
-        position: 'top-left',
-      });
-      applyUiTheme(uiTheme);
-      return;
-    }
-
     try {
       setSavingUiTheme(true);
-
-      await putData(`configs/${configId}`, {
-        ui_config: uiTheme,
-      });
-
-      applyUiTheme(uiTheme);
-
+      const saved = await saveUiThemeForUser(uiTheme, user?.id);
+      setUiTheme(saved);
       ToastNotify({
-        message: 'Apariencia actualizada',
+        message: 'Apariencia guardada para tu usuario',
         type: 'success',
         position: 'top-left',
       });
@@ -102,17 +126,17 @@ const Appearance = () => {
   }
 
   return (
-    <div className='bg-white border border-gray-200 rounded-lg shadow p-6 space-y-6'>
+    <div className='bg-white border border-gray-200 rounded-lg shadow p-6 space-y-6 erp-form'>
       <div>
-        <h2 className='text-xl font-semibold text-gray-700'>Apariencia</h2>
+        <h2 className='text-xl font-semibold'>Apariencia</h2>
         <p className='text-sm text-gray-500 mt-1'>
-          Tipografía global. Colores de formularios, paneles, cards y tablas van por separado.
-          Los botones no se modifican aquí.
+          Esta configuración es por usuario. Los tamaños se indican en píxeles.
+          Los botones y los colores de fila de las tablas no se modifican aquí.
         </p>
       </div>
 
       <div className='space-y-4'>
-        <h4 className='text-sm font-semibold text-gray-700 uppercase tracking-wide'>
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
           Tipografía (global)
         </h4>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
@@ -122,7 +146,7 @@ const Appearance = () => {
               id='fontFamily'
               value={uiTheme.fontFamily}
               onChange={(event) => handleUiThemeChange('fontFamily', event.target.value)}
-              className='mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
+              className={inputClass}
             >
               {FONT_FAMILY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -131,124 +155,84 @@ const Appearance = () => {
               ))}
             </select>
           </div>
-          <div>
-            <label htmlFor='fontSize'>Tamaño de fuente base</label>
-            <select
-              id='fontSize'
-              value={uiTheme.fontSize}
-              onChange={(event) => handleUiThemeChange('fontSize', event.target.value)}
-              className='mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            >
-              {FONT_SIZE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <SizeInput
+            id='fontSize'
+            labelText='Tamaño de fuente base'
+            value={uiTheme.fontSize}
+            onChange={(value) => handleUiThemeChange('fontSize', value)}
+          />
         </div>
       </div>
 
       <div className='space-y-4 border-t pt-4'>
-        <h4 className='text-sm font-semibold text-gray-700 uppercase tracking-wide'>
-          Colores de formularios
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
+          Formularios (toda la aplicación)
         </h4>
         <p className='text-xs text-gray-500'>
-          Solo afectan labels y títulos dentro de formularios (pestañas General, etc.).
+          Afecta labels, títulos e inputs de cualquier formulario: clientes, cuidadores,
+          configuración, usuarios, servicios, etc.
         </p>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <div>
-            <label htmlFor='labelColor'>Color de labels</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='labelColor'
-                type='color'
-                value={uiTheme.labelColor}
-                onChange={(event) => handleUiThemeChange('labelColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.labelColor}
-                onChange={(event) => handleUiThemeChange('labelColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor='titleColor'>Color de títulos</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='titleColor'
-                type='color'
-                value={uiTheme.titleColor}
-                onChange={(event) => handleUiThemeChange('titleColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.titleColor}
-                onChange={(event) => handleUiThemeChange('titleColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
+          <SizeInput
+            id='formLabelSize'
+            labelText='Tamaño de labels'
+            value={uiTheme.formLabelSize}
+            onChange={(value) => handleUiThemeChange('formLabelSize', value)}
+          />
+          <SizeInput
+            id='formTitleSize'
+            labelText='Tamaño de títulos'
+            value={uiTheme.formTitleSize}
+            onChange={(value) => handleUiThemeChange('formTitleSize', value)}
+          />
+          <SizeInput
+            id='formInputSize'
+            labelText='Tamaño de campos (inputs)'
+            value={uiTheme.formInputSize}
+            onChange={(value) => handleUiThemeChange('formInputSize', value)}
+          />
+          <ColorInput
+            id='labelColor'
+            labelText='Color de labels'
+            value={uiTheme.labelColor}
+            onChange={(value) => handleUiThemeChange('labelColor', value)}
+          />
+          <ColorInput
+            id='titleColor'
+            labelText='Color de títulos'
+            value={uiTheme.titleColor}
+            onChange={(value) => handleUiThemeChange('titleColor', value)}
+          />
         </div>
-        <div className='rounded-md border border-gray-200 p-4 erp-form'>
-          <p style={{ color: uiTheme.titleColor, fontWeight: 600, marginBottom: 8 }}>
-            Vista previa título de formulario
-          </p>
-          <label style={{ color: uiTheme.labelColor, display: 'block' }}>
+        <div className='rounded-md border border-gray-200 p-4'>
+          <h3 style={{ marginBottom: 8 }}>Vista previa título de formulario</h3>
+          <label style={{ display: 'block', marginBottom: 6 }}>
             Vista previa label de formulario
           </label>
+          <input type='text' defaultValue='Campo de ejemplo' className={inputClass} readOnly />
         </div>
       </div>
 
       <div className='space-y-4 border-t pt-4'>
-        <h4 className='text-sm font-semibold text-gray-700 uppercase tracking-wide'>
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
           Colores de paneles / fichas
         </h4>
         <p className='text-xs text-gray-500'>
-          Independientes de los formularios. Afectan la ficha lateral de cliente/cuidador
-          (nombre, “Datos de contacto”, dirección, etc.).
+          Independientes de los formularios. Afectan la ficha lateral de cliente/cuidador.
         </p>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <div>
-            <label htmlFor='panelTitleColor'>Color de títulos del panel</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='panelTitleColor'
-                type='color'
-                value={uiTheme.panelTitleColor}
-                onChange={(event) => handleUiThemeChange('panelTitleColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.panelTitleColor}
-                onChange={(event) => handleUiThemeChange('panelTitleColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor='panelTextColor'>Color de texto del panel</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='panelTextColor'
-                type='color'
-                value={uiTheme.panelTextColor}
-                onChange={(event) => handleUiThemeChange('panelTextColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.panelTextColor}
-                onChange={(event) => handleUiThemeChange('panelTextColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
+          <ColorInput
+            id='panelTitleColor'
+            labelText='Color de títulos del panel'
+            value={uiTheme.panelTitleColor}
+            onChange={(value) => handleUiThemeChange('panelTitleColor', value)}
+          />
+          <ColorInput
+            id='panelTextColor'
+            labelText='Color de texto del panel'
+            value={uiTheme.panelTextColor}
+            onChange={(value) => handleUiThemeChange('panelTextColor', value)}
+          />
         </div>
         <div className='rounded-md border border-gray-200 p-4 erp-profile-panel'>
           <label className='font-semibold text-base block' style={{ marginBottom: 6 }}>
@@ -262,95 +246,40 @@ const Appearance = () => {
       </div>
 
       <div className='space-y-4 border-t pt-4'>
-        <h4 className='text-sm font-semibold text-gray-700 uppercase tracking-wide'>
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
           Cards internas (Datos Familiar)
         </h4>
-        <p className='text-xs text-gray-500'>
-          Independiente del panel y de los formularios. Controla la card gris del familiar:
-          tamaño, título y texto interno.
-        </p>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <div>
-            <label htmlFor='cardPadding'>Tamaño / padding de la card</label>
-            <select
-              id='cardPadding'
-              value={uiTheme.cardPadding}
-              onChange={(event) => handleUiThemeChange('cardPadding', event.target.value)}
-              className='mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            >
-              {CARD_PADDING_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor='cardTitleSize'>Tamaño del título de la card</label>
-            <select
-              id='cardTitleSize'
-              value={uiTheme.cardTitleSize}
-              onChange={(event) => handleUiThemeChange('cardTitleSize', event.target.value)}
-              className='mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            >
-              {FONT_SIZE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor='cardTitleColor'>Color del título de la card</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='cardTitleColor'
-                type='color'
-                value={uiTheme.cardTitleColor}
-                onChange={(event) => handleUiThemeChange('cardTitleColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.cardTitleColor}
-                onChange={(event) => handleUiThemeChange('cardTitleColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor='cardTextSize'>Tamaño del texto interno</label>
-            <select
-              id='cardTextSize'
-              value={uiTheme.cardTextSize}
-              onChange={(event) => handleUiThemeChange('cardTextSize', event.target.value)}
-              className='mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            >
-              {FONT_SIZE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor='cardTextColor'>Color del texto interno</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='cardTextColor'
-                type='color'
-                value={uiTheme.cardTextColor}
-                onChange={(event) => handleUiThemeChange('cardTextColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.cardTextColor}
-                onChange={(event) => handleUiThemeChange('cardTextColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
+          <SizeInput
+            id='cardPadding'
+            labelText='Padding de la card'
+            value={uiTheme.cardPadding}
+            onChange={(value) => handleUiThemeChange('cardPadding', value)}
+          />
+          <SizeInput
+            id='cardTitleSize'
+            labelText='Tamaño del título de la card'
+            value={uiTheme.cardTitleSize}
+            onChange={(value) => handleUiThemeChange('cardTitleSize', value)}
+          />
+          <ColorInput
+            id='cardTitleColor'
+            labelText='Color del título de la card'
+            value={uiTheme.cardTitleColor}
+            onChange={(value) => handleUiThemeChange('cardTitleColor', value)}
+          />
+          <SizeInput
+            id='cardTextSize'
+            labelText='Tamaño del texto interno'
+            value={uiTheme.cardTextSize}
+            onChange={(value) => handleUiThemeChange('cardTextSize', value)}
+          />
+          <ColorInput
+            id='cardTextColor'
+            labelText='Color del texto interno'
+            value={uiTheme.cardTextColor}
+            onChange={(value) => handleUiThemeChange('cardTextColor', value)}
+          />
         </div>
         <div className='erp-familiar-card bg-gray-100 shadow-md rounded-md max-w-xs'>
           <h2 className='erp-familiar-card-title font-semibold'>SUSANA RODRIGUEZ BENITEZ</h2>
@@ -359,79 +288,37 @@ const Appearance = () => {
       </div>
 
       <div className='space-y-4 border-t pt-4'>
-        <h4 className='text-sm font-semibold text-gray-700 uppercase tracking-wide'>
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
           Tablas (Clientes / Cuidadores)
         </h4>
         <p className='text-xs text-gray-500'>
-          Afecta el listado de clientes y cuidadores: cabeceras y celdas.
+          Solo tipografía. No cambia los colores de estado de las filas.
         </p>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
-          <div>
-            <label htmlFor='tableHeaderSize'>Tamaño de cabecera</label>
-            <select
-              id='tableHeaderSize'
-              value={uiTheme.tableHeaderSize}
-              onChange={(event) => handleUiThemeChange('tableHeaderSize', event.target.value)}
-              className='mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            >
-              {TABLE_SIZE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor='tableHeaderColor'>Color de cabecera</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='tableHeaderColor'
-                type='color'
-                value={uiTheme.tableHeaderColor}
-                onChange={(event) => handleUiThemeChange('tableHeaderColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.tableHeaderColor}
-                onChange={(event) => handleUiThemeChange('tableHeaderColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
-          <div>
-            <label htmlFor='tableCellSize'>Tamaño de celdas</label>
-            <select
-              id='tableCellSize'
-              value={uiTheme.tableCellSize}
-              onChange={(event) => handleUiThemeChange('tableCellSize', event.target.value)}
-              className='mt-1 block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-            >
-              {TABLE_SIZE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label htmlFor='tableCellColor'>Color de texto en celdas</label>
-            <div className='mt-1 flex items-center gap-3'>
-              <input
-                id='tableCellColor'
-                type='color'
-                value={uiTheme.tableCellColor}
-                onChange={(event) => handleUiThemeChange('tableCellColor', event.target.value)}
-                className='h-10 w-14 rounded border border-gray-300 cursor-pointer'
-              />
-              <input
-                type='text'
-                value={uiTheme.tableCellColor}
-                onChange={(event) => handleUiThemeChange('tableCellColor', event.target.value)}
-                className='block w-full rounded-md border border-gray-300 py-2 px-3 shadow-sm focus:border-indigo-500 focus:ring-indigo-500'
-              />
-            </div>
-          </div>
+          <SizeInput
+            id='tableHeaderSize'
+            labelText='Tamaño de cabecera'
+            value={uiTheme.tableHeaderSize}
+            onChange={(value) => handleUiThemeChange('tableHeaderSize', value)}
+          />
+          <ColorInput
+            id='tableHeaderColor'
+            labelText='Color de cabecera'
+            value={uiTheme.tableHeaderColor}
+            onChange={(value) => handleUiThemeChange('tableHeaderColor', value)}
+          />
+          <SizeInput
+            id='tableCellSize'
+            labelText='Tamaño de celdas'
+            value={uiTheme.tableCellSize}
+            onChange={(value) => handleUiThemeChange('tableCellSize', value)}
+          />
+          <ColorInput
+            id='tableCellColor'
+            labelText='Color de texto en celdas'
+            value={uiTheme.tableCellColor}
+            onChange={(value) => handleUiThemeChange('tableCellColor', value)}
+          />
         </div>
         <div className='overflow-hidden rounded-md border border-gray-200 erp-list-page'>
           <table className='w-full'>

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { cakeLogout, verifyToken } from '../api';
 import Cookies from 'js-cookie';
 import { clearSession, isPublicRoute, isTokenExpired } from '../utils/auth';
+import { loadUiThemeForUser } from '../utils/uiTheme';
 
 const UserContext = createContext();
 
@@ -92,6 +93,12 @@ export const UserProvider = ({ children }) => {
     clearSession();
     redirect();
   }, []);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadUiThemeForUser(user.id);
+    }
+  }, [user?.id]);
 
   return (
     <UserContext.Provider
