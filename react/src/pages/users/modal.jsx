@@ -188,7 +188,7 @@ const Modal = ({ isOpen, onClose, id, row }) => {
       {isLoading && <Spinner />}
 
       <div
-        className="bg-white p-6 shadow-2xl rounded-lg overflow-auto"
+        className="bg-white p-6 shadow-2xl rounded-lg overflow-auto erp-form"
         style={{ width: 900, maxHeight: '90vh' }}
       >
         {/* HEADER */}

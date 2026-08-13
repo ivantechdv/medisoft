@@ -182,7 +182,7 @@ const Clients = () => {
   );
 
   return (
-    <div className='bg-white border border-gray-200 rounded-lg shadow p-6 space-y-6'>
+    <div className='bg-white border border-gray-200 rounded-lg shadow p-6 space-y-6 erp-form'>
       <h2 className='text-xl font-semibold text-gray-700'>Configuración de Clientes</h2>
 
       <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>

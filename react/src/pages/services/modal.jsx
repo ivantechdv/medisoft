@@ -78,7 +78,7 @@ const Modal = ({ isOpen, onClose, id, row }) => {
     <div className="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 z-50">
       {isLoading && <Spinner />}
       <div
-        className="absolute top-1/2 left-1/2 bg-white rounded-xl shadow-lg p-6 transform -translate-x-1/2 -translate-y-1/2 overflow-auto"
+        className="absolute top-1/2 left-1/2 bg-white rounded-xl shadow-lg p-6 transform -translate-x-1/2 -translate-y-1/2 overflow-auto erp-form"
         style={{ width: 520 }}
       >
         {/* Título + Toggle */}

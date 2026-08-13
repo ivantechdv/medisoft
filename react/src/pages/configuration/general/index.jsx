@@ -293,7 +293,7 @@ const General = () => {
   }
 
   return (
-    <div className='bg-white border border-gray-200 rounded-lg shadow p-6 space-y-6'>
+    <div className='bg-white border border-gray-200 rounded-lg shadow p-6 space-y-6 erp-form'>
       <h2 className='text-xl font-semibold text-gray-700'>Configuración General</h2>
 
       {/* Sección de configuración por defecto */}

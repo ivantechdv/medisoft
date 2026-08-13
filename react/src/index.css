@@ -31,6 +31,9 @@ body {
   --erp-text: #243447;
   --erp-font-family: Manrope, Inter, 'Segoe UI', system-ui, sans-serif;
   --erp-font-size-base: 11px;
+  --erp-form-label-size: 10px;
+  --erp-form-title-size: 13px;
+  --erp-form-input-size: 11px;
   --erp-color-label: #374151;
   --erp-color-title: #111827;
   --erp-color-panel-title: #274C8F;
@@ -199,15 +202,17 @@ h3,
   font-size: calc(var(--erp-font-size-base) * 1.18) !important;
 }
 
-/* Labels: tamaño global, color SOLO en formularios */
+/* Labels: tamaño global por defecto */
 label {
   font-size: calc(var(--erp-font-size-base) * 0.91) !important;
   letter-spacing: -0.01em;
 }
 
+/* Formularios de toda la app */
 form label,
 .erp-form label {
   color: var(--erp-color-label) !important;
+  font-size: var(--erp-form-label-size) !important;
 }
 
 form h1,
@@ -223,6 +228,16 @@ form h6,
 .erp-form h5,
 .erp-form h6 {
   color: var(--erp-color-title) !important;
+  font-size: var(--erp-form-title-size) !important;
+}
+
+form input:not([type='color']):not([type='checkbox']):not([type='radio']),
+form select,
+form textarea,
+.erp-form input:not([type='color']):not([type='checkbox']):not([type='radio']),
+.erp-form select,
+.erp-form textarea {
+  font-size: var(--erp-form-input-size) !important;
 }
 
 /* Panel lateral / ficha (cliente, cuidador): colores independientes */
@@ -518,7 +533,7 @@ main div[style*='max-height: calc(100vh - 130px)'] table td,
   color: var(--erp-table-cell-color) !important;
   border-bottom: 1px solid #e8edf3 !important;
   padding: 0 !important;
-  background: #ffffff !important;
+  /* No forzar background: respeta colores de estado/fila e indicadores */
 }
 
 main div[style*='max-height: calc(100vh - 130px)'] table td > div,
@@ -527,16 +542,19 @@ main div[style*='max-height: calc(100vh - 130px)'] table td > div,
   color: var(--erp-table-cell-color) !important;
   padding: 3px 8px !important;
   min-height: 24px;
-  background: transparent !important;
+  /* No forzar background: respeta T/N/S y chips de color */
 }
 
-main div[style*='max-height: calc(100vh - 130px)'] table tbody tr:hover td {
-  background-color: #f3f7fd !important;
+/* Hover suave sin pisar colores de fila (sin !important) */
+main div[style*='max-height: calc(100vh - 130px)'] table tbody tr:hover td,
+.erp-list-page table tbody tr:hover td {
+  filter: brightness(0.97);
 }
 
-/* Evita bloques grises/coloreados detrás de texto vacío */
-main div[style*='max-height: calc(100vh - 130px)'] table td span {
-  background: transparent !important;
+/* Evita bloques grises detrás de texto vacío, sin tocar indicadores */
+main div[style*='max-height: calc(100vh - 130px)'] table td span:empty,
+.erp-list-page table td span:empty {
+  background: transparent;
 }
 
 /* Toolbar superior más compacta y uniforme */
