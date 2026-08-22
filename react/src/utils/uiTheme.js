@@ -26,6 +26,9 @@ export const DEFAULT_UI_THEME = {
   tableHeaderColor: '#334155',
   tableCellSize: '10.5px',
   tableCellColor: '#1f2937',
+  pageBackgroundColor: '#f1f4f8',
+  sidebarBackgroundColor: '#f8f9fb',
+  topNavBackgroundColor: '#f6f8fb',
 };
 
 export const FONT_FAMILY_OPTIONS = [
@@ -106,6 +109,12 @@ export const normalizeUiTheme = (theme = {}) => ({
   tableHeaderColor: theme.tableHeaderColor || DEFAULT_UI_THEME.tableHeaderColor,
   tableCellSize: clampFontSize(theme.tableCellSize, DEFAULT_UI_THEME.tableCellSize),
   tableCellColor: theme.tableCellColor || DEFAULT_UI_THEME.tableCellColor,
+  pageBackgroundColor:
+    theme.pageBackgroundColor || DEFAULT_UI_THEME.pageBackgroundColor,
+  sidebarBackgroundColor:
+    theme.sidebarBackgroundColor || DEFAULT_UI_THEME.sidebarBackgroundColor,
+  topNavBackgroundColor:
+    theme.topNavBackgroundColor || DEFAULT_UI_THEME.topNavBackgroundColor,
 });
 
 export const applyUiTheme = (theme = {}, userId) => {
@@ -137,6 +146,18 @@ export const applyUiTheme = (theme = {}, userId) => {
   root.style.setProperty('--erp-table-header-color', normalized.tableHeaderColor);
   root.style.setProperty('--erp-table-cell-size', normalized.tableCellSize);
   root.style.setProperty('--erp-table-cell-color', normalized.tableCellColor);
+  root.style.setProperty(
+    '--erp-page-background',
+    normalized.pageBackgroundColor,
+  );
+  root.style.setProperty(
+    '--erp-sidebar-background',
+    normalized.sidebarBackgroundColor,
+  );
+  root.style.setProperty(
+    '--erp-topnav-background',
+    normalized.topNavBackgroundColor,
+  );
 
   localStorage.setItem(getUiThemeStorageKey(userId), JSON.stringify(normalized));
   return normalized;

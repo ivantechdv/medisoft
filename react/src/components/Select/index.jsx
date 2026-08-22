@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 
+const FORM_INPUT_FONT = 'var(--erp-form-input-size)';
+
 const CustomSelect = ({
   options,
   onChange,
@@ -43,6 +45,7 @@ const CustomSelect = ({
         : 'none',
       color: state.isDisabled ? '#000' : '#000',
       backgroundColor: state.isDisabled ? '#f5f5f5' : base.backgroundColor,
+      fontSize: FORM_INPUT_FONT,
     }),
     valueContainer: (base) => ({
       ...base,
@@ -50,6 +53,7 @@ const CustomSelect = ({
       alignItems: 'center',
       minHeight: `${targetHeight - 8}px`,
       color: '#000',
+      fontSize: FORM_INPUT_FONT,
     }),
     multiValue: (base) => ({
       ...base,
@@ -60,6 +64,7 @@ const CustomSelect = ({
       ...base,
       padding: '2px',
       color: '#000',
+      fontSize: FORM_INPUT_FONT,
     }),
     clearIndicator: (base) => ({
       ...base,
@@ -72,14 +77,25 @@ const CustomSelect = ({
     placeholder: (base, state) => ({
       ...base,
       color: state.isDisabled ? '#000' : base.color,
+      fontSize: FORM_INPUT_FONT,
     }),
     input: (base, state) => ({
       ...base,
       color: state.isDisabled ? '#000' : base.color,
+      fontSize: FORM_INPUT_FONT,
     }),
     singleValue: (base, state) => ({
       ...base,
       color: state.isDisabled ? '#000' : base.color,
+      fontSize: FORM_INPUT_FONT,
+    }),
+    option: (base) => ({
+      ...base,
+      fontSize: FORM_INPUT_FONT,
+    }),
+    menu: (base) => ({
+      ...base,
+      fontSize: FORM_INPUT_FONT,
     }),
   };
 
@@ -97,6 +113,8 @@ const CustomSelect = ({
       isMulti={isMulti}
       defaultValue={selectedOptions}
       value={selectedOptions}
+      className='react-select-container'
+      classNamePrefix='react-select'
       key={
         isMulti ? selectedOptions.map((opt) => opt.value).join(',') : 'single'
       }

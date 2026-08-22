@@ -403,16 +403,12 @@ const MyDataTable = ({
           const data = row.original;
           const title = client_tipo_config[data.type]?.label;
           return (
-            <div
-              title={title}
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: 2,
-                margin: '0 auto',
-                backgroundColor: getClientTypeColor(data),
-              }}
-            />
+            <div className='erp-indicator-cell' title={title}>
+              <div
+                className='erp-indicator-swatch'
+                style={{ backgroundColor: getClientTypeColor(data) }}
+              />
+            </div>
           );
         },
       },

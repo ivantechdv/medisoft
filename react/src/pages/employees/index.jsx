@@ -343,16 +343,12 @@ const MyDataTable = ({
           const data = row.original;
           const title = tipo_config[data.type]?.label;
           return (
-            <div
-              title={title}
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: 2,
-                margin: '0 auto',
-                backgroundColor: getColor('t', data),
-              }}
-            />
+            <div className='erp-indicator-cell' title={title}>
+              <div
+                className='erp-indicator-swatch'
+                style={{ backgroundColor: getColor('t', data) }}
+              />
+            </div>
           );
         },
       },
@@ -369,16 +365,12 @@ const MyDataTable = ({
           const data = row.original;
           const title = data?.level?.name;
           return (
-            <div
-              title={title}
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: 2,
-                margin: '0 auto',
-                backgroundColor: getColor('n', data),
-              }}
-            />
+            <div className='erp-indicator-cell' title={title}>
+              <div
+                className='erp-indicator-swatch'
+                style={{ backgroundColor: getColor('n', data) }}
+              />
+            </div>
           );
         },
       },
@@ -395,16 +387,12 @@ const MyDataTable = ({
           const data = row.original;
           const title = data?.statu?.name;
           return (
-            <div
-              title={title}
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: 2,
-                margin: '0 auto',
-                backgroundColor: getColor('s', data),
-              }}
-            />
+            <div className='erp-indicator-cell' title={title}>
+              <div
+                className='erp-indicator-swatch'
+                style={{ backgroundColor: getColor('s', data) }}
+              />
+            </div>
           );
         },
       },
