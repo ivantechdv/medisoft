@@ -119,6 +119,9 @@ const DEFAULT_UI_CONFIG = {
   tableHeaderColor: '#334155',
   tableCellSize: '10.5px',
   tableCellColor: '#1f2937',
+  pageBackgroundColor: '#f1f4f8',
+  sidebarBackgroundColor: '#f8f9fb',
+  topNavBackgroundColor: '#f6f8fb',
 };
 
 const sanitizeUiConfig = (config) => {
@@ -142,6 +145,12 @@ const sanitizeUiConfig = (config) => {
     tableHeaderColor: config.tableHeaderColor || DEFAULT_UI_CONFIG.tableHeaderColor,
     tableCellSize: config.tableCellSize || DEFAULT_UI_CONFIG.tableCellSize,
     tableCellColor: config.tableCellColor || DEFAULT_UI_CONFIG.tableCellColor,
+    pageBackgroundColor:
+      config.pageBackgroundColor || DEFAULT_UI_CONFIG.pageBackgroundColor,
+    sidebarBackgroundColor:
+      config.sidebarBackgroundColor || DEFAULT_UI_CONFIG.sidebarBackgroundColor,
+    topNavBackgroundColor:
+      config.topNavBackgroundColor || DEFAULT_UI_CONFIG.topNavBackgroundColor,
   };
 };
 

@@ -1,5 +1,7 @@
 import Select from 'react-select';
 
+const FORM_INPUT_FONT = 'var(--erp-form-input-size)';
+
 const ColorSelect = ({ value, onChange, optionsConfig }) => {
   const options = Object.entries(optionsConfig).map(([val, option]) => ({
     value: val,
@@ -24,26 +26,45 @@ const ColorSelect = ({ value, onChange, optionsConfig }) => {
       options={options}
       value={options.find((opt) => opt.value == value)}
       onChange={(selected) => onChange(selected.value)}
+      className='react-select-container'
+      classNamePrefix='react-select'
       styles={{
         control: (base) => ({
           ...base,
           borderColor: '#ccc',
-          minHeight: '28px', // 🔽 reduce la altura
-          height: '28px', // 🔽 fuerza altura
-          fontSize: '13px',
+          minHeight: '28px',
+          height: '28px',
+          fontSize: FORM_INPUT_FONT,
           marginTop: '4px',
         }),
         valueContainer: (base) => ({
           ...base,
-          padding: '0 6px', // 🔽 menos espacio interno
+          padding: '0 6px',
+          fontSize: FORM_INPUT_FONT,
         }),
         indicatorsContainer: (base) => ({
           ...base,
-          height: '28px', // 🔽 igualamos altura de los íconos
+          height: '28px',
         }),
         dropdownIndicator: (base) => ({
           ...base,
-          padding: '2px', // 🔽 achicamos el botón flecha
+          padding: '2px',
+        }),
+        singleValue: (base) => ({
+          ...base,
+          fontSize: FORM_INPUT_FONT,
+        }),
+        placeholder: (base) => ({
+          ...base,
+          fontSize: FORM_INPUT_FONT,
+        }),
+        option: (base) => ({
+          ...base,
+          fontSize: FORM_INPUT_FONT,
+        }),
+        menu: (base) => ({
+          ...base,
+          fontSize: FORM_INPUT_FONT,
         }),
       }}
     />

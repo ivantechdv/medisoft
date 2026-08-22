@@ -135,7 +135,62 @@ const Appearance = () => {
         </p>
       </div>
 
-      <div className='space-y-4'>
+      <div className='space-y-4 border-t pt-4'>
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
+          Layout (fondo, menú y barra superior)
+        </h4>
+        <p className='text-xs text-gray-500'>
+          Colores del shell de la aplicación: fondo general, menú lateral y barra superior.
+        </p>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <ColorInput
+            id='pageBackgroundColor'
+            labelText='Fondo de pantalla'
+            value={uiTheme.pageBackgroundColor}
+            onChange={(value) => handleUiThemeChange('pageBackgroundColor', value)}
+          />
+          <ColorInput
+            id='sidebarBackgroundColor'
+            labelText='Panel lateral (menú)'
+            value={uiTheme.sidebarBackgroundColor}
+            onChange={(value) =>
+              handleUiThemeChange('sidebarBackgroundColor', value)
+            }
+          />
+          <ColorInput
+            id='topNavBackgroundColor'
+            labelText='Panel superior (top)'
+            value={uiTheme.topNavBackgroundColor}
+            onChange={(value) =>
+              handleUiThemeChange('topNavBackgroundColor', value)
+            }
+          />
+        </div>
+        <div
+          className='rounded-md border border-gray-200 overflow-hidden'
+          style={{ backgroundColor: uiTheme.pageBackgroundColor }}
+        >
+          <div className='flex h-20'>
+            <div
+              className='w-16 shrink-0 border-r border-gray-200'
+              style={{ backgroundColor: uiTheme.sidebarBackgroundColor }}
+              title='Menú lateral'
+            />
+            <div className='flex-1 flex flex-col'>
+              <div
+                className='h-7 border-b border-gray-200'
+                style={{ backgroundColor: uiTheme.topNavBackgroundColor }}
+                title='Barra superior'
+              />
+              <div className='flex-1 flex items-center justify-center text-xs text-gray-500'>
+                Vista previa del layout
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className='space-y-4 border-t pt-4'>
         <h4 className='text-sm font-semibold uppercase tracking-wide'>
           Tipografía (global)
         </h4>
