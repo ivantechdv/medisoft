@@ -111,6 +111,7 @@ router.put("/filter/:id", Filter.update);
 router.get("/", phoneFormatMiddleware, Employee.get);
 router.get("/all", phoneFormatMiddleware, Employee.getAll);
 router.get("/getBySearch", phoneFormatMiddleware, Employee.getBySearch);
+router.post("/sync-active-from-assignments", Employee.syncActiveFromAssignments);
 router.get("/:id", phoneFormatMiddleware, Employee.getById);
 router.post("/", Employee.create);
 router.put("/:id", Employee.update);

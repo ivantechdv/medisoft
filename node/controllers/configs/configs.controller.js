@@ -120,8 +120,16 @@ const DEFAULT_UI_CONFIG = {
   tableCellSize: '10.5px',
   tableCellColor: '#1f2937',
   pageBackgroundColor: '#f1f4f8',
+  pageBackgroundPattern: 'none',
   sidebarBackgroundColor: '#f8f9fb',
   topNavBackgroundColor: '#f6f8fb',
+  sidebarFontFamily: 'Manrope',
+  sidebarFontSize: '12px',
+  sidebarTextColor: '#243447',
+  toolbarFontFamily: 'Manrope',
+  toolbarFontSize: '10.5px',
+  toolbarTextColor: '#1f2937',
+  toolbarBackgroundColor: '#ffffff',
 };
 
 const sanitizeUiConfig = (config) => {
@@ -147,10 +155,26 @@ const sanitizeUiConfig = (config) => {
     tableCellColor: config.tableCellColor || DEFAULT_UI_CONFIG.tableCellColor,
     pageBackgroundColor:
       config.pageBackgroundColor || DEFAULT_UI_CONFIG.pageBackgroundColor,
+    pageBackgroundPattern:
+      config.pageBackgroundPattern || DEFAULT_UI_CONFIG.pageBackgroundPattern,
     sidebarBackgroundColor:
       config.sidebarBackgroundColor || DEFAULT_UI_CONFIG.sidebarBackgroundColor,
     topNavBackgroundColor:
       config.topNavBackgroundColor || DEFAULT_UI_CONFIG.topNavBackgroundColor,
+    sidebarFontFamily:
+      config.sidebarFontFamily || DEFAULT_UI_CONFIG.sidebarFontFamily,
+    sidebarFontSize:
+      config.sidebarFontSize || DEFAULT_UI_CONFIG.sidebarFontSize,
+    sidebarTextColor:
+      config.sidebarTextColor || DEFAULT_UI_CONFIG.sidebarTextColor,
+    toolbarFontFamily:
+      config.toolbarFontFamily || DEFAULT_UI_CONFIG.toolbarFontFamily,
+    toolbarFontSize:
+      config.toolbarFontSize || DEFAULT_UI_CONFIG.toolbarFontSize,
+    toolbarTextColor:
+      config.toolbarTextColor || DEFAULT_UI_CONFIG.toolbarTextColor,
+    toolbarBackgroundColor:
+      config.toolbarBackgroundColor || DEFAULT_UI_CONFIG.toolbarBackgroundColor,
   };
 };
 

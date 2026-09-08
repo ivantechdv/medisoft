@@ -1014,10 +1014,10 @@ const Clients = () => {
             </button>
             
             {showFilterModal && (
-              <div className='absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2 w-48'>
+              <div className='absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-4 z-50 space-y-3 w-72 min-w-[18rem]'>
                 {/* Estado */}
-                <div className='flex items-center space-x-2'>
-                  <label htmlFor='estado' className='text-xs w-16'>
+                <div className='flex items-center gap-3'>
+                  <label htmlFor='estado' className='text-xs shrink-0 w-20'>
                     Estado:
                   </label>
                   <select
@@ -1025,7 +1025,7 @@ const Clients = () => {
                     id='estado'
                     value={filtersT.estado}
                     onChange={handleFilterChange}
-                    className='border border-gray-400 rounded w-full text-xs p-1'
+                    className='border border-gray-400 rounded flex-1 min-w-0 text-xs p-1.5'
                   >
                     <option value=''>Estado</option>
                     <option value='activo'>Activo</option>
@@ -1035,8 +1035,8 @@ const Clients = () => {
                 </div>
                 
                 {/* Tipo */}
-                <div className='flex items-center space-x-2'>
-                  <label htmlFor='tipo' className='text-xs w-16'>
+                <div className='flex items-center gap-3'>
+                  <label htmlFor='tipo' className='text-xs shrink-0 w-20'>
                     Tipo:
                   </label>
                   <select
@@ -1044,7 +1044,7 @@ const Clients = () => {
                     id='tipo'
                     value={filtersT.tipo}
                     onChange={handleFilterChange}
-                    className='border border-gray-400 rounded w-full text-xs p-1'
+                    className='border border-gray-400 rounded flex-1 min-w-0 text-xs p-1.5'
                   >
                     <option value=''>Tipo</option>
                     <option value='Cliente'>Cliente</option>
@@ -1053,17 +1053,17 @@ const Clients = () => {
                 </div>
                 
                 {/* Botones */}
-                <div className='flex flex-row justify-between gap-2 pt-2'>
+                <div className='flex flex-row justify-end gap-2 pt-2'>
                   <button
                     type='button'
-                    className='px-1 py-1 bg-gray-600 text-white rounded text-sm'
+                    className='px-3 py-1.5 bg-gray-600 text-white rounded text-sm whitespace-nowrap'
                     onClick={handleResetFilter}
                   >
                     Borrar Filtro
                   </button>
                   <button
                     type='button'
-                    className='px-2 py-1 bg-green-600 text-white rounded text-sm'
+                    className='px-3 py-1.5 bg-green-600 text-white rounded text-sm whitespace-nowrap'
                     onClick={handleAplyFilter}
                   >
                     Aplicar

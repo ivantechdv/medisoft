@@ -40,7 +40,7 @@ const Employees = () => {
     photo: '',
     dniFront: '',
     dniBack: '',
-    is_active: true,
+    is_active: false,
     country_id: '',
     type: '1',
     recommendations: '',

@@ -19,8 +19,8 @@ const SidebarItem = ({
       {item.sublinks ? (
         <>
           <div
-            className={`font-medium text-sm items-center rounded-lg px-4 py-2 flex transition-all duration-300 hover:bg-slate-500 hover:text-white group cursor-pointer ${
-              isActive ? 'bg-slate-500 text-white' : 'text-white'
+            className={`font-medium items-center rounded-lg px-4 py-2 flex transition-all duration-300 hover:bg-slate-500 group cursor-pointer ${
+              isActive ? 'bg-slate-500' : ''
             }`}
             onClick={() => toggleMenu(index)}
           >
@@ -40,7 +40,7 @@ const SidebarItem = ({
                 <NavLink
                   key={subIndex}
                   to={sublink.to}
-                  className='font-medium text-sm items-center rounded-lg text-white flex py-1 transition-all duration-300 hover:bg-gray-200 group cursor-pointer'
+                  className='font-medium items-center rounded-lg flex py-1 transition-all duration-300 hover:bg-gray-200 group cursor-pointer'
                 >
                   <span className='mr-2'>{sublink.icon}</span>
                   {isSidebarExpanded && <span>{sublink.label}</span>}
@@ -52,8 +52,8 @@ const SidebarItem = ({
       ) : (
         <NavLink
           to={item.to}
-          className={`font-medium text-sm items-center rounded-lg px-4 py-2 flex transition-all duration-300 group cursor-pointer hover:bg-slate-500 hover:text-white ${
-            isActive ? 'bg-slate-500 text-white' : 'text-white'
+          className={`font-medium items-center rounded-lg px-4 py-2 flex transition-all duration-300 group cursor-pointer hover:bg-slate-500 ${
+            isActive ? 'bg-slate-500' : ''
           }`}
         >
           <span className='mr-1'>{item.icon}</span>

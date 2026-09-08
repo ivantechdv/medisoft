@@ -146,7 +146,7 @@ const Form = ({
     dniBack: '',
     attach_reference: '',
     attach_curriculum: '',
-    is_active: true,
+    is_active: false,
     country_id: 0,
     type: '1',
     recommendations: '',
@@ -179,7 +179,7 @@ const Form = ({
     dniBack: '',
     attach_reference: '',
     attach_curriculum: '',
-    is_active: true,
+    is_active: false,
     country_id: 0,
     type: '1',
     recommendations: '',
@@ -975,6 +975,7 @@ const Form = ({
 
       let message = '';
       if (!id) {
+        dataToSend.is_active = false;
         response = await postData('employees', dataToSend);
         message = 'Empleado registrado con exito';
       } else {
