@@ -16,6 +16,9 @@ body {
   letter-spacing: -0.01em;
   color: var(--erp-text);
   background-color: var(--erp-page-background);
+  background-image: var(--erp-page-background-pattern);
+  background-repeat: repeat;
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -48,17 +51,25 @@ body {
   --erp-table-cell-size: 10.5px;
   --erp-table-cell-color: #1f2937;
   --erp-page-background: #f1f4f8;
+  --erp-page-background-pattern: none;
   --erp-sidebar-background: #f8f9fb;
   --erp-topnav-background: #f6f8fb;
+  --erp-sidebar-font-family: Manrope, Inter, 'Segoe UI', system-ui, sans-serif;
+  --erp-sidebar-font-size: 12px;
+  --erp-sidebar-text-color: #243447;
+  --erp-toolbar-font-family: Manrope, Inter, 'Segoe UI', system-ui, sans-serif;
+  --erp-toolbar-font-size: 10.5px;
+  --erp-toolbar-text-color: #1f2937;
+  --erp-toolbar-background: #ffffff;
 }
 
 #root {
   min-height: 100vh;
-  background-color: var(--erp-page-background);
+  background-color: transparent;
 }
 
 .bg-body {
-  background-color: var(--erp-page-background) !important;
+  background-color: transparent !important;
 }
 
 .flex {
@@ -320,7 +331,8 @@ td {
 /* Sidebar estilo acordeon limpio */
 aside.bg-sidebar {
   background-color: var(--erp-sidebar-background) !important;
-  color: #1f2937 !important;
+  color: var(--erp-sidebar-text-color) !important;
+  font-family: var(--erp-sidebar-font-family) !important;
   border-right: 1px solid #d9e1ea;
   box-shadow: inset -1px 0 0 rgba(182, 138, 47, 0.12);
 }
@@ -337,20 +349,27 @@ aside.bg-sidebar.w-16 {
   max-width: 72px !important;
 }
 
-aside.bg-sidebar .group {
+aside.bg-sidebar .group,
+aside.bg-sidebar a,
+aside.bg-sidebar .font-medium {
   border-radius: 6px !important;
   padding: 6px 12px !important;
   margin: 2px 8px;
-  color: #243447 !important;
-  font-size: 12px !important;
+  color: var(--erp-sidebar-text-color) !important;
+  font-size: var(--erp-sidebar-font-size) !important;
+  font-family: var(--erp-sidebar-font-family) !important;
 }
 
-aside.bg-sidebar .group:hover {
+aside.bg-sidebar .group:hover,
+aside.bg-sidebar a:hover,
+aside.bg-sidebar .font-medium:hover {
   background-color: #f4f0e6 !important;
-  color: #0f172a !important;
+  color: var(--erp-sidebar-text-color) !important;
 }
 
-aside.bg-sidebar .bg-slate-500 {
+aside.bg-sidebar .bg-slate-500,
+aside.bg-sidebar a.bg-slate-500,
+aside.bg-sidebar .group.bg-slate-500 {
   background-color: var(--brand-gold-soft) !important;
   color: #7a5a18 !important;
   border-left: 3px solid var(--brand-gold);
@@ -358,6 +377,12 @@ aside.bg-sidebar .bg-slate-500 {
 
 aside.bg-sidebar .pl-8 {
   padding-left: 12px !important;
+}
+
+aside.bg-sidebar .pl-8 a,
+aside.bg-sidebar .pl-8 .font-medium {
+  margin: 1px 8px;
+  padding: 4px 12px !important;
 }
 
 aside.bg-sidebar .border-2 {
@@ -611,23 +636,44 @@ main div[style*='max-height: calc(100vh - 130px)'] table td span:empty,
   background: transparent;
 }
 
-/* Toolbar superior más compacta y uniforme */
+/* Toolbar superior: búsqueda y selects personalizables */
 main .flex.justify-between.px-4 button.h-8,
-main .flex.justify-between.px-4 select.h-8,
-main .flex.justify-between.px-4 input.h-8 {
+main .erp-list-toolbar button.h-8,
+main .erp-list-actions button.h-8 {
   height: 28px !important;
   min-height: 28px !important;
-  font-size: 10.5px !important;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
 }
 
-main .flex.justify-between.px-4 button.h-8 .text-lg {
+main .flex.justify-between.px-4 select.h-8,
+main .flex.justify-between.px-4 input.h-8,
+main .erp-list-toolbar select.h-8,
+main .erp-list-toolbar input.h-8,
+main .erp-list-actions select.h-8,
+main .erp-list-actions input.h-8,
+main .erp-list-actions .relative > input.h-8 {
+  height: 28px !important;
+  min-height: 28px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  font-family: var(--erp-toolbar-font-family) !important;
+  font-size: var(--erp-toolbar-font-size) !important;
+  color: var(--erp-toolbar-text-color) !important;
+  background-color: var(--erp-toolbar-background) !important;
+}
+
+main .flex.justify-between.px-4 button.h-8 .text-lg,
+main .erp-list-actions button.h-8 .text-lg {
   font-size: 13px !important;
 }
 
-main .flex.justify-between.px-4 input.w-\[250px\] {
-  font-size: 10.5px !important;
+main .flex.justify-between.px-4 input.w-\[250px\],
+main .erp-list-actions input.w-\[250px\] {
+  font-family: var(--erp-toolbar-font-family) !important;
+  font-size: var(--erp-toolbar-font-size) !important;
+  color: var(--erp-toolbar-text-color) !important;
+  background-color: var(--erp-toolbar-background) !important;
 }
 
 /* Panel lateral de detalle más limpio (sin doble scroll) */

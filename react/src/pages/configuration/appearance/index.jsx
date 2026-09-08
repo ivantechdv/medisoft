@@ -12,6 +12,8 @@ import {
   pxToNumber,
   loadUiThemeForUser,
   saveUiThemeForUser,
+  PAGE_BACKGROUND_PATTERN_OPTIONS,
+  PAGE_BACKGROUND_PATTERNS,
 } from '../../../utils/uiTheme';
 
 const inputClass =
@@ -151,7 +153,7 @@ const Appearance = () => {
           />
           <ColorInput
             id='sidebarBackgroundColor'
-            labelText='Panel lateral (menú)'
+            labelText='Fondo del menú lateral'
             value={uiTheme.sidebarBackgroundColor}
             onChange={(value) =>
               handleUiThemeChange('sidebarBackgroundColor', value)
@@ -166,16 +168,116 @@ const Appearance = () => {
             }
           />
         </div>
+        <div>
+          <p className='text-sm font-medium mb-2'>Pattern del fondo</p>
+          <p className='text-xs text-gray-500 mb-3'>
+            Se combina con el color de fondo de pantalla (estilo chat).
+          </p>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
+            {PAGE_BACKGROUND_PATTERN_OPTIONS.map((option) => {
+              const selected = uiTheme.pageBackgroundPattern === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  onClick={() =>
+                    handleUiThemeChange('pageBackgroundPattern', option.value)
+                  }
+                  className={`rounded-md border overflow-hidden text-left transition ${
+                    selected
+                      ? 'border-indigo-500 ring-2 ring-indigo-200'
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div
+                    className='h-16 w-full'
+                    style={{
+                      backgroundColor: uiTheme.pageBackgroundColor,
+                      backgroundImage:
+                        PAGE_BACKGROUND_PATTERNS[option.value] || 'none',
+                      backgroundRepeat: 'repeat',
+                    }}
+                  />
+                  <div className='px-2 py-1.5 text-xs text-gray-700'>
+                    {option.label}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div className='space-y-4 border-t pt-4'>
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
+          Menú lateral (ítems)
+        </h4>
+        <p className='text-xs text-gray-500'>
+          Tipografía, tamaño y color de los menús principales del panel izquierdo.
+        </p>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div>
+            <label htmlFor='sidebarFontFamily'>Familia de fuente del menú</label>
+            <select
+              id='sidebarFontFamily'
+              value={uiTheme.sidebarFontFamily}
+              onChange={(event) =>
+                handleUiThemeChange('sidebarFontFamily', event.target.value)
+              }
+              className={inputClass}
+            >
+              {FONT_FAMILY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <SizeInput
+            id='sidebarFontSize'
+            labelText='Tamaño de texto del menú'
+            value={uiTheme.sidebarFontSize}
+            onChange={(value) => handleUiThemeChange('sidebarFontSize', value)}
+          />
+          <ColorInput
+            id='sidebarTextColor'
+            labelText='Color de texto del menú'
+            value={uiTheme.sidebarTextColor}
+            onChange={(value) => handleUiThemeChange('sidebarTextColor', value)}
+          />
+        </div>
         <div
           className='rounded-md border border-gray-200 overflow-hidden'
-          style={{ backgroundColor: uiTheme.pageBackgroundColor }}
+          style={{
+            backgroundColor: uiTheme.pageBackgroundColor,
+            backgroundImage:
+              PAGE_BACKGROUND_PATTERNS[uiTheme.pageBackgroundPattern] || 'none',
+            backgroundRepeat: 'repeat',
+          }}
         >
-          <div className='flex h-20'>
+          <div className='flex min-h-[120px]'>
             <div
-              className='w-16 shrink-0 border-r border-gray-200'
+              className='w-40 shrink-0 border-r border-gray-200 p-2 space-y-1'
               style={{ backgroundColor: uiTheme.sidebarBackgroundColor }}
               title='Menú lateral'
-            />
+            >
+              {['Clientes', 'Cuidadores', 'Configuración'].map((label) => (
+                <div
+                  key={label}
+                  className='rounded px-2 py-1'
+                  style={{
+                    fontFamily:
+                      uiTheme.sidebarFontFamily === 'system-ui'
+                        ? 'system-ui, sans-serif'
+                        : `"${uiTheme.sidebarFontFamily}", sans-serif`,
+                    fontSize: uiTheme.sidebarFontSize,
+                    color: uiTheme.sidebarTextColor,
+                  }}
+                >
+                  {label}
+                </div>
+              ))}
+            </div>
             <div className='flex-1 flex flex-col'>
               <div
                 className='h-7 border-b border-gray-200'
@@ -183,10 +285,93 @@ const Appearance = () => {
                 title='Barra superior'
               />
               <div className='flex-1 flex items-center justify-center text-xs text-gray-500'>
-                Vista previa del layout
+                Vista previa del menú lateral
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className='space-y-4 border-t pt-4'>
+        <h4 className='text-sm font-semibold uppercase tracking-wide'>
+          Toolbar (búsqueda y selects)
+        </h4>
+        <p className='text-xs text-gray-500'>
+          Tipografía, tamaño, color y fondo de los campos de búsqueda y selects
+          de la barra superior en listados (Clientes, Cuidadores, etc.).
+        </p>
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+          <div>
+            <label htmlFor='toolbarFontFamily'>Familia de fuente</label>
+            <select
+              id='toolbarFontFamily'
+              value={uiTheme.toolbarFontFamily}
+              onChange={(event) =>
+                handleUiThemeChange('toolbarFontFamily', event.target.value)
+              }
+              className={inputClass}
+            >
+              {FONT_FAMILY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <SizeInput
+            id='toolbarFontSize'
+            labelText='Tamaño de texto'
+            value={uiTheme.toolbarFontSize}
+            onChange={(value) => handleUiThemeChange('toolbarFontSize', value)}
+          />
+          <ColorInput
+            id='toolbarTextColor'
+            labelText='Color de texto'
+            value={uiTheme.toolbarTextColor}
+            onChange={(value) => handleUiThemeChange('toolbarTextColor', value)}
+          />
+          <ColorInput
+            id='toolbarBackgroundColor'
+            labelText='Fondo del campo'
+            value={uiTheme.toolbarBackgroundColor}
+            onChange={(value) =>
+              handleUiThemeChange('toolbarBackgroundColor', value)
+            }
+          />
+        </div>
+        <div className='rounded-md border border-gray-200 p-4 bg-gray-50 flex flex-wrap items-center gap-3'>
+          <input
+            type='text'
+            readOnly
+            defaultValue='Buscar...'
+            className='border border-gray-600 rounded h-8 px-2 w-[220px]'
+            style={{
+              fontFamily:
+                uiTheme.toolbarFontFamily === 'system-ui'
+                  ? 'system-ui, sans-serif'
+                  : `"${uiTheme.toolbarFontFamily}", sans-serif`,
+              fontSize: uiTheme.toolbarFontSize,
+              color: uiTheme.toolbarTextColor,
+              backgroundColor: uiTheme.toolbarBackgroundColor,
+            }}
+          />
+          <select
+            className='border border-gray-600 rounded h-8 px-2'
+            style={{
+              fontFamily:
+                uiTheme.toolbarFontFamily === 'system-ui'
+                  ? 'system-ui, sans-serif'
+                  : `"${uiTheme.toolbarFontFamily}", sans-serif`,
+              fontSize: uiTheme.toolbarFontSize,
+              color: uiTheme.toolbarTextColor,
+              backgroundColor: uiTheme.toolbarBackgroundColor,
+            }}
+            defaultValue='10'
+          >
+            <option value='10'>10</option>
+            <option value='25'>25</option>
+            <option value='todos'>Todos</option>
+          </select>
         </div>
       </div>
 

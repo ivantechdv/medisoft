@@ -17,6 +17,8 @@ const Level = require("../../models/employees/level.model");
 
 CTRL.create = async (req, res, next) => {
   try {
+    // Nuevos cuidadores no se marcan activos hasta tener asignación real
+    req.body.is_active = false;
     await Methods.create(req, res, next, Employee);
   } catch (error) {
     console.error("Error Sequelize:", error);
@@ -418,6 +420,100 @@ CTRL.getById = async (req, res, next) => {
     Methods.getById(req, res, next, Employee, condition, include);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * Alinea is_active (y situación "Asignado") con asignaciones reales:
+ * activo solo si tiene clients_services con employee_id, is_deleted=0 y statu=true.
+ */
+CTRL.syncActiveFromAssignments = async (req, res) => {
+  try {
+    const activeRows = await ClientsServices.findAll({
+      attributes: [
+        [
+          sequelize.fn("DISTINCT", sequelize.col("employee_id")),
+          "employee_id",
+        ],
+      ],
+      where: {
+        employee_id: { [Op.gt]: 0 },
+        is_deleted: 0,
+        statu: true,
+      },
+      raw: true,
+    });
+
+    const activeIds = activeRows
+      .map((row) => Number(row.employee_id))
+      .filter((id) => Number.isFinite(id) && id > 0);
+
+    const notDeleted = { is_deleted: { [Op.or]: [0, false, null] } };
+
+    let activated = 0;
+    let deactivated = 0;
+    let clearedAssignedStatus = 0;
+
+    if (activeIds.length > 0) {
+      const [activatedCount] = await Employee.update(
+        { is_active: true },
+        { where: { id: { [Op.in]: activeIds }, ...notDeleted } },
+      );
+      activated = activatedCount;
+
+      const [deactivatedCount] = await Employee.update(
+        { is_active: false },
+        {
+          where: {
+            id: { [Op.notIn]: activeIds },
+            ...notDeleted,
+          },
+        },
+      );
+      deactivated = deactivatedCount;
+    } else {
+      const [deactivatedCount] = await Employee.update(
+        { is_active: false },
+        { where: { ...notDeleted } },
+      );
+      deactivated = deactivatedCount;
+    }
+
+    // Situaciones cuyo nombre sugiere "Asignado" sin asignación activa → limpiar
+    const assignedStatuses = await Status.findAll({
+      where: {
+        name: { [Op.like]: "%Asignad%" },
+      },
+      attributes: ["id"],
+      raw: true,
+    });
+    const assignedStatusIds = assignedStatuses.map((s) => s.id);
+
+    if (assignedStatusIds.length > 0) {
+      const clearWhere = {
+        statu_id: { [Op.in]: assignedStatusIds },
+        ...notDeleted,
+      };
+      if (activeIds.length > 0) {
+        clearWhere.id = { [Op.notIn]: activeIds };
+      }
+      const [clearedCount] = await Employee.update(
+        { statu_id: null },
+        { where: clearWhere },
+      );
+      clearedAssignedStatus = clearedCount;
+    }
+
+    return res.status(200).json({
+      success: true,
+      activeAssignmentCount: activeIds.length,
+      activated,
+      deactivated,
+      clearedAssignedStatus,
+    });
+  } catch (error) {
+    console.error("Error syncActiveFromAssignments:", error);
+    return res.status(500).json({ error: error.message });
   }
 };
 

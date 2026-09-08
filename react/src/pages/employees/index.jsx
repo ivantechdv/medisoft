@@ -251,15 +251,27 @@ const MyDataTable = ({
   };
 
   const getRowBackgroundColor = (row) => {
-    if (!estado_config || estado_config.length < 3) return '#ffffff';
+    if (!estado_config) return '#ffffff';
 
-    const hasClientServices = row.clients_services?.length > 0;
-    if (row.is_active === true) {
-      return estado_config[1].color;
-    } else if (hasClientServices) {
-      return estado_config[2].color;
+    // Activo = tiene al menos un servicio de cliente vigente asignado
+    const services =
+      row.clients_services?.filter(
+        (service) => service.is_deleted === 0 || service.is_deleted === false,
+      ) || [];
+    const hasActiveAssignment = services.some(
+      (service) => service.statu === true || service.statu === 1,
+    );
+    const hasPreviousAssignment = services.some(
+      (service) => service.statu === false || service.statu === 0,
+    );
+
+    if (hasActiveAssignment) {
+      return estado_config[1].color; // Activo
     }
-    return estado_config[0].color;
+    if (hasPreviousAssignment) {
+      return estado_config[2].color; // Anteriormente activo
+    }
+    return estado_config[0].color; // Inactivo / sin asignación
   };
 
   const getColor = (key, row) => {
@@ -831,6 +843,19 @@ const Employees = () => {
       if (!debouncedSearchTerm) {
         setIsLoading(true);
       }
+
+      // Una vez por sesión: alinear is_active / "Asignado" con asignaciones reales
+      let justSynced = false;
+      if (!sessionStorage.getItem('employees_sync_active_v1')) {
+        try {
+          await postData('employees/sync-active-from-assignments', {});
+          sessionStorage.setItem('employees_sync_active_v1', '1');
+          justSynced = true;
+        } catch (syncError) {
+          console.warn('No se pudo sincronizar estado activo de cuidadores:', syncError);
+        }
+      }
+
       let response;
       // Usar el término debounced para construir la URL y evitar llamadas por cada pulsación
       let url = `employees?is_deleted=${showDeleted ? 1 : 0}&searchTerm=${debouncedSearchTerm}`;
@@ -847,7 +872,9 @@ const Employees = () => {
         // Cuando pageSize es 'todos', usar un número grande para obtener todos los registros
         url += `&page=1&pageSize=1000`;
       }
-      response = await getCachedData(url, LIST_CACHE_TTL_MS);
+      response = justSynced
+        ? await getData(url)
+        : await getCachedData(url, LIST_CACHE_TTL_MS);
       console.log(response);
       const { data, meta } = response;
 
@@ -1126,7 +1153,7 @@ const handleViewClient = (clientId, color) => {
       }
 
       const payload = showDeleted
-        ? { is_deleted: 0, is_active: true }
+        ? { is_deleted: 0, is_active: false }
         : { is_deleted: 1, is_active: false };
 
       for (const row of selectedRows) {
@@ -1136,6 +1163,15 @@ const handleViewClient = (clientId, color) => {
         } catch (error) {
           console.error(`Error al actualizar el cuidador con ID ${id}:`, error);
         }
+      }
+
+      // Re-sincronizar activos reales tras restaurar/inactivar
+      try {
+        sessionStorage.removeItem('employees_sync_active_v1');
+        await postData('employees/sync-active-from-assignments', {});
+        sessionStorage.setItem('employees_sync_active_v1', '1');
+      } catch (syncError) {
+        console.warn('Sync tras inactivar/restaurar falló:', syncError);
       }
 
       setSelectedRows([]);
@@ -1209,10 +1245,10 @@ const handleViewClient = (clientId, color) => {
             </button>
 
             {isFilterOpen && (
-              <div className='absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-3 z-50 space-y-2'>
+              <div className='absolute top-10 left-0 bg-white border border-gray-300 rounded shadow-md p-4 z-50 space-y-3 w-72 min-w-[18rem]'>
                 {/* Estado */}
-                <div className='flex items-center space-x-2'>
-                  <label htmlFor='estado' className='text-xs w-16'>
+                <div className='flex items-center gap-3'>
+                  <label htmlFor='estado' className='text-xs shrink-0 w-20'>
                     Estado:
                   </label>
                   <select
@@ -1220,7 +1256,7 @@ const handleViewClient = (clientId, color) => {
                     id='estado'
                     value={filtersT.estado}
                     onChange={handleFilterChange}
-                    className='border border-gray-400 rounded w-full text-xs p-1'
+                    className='border border-gray-400 rounded flex-1 min-w-0 text-xs p-1.5'
                   >
                     <option value=''>Estado</option>
                     {Object.entries(estado_config).map(([value, option]) => (
@@ -1232,8 +1268,8 @@ const handleViewClient = (clientId, color) => {
                 </div>
 
                 {/* Tipo */}
-                <div className='flex items-center space-x-2'>
-                  <label htmlFor='tipo' className='text-xs w-16'>
+                <div className='flex items-center gap-3'>
+                  <label htmlFor='tipo' className='text-xs shrink-0 w-20'>
                     Tipo:
                   </label>
                   <select
@@ -1241,7 +1277,7 @@ const handleViewClient = (clientId, color) => {
                     id='tipo'
                     value={filtersT.tipo}
                     onChange={handleFilterChange}
-                    className='border border-gray-400 rounded w-full text-xs p-1'
+                    className='border border-gray-400 rounded flex-1 min-w-0 text-xs p-1.5'
                   >
                     <option value=''>Tipo</option>
                     {Object.entries(tipo_config).map(([value, option]) => (
@@ -1253,8 +1289,8 @@ const handleViewClient = (clientId, color) => {
                 </div>
 
                 {/* Nivel */}
-                <div className='flex items-center space-x-2'>
-                  <label htmlFor='nivel' className='text-xs w-16'>
+                <div className='flex items-center gap-3'>
+                  <label htmlFor='nivel' className='text-xs shrink-0 w-20'>
                     Nivel:
                   </label>
                   <select
@@ -1262,7 +1298,7 @@ const handleViewClient = (clientId, color) => {
                     id='nivel'
                     value={filtersT.nivel}
                     onChange={handleFilterChange}
-                    className='border border-gray-400 rounded w-full text-xs p-1'
+                    className='border border-gray-400 rounded flex-1 min-w-0 text-xs p-1.5'
                   >
                     <option value=''>Nivel</option>
                     {niveles.map((n) => (
@@ -1274,8 +1310,8 @@ const handleViewClient = (clientId, color) => {
                 </div>
 
                 {/* Situación */}
-                <div className='flex items-center space-x-2'>
-                  <label htmlFor='situacion' className='text-xs w-16'>
+                <div className='flex items-center gap-3'>
+                  <label htmlFor='situacion' className='text-xs shrink-0 w-20'>
                     Situación:
                   </label>
                   <select
@@ -1283,7 +1319,7 @@ const handleViewClient = (clientId, color) => {
                     id='situacion'
                     value={filtersT.situacion}
                     onChange={handleFilterChange}
-                    className='border border-gray-400 rounded w-full text-xs p-1'
+                    className='border border-gray-400 rounded flex-1 min-w-0 text-xs p-1.5'
                   >
                     <option value=''>Situación</option>
                     {situaciones.map((s) => (
@@ -1295,17 +1331,17 @@ const handleViewClient = (clientId, color) => {
                 </div>
 
                 {/* Botones */}
-                <div className='flex flex-row justify-between gap-2 pt-2'>
+                <div className='flex flex-row justify-end gap-2 pt-2'>
                   <button
                     type='button'
-                    className='px-2 py-1 bg-gray-600 text-white rounded text-sm'
+                    className='px-3 py-1.5 bg-gray-600 text-white rounded text-sm whitespace-nowrap'
                     onClick={handleResetFilter}
                   >
                     Borrar Filtro
                   </button>
                   <button
                     type='button'
-                    className='px-2 py-1 bg-green-600 text-white rounded text-sm'
+                    className='px-3 py-1.5 bg-green-600 text-white rounded text-sm whitespace-nowrap'
                     onClick={handleAplyFilter}
                   >
                     Aplicar
